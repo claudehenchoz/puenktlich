@@ -83,7 +83,7 @@ def build_coach(spec: CoachSpec, lights: Lights) -> Model:
     # control car at the end of the train: build cab-first with red lamps, then turn round
     turn_round = spec.cab is not None and lights.front == "off" and lights.rear == "red"
     if turn_round:
-        lights = Lights(front="red", rear="off")  # type: ignore[arg-type]
+        lights = Lights(front="red", rear="off", dark=lights.dark)  # type: ignore[arg-type]
 
     mdl = Model.new()
     sx = mdl.d.shape[0]
@@ -143,10 +143,10 @@ def build_coach(spec: CoachSpec, lights: Lights) -> Model:
 
     # --- lamps ----------------------------------------------------------------
     if spec.cab:
-        lamp_cluster(mdl, shell, True, lights.front)
+        lamp_cluster(mdl, shell, True, lights.state("front"))
     else:
         lamp_cluster(mdl, shell, True, "off", low_z=(18, 22), top_z=None, spacing=13, lamp_half_width=1.5)
-    lamp_cluster(mdl, shell, False, lights.rear, low_z=(18, 22), top_z=None, spacing=13, lamp_half_width=1.5)
+    lamp_cluster(mdl, shell, False, lights.state("rear"), low_z=(18, 22), top_z=None, spacing=13, lamp_half_width=1.5)
 
     # --- running gear ----------------------------------------------------------
     off = spec.bogie_centres_m * 10

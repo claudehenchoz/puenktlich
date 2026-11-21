@@ -10,7 +10,7 @@ from puenktlich import paths
 from puenktlich.models import write_models
 from puenktlich.render import apply_overrides, cargopositor, gorender
 from puenktlich.schema import Vehicle
-from puenktlich.sprites import lint_vehicle
+from puenktlich.sprites import lint_vehicle, make_overlay
 
 HILL_ANGLE = 10  # degrees, as in Timberwolf's Trains
 HILL_BATCH = {
@@ -29,7 +29,7 @@ def sprite_dir(vehicle: Vehicle) -> Path:
 def render_vehicle(vehicle: Vehicle, force: bool = False) -> tuple[Path, list[str], list[Path]]:
     """Render all sheets for one vehicle. Returns (sprite dir, lint problems, overrides applied)."""
     vox_root = paths.BUILD_VOX / vehicle.id
-    base = write_models(vehicle, vox_root / "base")
+    plan, base = write_models(vehicle, vox_root / "base")
 
     # hill models: every variant tilted ±10° (Cargopositor rotate_y -> <name>_up/_down.vox)
     hill_dir = vox_root / "hill"
@@ -45,5 +45,8 @@ def render_vehicle(vehicle: Vehicle, force: bool = False) -> tuple[Path, list[st
     out = sprite_dir(vehicle)
     gorender(base, out, manifest="train", force=force)
     gorender(hills, out, manifest="train_hill", force=force)
+    # lamp overlays: lit render minus its dark body render
+    for ovl, (body, _) in plan.overlays.items():
+        make_overlay(out, ovl, body)
     applied = apply_overrides(vehicle.id, vehicle.id, out)
     return out, lint_vehicle(vehicle), applied

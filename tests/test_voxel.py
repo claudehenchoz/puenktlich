@@ -101,3 +101,30 @@ def test_coaches_never_show_white_lamps() -> None:
         v = vehicles()[vid]
         for var in variants(v):
             assert not (build_grid(v, var).data == LAMP_WHITE).any(), (vid, var)
+
+
+def test_variant_plan_dedupes_bodies_and_overlays() -> None:
+    from puenktlich.models import variant_plan
+    from puenktlich.schema import vehicles
+
+    vs = vehicles()
+    coach = variant_plan(vs["ew4_b"])
+    assert len(coach.bodies) == 1 and len(coach.overlays) == 1  # only "rear red" differs
+    assert coach.mapping["head"][1] is None and coach.mapping["none"][1] is None
+    assert coach.mapping["solo"][1] == coach.mapping["tail"][1]
+    bt = variant_plan(vs["ew4_bt"])
+    assert len(bt.bodies) == 2  # cab-front body and turned-round body
+    assert bt.mapping["tail"][0] != bt.mapping["head"][0]
+    loco = variant_plan(vs["re460"])
+    assert len(loco.bodies) == 1 and len(loco.overlays) == 3
+
+
+def test_dark_lights_paint_no_lit_lamps() -> None:
+    from puenktlich.models import build_grid, variants
+    from puenktlich.schema import vehicles
+    from puenktlich.voxel.parts.lights import LAMP_RED, LAMP_WHITE
+
+    for v in vehicles().values():
+        for var in variants(v):
+            d = build_grid(v, var, dark=True).data
+            assert not ((d == LAMP_RED) | (d == LAMP_WHITE)).any(), (v.id, var)

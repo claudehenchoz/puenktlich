@@ -12,7 +12,7 @@ variants from the vehicle's position in the train (see nml/templates/procedures.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Literal
 
 Front = Literal["white", "off"]
@@ -23,6 +23,16 @@ Rear = Literal["red", "off"]
 class Lights:
     front: Front = "white"
     rear: Rear = "red"
+    # dark=True: same model (incl. orientation decisions), but every lamp unlit. The
+    # pipeline renders this "body" once and draws lit lamps as a small overlay layer.
+    dark: bool = False
+
+    def state(self, end: Literal["front", "rear"]) -> str:
+        """Lamp colour to paint at one end: 'white' | 'red' | 'off'."""
+        return "off" if self.dark else (self.front if end == "front" else self.rear)
+
+    def darkened(self) -> Lights:
+        return replace(self, dark=True)
 
 
 LIGHT_VARIANTS: dict[str, Lights] = {

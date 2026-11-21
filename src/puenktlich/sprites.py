@@ -46,6 +46,43 @@ def sheet_for(sprite_dir: Path, name: str, kind: str, scale: int, depth: str) ->
     return sheet_path(sprite_dir, stem, scale, depth)
 
 
+OVERLAY_SUFFIX = "_ovl"
+
+
+def overlay_sheet_name(overlay: str) -> str:
+    """Sheet base name of a lamp overlay, e.g. re460_solo -> re460_solo_ovl."""
+    return overlay + OVERLAY_SUFFIX
+
+
+def make_overlay(sprite_dir: Path, lit: str, body: str) -> list[Path]:
+    """Write `<lit>_ovl` sheets: the pixels where the lit render differs from its dark
+    body render (lamps), transparent elsewhere. GoRender is deterministic, so unchanged
+    pixels are bit-identical. Drawn in-game as a second sprite layer over the body."""
+    written = []
+    out = overlay_sheet_name(lit)
+    for kind in ("normal", "up", "down"):  # the normal sheet also holds the turn views
+        for scale in SCALES:
+            a32 = np.array(Image.open(sheet_for(sprite_dir, lit, kind, scale, "32bpp")).convert("RGBA"))
+            b32 = np.array(Image.open(sheet_for(sprite_dir, body, kind, scale, "32bpp")).convert("RGBA"))
+            diff = (a32 != b32).any(axis=2)
+            p = sheet_for(sprite_dir, out, kind, scale, "32bpp")
+            Image.fromarray(np.where(diff[..., None], a32, 0).astype(np.uint8), "RGBA").save(p)
+            written.append(p)
+            for depth in ("mask",) + (("8bpp",) if scale == 1 else ()):
+                src = Image.open(sheet_for(sprite_dir, lit, kind, scale, depth))
+                a = np.array(src)
+                if depth == "mask":
+                    d = diff
+                else:
+                    d = a != np.array(Image.open(sheet_for(sprite_dir, body, kind, scale, depth)))
+                o = Image.fromarray(np.where(d, a, 0).astype(np.uint8), "P")
+                o.putpalette(src.getpalette())
+                p = sheet_for(sprite_dir, out, kind, scale, depth)
+                o.save(p)
+                written.append(p)
+    return written
+
+
 def _views(
     sprite_dir: Path,
     name: str,
@@ -54,6 +91,7 @@ def _views(
     length: int,
     only: tuple[int, ...] | None = None,
     mask_vis: bool = False,
+    overlay: str | None = None,
 ) -> Image.Image:
     """The 8 (or 4 for hills) direction views of one sheet, cropped and laid out in a row."""
     p32 = sheet_for(sprite_dir, name, kind, scale, "32bpp")
@@ -67,6 +105,11 @@ def _views(
         img = Image.fromarray(vis, "RGBA")
     else:
         img = composite_cc(Image.open(p32), mask)
+        if overlay is not None:  # what the game shows: body, then the lamp layer on top
+            o32 = sheet_for(sprite_dir, overlay_sheet_name(overlay), kind, scale, "32bpp")
+            om = sheet_for(sprite_dir, overlay_sheet_name(overlay), kind, scale, "mask")
+            img = img.copy()
+            img.alpha_composite(composite_cc(Image.open(o32), Image.open(om)))
     crops = []
     for i, r in enumerate(sprite_layout(scale, length, kind)):
         if r.w <= 1 or (only is not None and i not in only):
@@ -84,11 +127,12 @@ def _views(
 def contact_sheet(vehicle, sprite_dir: Path, out: Path) -> Path:
     """Review sheet: normal views at 1x/2x/4x, curve (±15°) and hill views, every light
     variant and the company-colour mask, upscaled nearest-neighbour to 4x."""
-    from puenktlich.models import sprite_name, variants  # local: avoid import cycle
+    from puenktlich.models import variant_plan  # local: avoid import cycle
 
     length = vehicle.ottd_length
-    names = {v: sprite_name(vehicle, v) for v in variants(vehicle)}
-    main = names.get("solo", next(iter(names.values())))
+    plan = variant_plan(vehicle)
+    first = next(iter(plan.mapping))
+    main, main_ovl = plan.mapping[first]
     rows: list[tuple[str, Image.Image]] = []
 
     def up(img: Image.Image, f: int) -> Image.Image:
@@ -96,15 +140,18 @@ def contact_sheet(vehicle, sprite_dir: Path, out: Path) -> Path:
 
     for scale in SCALES:
         label = f"{scale}x normal, CC red/white (shown x{4 // scale})"
-        rows.append((label, up(_views(sprite_dir, main, "normal", scale, length), 4 // scale)))
-    rows.append(("4x turn_1 (+15°, curves)", _views(sprite_dir, main, "turn_1", 4, length)))
-    rows.append(("4x turn_2 (-15°, curves)", _views(sprite_dir, main, "turn_2", 4, length)))
-    rows.append(("4x up (hill)", _views(sprite_dir, main, "up", 4, length)))
-    rows.append(("4x down (hill)", _views(sprite_dir, main, "down", 4, length)))
-    if len(names) > 1:
-        for var, name in names.items():
-            label = f"4x lights: {var} (left: NE view = rear end, right: SW view = front end)"
-            rows.append((label, _views(sprite_dir, name, "normal", 4, length, only=(5, 1))))
+        rows.append((label, up(_views(sprite_dir, main, "normal", scale, length, overlay=main_ovl), 4 // scale)))
+    for kind, label in (
+        ("turn_1", "turn_1 (+15°, curves)"),
+        ("turn_2", "turn_2 (-15°, curves)"),
+        ("up", "up (hill)"),
+        ("down", "down (hill)"),
+    ):
+        rows.append((f"4x {label}", _views(sprite_dir, main, kind, 4, length, overlay=main_ovl)))
+    if len(plan.mapping) > 1:
+        for var, (body, ovl) in plan.mapping.items():
+            label = f"4x lights: {var} = {body} + {ovl or 'no overlay'} (left: NE view = rear end, right: SW = front)"
+            rows.append((label, _views(sprite_dir, body, "normal", 4, length, only=(5, 1), overlay=ovl)))
     rows.append(("4x mask (magenta = CC1, cyan = CC2)", _views(sprite_dir, main, "normal", 4, length, mask_vis=True)))
 
     label_h, pad = 14, 6
@@ -123,8 +170,9 @@ def contact_sheet(vehicle, sprite_dir: Path, out: Path) -> Path:
     return out
 
 
-def lint_sheets(sprite_dir: Path, name: str, length: int) -> list[str]:
-    """Problems with one model's sheets (all kinds, scales, depths). Empty = OK."""
+def lint_sheets(sprite_dir: Path, name: str, length: int, allow_empty: bool = False) -> list[str]:
+    """Problems with one model's sheets (all kinds, scales, depths). Empty = OK.
+    allow_empty: overlays legitimately have views without any lamp pixel."""
     problems: list[str] = []
     for kind in ("normal", "turn_1", "turn_2", "up", "down"):
         for scale in SCALES:
@@ -142,7 +190,7 @@ def lint_sheets(sprite_dir: Path, name: str, length: int) -> list[str]:
                     problems.append(f"{p}: {im.size} smaller than layout {need_w}x{need_h}")
                 if depth in ("8bpp", "mask") and im.mode != "P":
                     problems.append(f"{p}: expected palette image, got {im.mode}")
-                if depth == "32bpp":
+                if depth == "32bpp" and not allow_empty:
                     alpha = np.array(im.convert("RGBA"))[..., 3]
                     for r in rects:
                         if not alpha[r.y : r.y + r.h, r.x : r.x + r.w].any():
@@ -151,10 +199,13 @@ def lint_sheets(sprite_dir: Path, name: str, length: int) -> list[str]:
 
 
 def lint_vehicle(vehicle) -> list[str]:
-    from puenktlich.models import sprite_name, variants
+    from puenktlich.models import variant_plan
     from puenktlich.paths import BUILD_SPRITES
 
+    plan = variant_plan(vehicle)
     out: list[str] = []
-    for var in variants(vehicle):
-        out += lint_sheets(BUILD_SPRITES / vehicle.id, sprite_name(vehicle, var), vehicle.ottd_length)
+    for body in plan.bodies:
+        out += lint_sheets(BUILD_SPRITES / vehicle.id, body, vehicle.ottd_length)
+    for ovl in plan.overlays:
+        out += lint_sheets(BUILD_SPRITES / vehicle.id, overlay_sheet_name(ovl), vehicle.ottd_length, allow_empty=True)
     return out

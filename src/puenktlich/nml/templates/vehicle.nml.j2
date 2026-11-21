@@ -1,6 +1,6 @@
 
 // ---- {{ v.id }} -------------------------------------------------------------
-{%- for var in variants %}
+{%- for var in sets %}
 {%- for kind in kinds %}
 spriteset(ss_{{ var.name }}_{{ kind }}, "{{ var.sheets[kind][1]['8bpp'] }}") {
 {%- for r in rects[kind][1] %}
@@ -27,22 +27,46 @@ switch (FEAT_TRAINS, SELF, sw_{{ var.name }}_shape, {{ shape_proc }}()) {
 {%- endif %}
 {%- endfor %}
 {%- if articulated %}
-{%- if variants | length > 1 %}
+{%- set lights_expr = "(position_in_consist == position_in_articulated_veh) * 2 + (position_in_consist_from_end + position_in_articulated_veh == 2)" %}
+{%- if not single_body %}
 
-// 2 = leads the train, 1 = last in the train, 3 = both (running alone), 0 = in the middle
-switch (FEAT_TRAINS, SELF, sw_{{ v.id }}_lights,
-        (position_in_consist == position_in_articulated_veh) * 2
-        + (position_in_consist_from_end + position_in_articulated_veh == 2)) {
-    2: sw_{{ v.id }}_head_shape;
-    1: sw_{{ v.id }}_tail_shape;
-    0: sw_{{ v.id }}_none_shape;
-    sw_{{ v.id }}_solo_shape;
+// light variant -> body. 2 = leads the train, 1 = last, 3 = both (running alone), 0 = middle
+switch (FEAT_TRAINS, SELF, sw_{{ v.id }}_lights_body, {{ lights_expr }}) {
+    2: sw_{{ light_map.head[0] }}_shape;
+    1: sw_{{ light_map.tail[0] }}_shape;
+    0: sw_{{ light_map.none[0] }}_shape;
+    sw_{{ light_map.solo[0] }}_shape;
+}
+{%- endif %}
+{%- if has_overlays %}
+
+// light variant -> lamp overlay (second sprite layer)
+switch (FEAT_TRAINS, SELF, sw_{{ v.id }}_lights_overlay, {{ lights_expr }}) {
+{%- for code, var in [(2, "head"), (1, "tail"), (0, "none")] %}
+    {{ code }}: {{ "sw_" ~ light_map[var][1] ~ "_shape" if light_map[var][1] else "ss_invisible" }};
+{%- endfor %}
+    {{ "sw_" ~ light_map.solo[1] ~ "_shape" if light_map.solo[1] else "ss_invisible" }};
+}
+
+// sprite stack on the middle part: layer 0 = body, layer 1 = lamps
+switch (FEAT_TRAINS, SELF, sw_{{ v.id }}_mid, [
+        STORE_TEMP((getbits(extra_callback_info1, 8, 8) < 1 ? CB_FLAG_MORE_SPRITES : 0) | PALETTE_USE_DEFAULT, 0x100),
+        getbits(extra_callback_info1, 8, 8)]) {
+    0: {{ "sw_" ~ default_body ~ "_shape" if single_body else "sw_" ~ v.id ~ "_lights_body" }};
+    1: sw_{{ v.id }}_lights_overlay;
+    ss_invisible;
 }
 {%- endif %}
 
 // 3 parts: invisible front, sprite-carrying middle, invisible rear
 switch (FEAT_TRAINS, SELF, sw_{{ v.id }}_parts, position_in_articulated_veh % 3) {
-    1: {{ "sw_" ~ v.id ~ "_lights" if variants | length > 1 else "sw_" ~ variants[0].name ~ "_shape" }};
+{%- if has_overlays %}
+    1: sw_{{ v.id }}_mid;
+{%- elif single_body %}
+    1: sw_{{ default_body }}_shape;
+{%- else %}
+    1: sw_{{ v.id }}_lights_body;
+{%- endif %}
     ss_invisible;
 }
 {%- if parts | unique | list | length > 1 %}
@@ -88,16 +112,22 @@ item(FEAT_TRAINS, {{ l.ident }}, {{ l.item_id }}) {
         weight: {{ v.weight_t }} ton;
         track_type: {{ track_label }};
         length: {{ parts[0] if articulated else v.ottd_length }};
-        misc_flags: bitmask(TRAIN_FLAG_2CC);
+        misc_flags: bitmask(TRAIN_FLAG_2CC{{ ", TRAIN_FLAG_SPRITE_STACK" if has_overlays and articulated else "" }});
         {%- if v.power_kw > 0 %}
         power: {{ v.power_kw }} kW;
         {%- if te_coefficient %}
         tractive_effort_coefficient: {{ te_coefficient }};
         {%- endif %}
         engine_class: {{ engine_class }};
-        visual_effect_and_powered: visual_effect_and_powered({{ visual_effect }}, 2, DISABLE_WAGON_POWER);
         dual_headed: 0;
+        {%- if v.kind == "control_car" %}
+        // control car: no exhaust/sparks, last choice for AIs
+        visual_effect_and_powered: visual_effect_and_powered(VISUAL_EFFECT_DISABLE, 0, DISABLE_WAGON_POWER);
+        ai_engine_rank: 0;
+        {%- else %}
+        visual_effect_and_powered: visual_effect_and_powered({{ visual_effect }}, 2, DISABLE_WAGON_POWER);
         ai_special_flag: AI_FLAG_PASSENGER;
+        {%- endif %}
         {%- else %}
         power: 0 kW;
         {%- endif %}
@@ -109,13 +139,13 @@ item(FEAT_TRAINS, {{ l.ident }}, {{ l.item_id }}) {
     graphics {
         {%- if articulated %}
         default: sw_{{ v.id }}_parts;
-        purchase: ss_{{ variants[0].name }}_normal;
+        purchase: ss_{{ default_body }}_normal;
         articulated_part: sw_{{ l.ident }}_articulated;
         {%- if parts | unique | list | length > 1 %}
         length: sw_{{ v.id }}_length;
         {%- endif %}
         {%- else %}
-        default: ss_{{ variants[0].name }}_normal;
+        default: ss_{{ default_body }}_normal;
         {%- endif %}
         {%- if not l.livery.company_colours %}
         colour_mapping: return palette_2cc(COLOUR_{{ l.livery.cc1 }}, COLOUR_{{ l.livery.cc2 }});

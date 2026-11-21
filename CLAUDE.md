@@ -32,8 +32,9 @@ Swiss trains & buses for OpenTTD. Vision: `docs/IDEA.md`. Architecture: `docs/AR
 
 ## Rendering model (curves, hills, lights)
 - Vehicles of length 3–8 are 3 articulated parts of the same item (`render.PARTS`). Only the middle part draws. It picks ±15° curve views and ±10° hill views from its neighbours. **Articulated engines can't be flipped in the depot.**
-- Recipes can take `build(lights: Lights)` and set `model.lights: true` in YAML. That gets them 4 variants (`<id>_solo/head/tail/none`) chosen in-game by position in the train. Use `voxel.parts.lights.lamps()`.
-- Coaches and control cars: build them with `voxel.parts.coach.build_coach(CoachSpec(...), lights)`. Give a `CabSpec` for a control car; push-pull orientation is automatic. Wagons have `power_kw: 0`, a `capacity` (split evenly over the 3 parts) and `railtype: standard`.
+- Recipes can take `build(lights: Lights)` and set `model.lights: true` in YAML. That gets them 4 variants (solo/head/tail/none) chosen in-game by position in the train. **Paint lamps only via `voxel.parts.lights` (`lamps()`, or `lamp_cluster()` with `lights.state(...)`)**, so the dark body (`Lights.dark`) stays lamp-free.
+- Sheet names: `<id>_body<k>` = bodies (lamps dark), `<id>_<variant>` = lit render (build intermediate), `<id>_<variant>_ovl` = lamp overlay (in the GRF). `models.variant_plan()` shows the mapping.
+- Coaches and control cars: build them with `voxel.parts.coach.build_coach(CoachSpec(...), lights)`. Give a `CabSpec` for a control car; push-pull orientation is automatic. Wagons have `power_kw: 0`, a `capacity` (split evenly over the 3 parts) and `railtype: standard`. Control cars get a nominal `power_kw` (1–10), so they can lead a train.
 - Keep models at z ≤ 68 so the 10° hill tilt has headroom (a test checks this).
 - A full render of a light-variant vehicle is ~1 min (4 variants × 3 renders). Unchanged vox files are skipped.
 

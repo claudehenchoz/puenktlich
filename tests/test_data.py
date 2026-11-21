@@ -25,6 +25,15 @@ def test_fixed_livery_requires_colours() -> None:
 
 def test_wagons_have_capacity_and_no_power() -> None:
     for v in vehicles().values():
-        if v.kind in ("coach", "control_car", "wagon"):
+        if v.kind in ("coach", "wagon"):
             assert v.power_kw == 0, v.id
+            assert v.capacity, v.id
+
+
+def test_control_cars_are_nominal_engines() -> None:
+    """Control cars carry a nominal power so they can lead a train (OpenTTD needs an
+    engine in front); it must stay token-sized."""
+    for v in vehicles().values():
+        if v.kind == "control_car":
+            assert 0 < v.power_kw <= 10, v.id
             assert v.capacity, v.id

@@ -16,10 +16,10 @@ import yaml
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from puenktlich import paths
-from puenktlich.models import sprite_name, variants
+from puenktlich.models import variant_plan
 from puenktlich.render import KINDS, SCALES, is_articulated, parts_for, sprite_layout
 from puenktlich.schema import Livery, Vehicle, operators, railtypes, vehicles
-from puenktlich.sprites import sheet_for
+from puenktlich.sprites import overlay_sheet_name, sheet_for
 
 GRFID = "PK\\43\\48"  # "PKCH" — never change after the first public release
 MAX_LIVERIES = 8
@@ -108,14 +108,18 @@ def vehicle_nml(v: Vehicle, strings: Strings) -> str:
     articulated = is_articulated(length)
     kinds = list(KINDS) if articulated else ["normal"]
     rects = {k: {s: sprite_layout(s, length, k) for s in SCALES} for k in kinds}
-    var_list = []
-    for var in variants(v):
-        name = sprite_name(v, var)
+    plan = variant_plan(v)
+
+    def sheet_set(stem: str) -> dict:
         sheets = {
-            k: {s: {d: _rel(sheet_for(sprite_dir, name, k, s, d)) for d in ("8bpp", "32bpp", "mask")} for s in SCALES}
+            k: {s: {d: _rel(sheet_for(sprite_dir, stem, k, s, d)) for d in ("8bpp", "32bpp", "mask")} for s in SCALES}
             for k in kinds
         }
-        var_list.append({"name": name, "sheets": sheets})
+        return {"name": stem, "sheets": sheets}
+
+    # every distinct body, plus every distinct lamp overlay (drawn as a second layer)
+    sets = [sheet_set(b) for b in plan.bodies] + [sheet_set(overlay_sheet_name(o)) for o in plan.overlays]
+    light_map = {var: (body, overlay_sheet_name(ovl) if ovl else None) for var, (body, ovl) in plan.mapping.items()}
 
     up = v.id.upper()
     desc_string = strings.add(f"STR_DESC_{up}", dict(v.description)) if v.description.get("en") else None
@@ -155,7 +159,11 @@ def vehicle_nml(v: Vehicle, strings: Strings) -> str:
     op = operators()[v.operator]
     return _env.get_template("vehicle.nml.j2").render(
         v=v,
-        variants=var_list,
+        sets=sets,
+        light_map=light_map,
+        default_body=plan.default_body,
+        single_body=len(plan.bodies) == 1,
+        has_overlays=bool(plan.overlays),
         kinds=kinds,
         rects=rects,
         articulated=articulated,

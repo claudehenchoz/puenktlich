@@ -13,7 +13,9 @@ intro_year: 1996
 vehicle_life_years: 40
 model_life_years: 30
 max_speed_kmh: 200
-power_kw: 0
+power_kw: 1          # nominal: makes the Bt an engine, so players can put it at the FRONT of a
+                     # push-pull train (OpenTTD trains must start with an engine). A Bt-only train
+                     # just crawls; the real power comes from the Re 460 at the other end.
 weight_t: 43
 length_m: 26.4
 capacity:

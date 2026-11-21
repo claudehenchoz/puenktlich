@@ -42,6 +42,7 @@ def lamp_cluster(
 
 
 def lamps(model: Model, shell: Shell, lights: Lights, **kw) -> None:
-    """Both ends according to `lights` (front = high x = direction of travel)."""
-    lamp_cluster(model, shell, True, lights.front, **kw)
-    lamp_cluster(model, shell, False, lights.rear, **kw)
+    """Both ends according to `lights` (front = high x = direction of travel).
+    Always paint lamps through this module so `Lights.dark` bodies stay lamp-free."""
+    lamp_cluster(model, shell, True, lights.state("front"), **kw)
+    lamp_cluster(model, shell, False, lights.state("rear"), **kw)

@@ -46,8 +46,19 @@ function PKTest::Start() {
     }
   }
   if (engines.len() == 0) { this.Log("ERROR no engines match TARGETS"); return; }
-  // track type of the first target (normally the locomotive), so electric locos get catenary
-  local rt = GSEngine.GetRailType(engines[0]);
+  // a track type every target can run on; prefer one that powers them all (catenary
+  // for electric locos even when a non-electric control car comes first)
+  local rt = -1;
+  foreach (cand, _ in GSRailTypeList()) {
+    local ok = true, powered = true;
+    foreach (e in engines) {
+      if (!GSEngine.CanRunOnRail(e, cand)) ok = false;
+      if (GSEngine.GetPower(e) > 0 && !GSEngine.HasPowerOnRail(e, cand)) powered = false;
+    }
+    if (ok && powered) { rt = cand; break; }
+    if (ok && rt == -1) rt = cand;
+  }
+  if (rt == -1) { this.Log("ERROR no railtype fits all targets"); return; }
   GSRail.SetCurrentRailType(rt);
   this.Log("railtype " + rt + " " + GSRail.GetName(rt));
 
