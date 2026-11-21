@@ -100,9 +100,89 @@ def _shape_proc(length: int) -> str:
     return "pk_shape_medium" if length > 4 else "pk_shape_short"
 
 
+def _livery_items(v: Vehicle, strings: Strings) -> list[LiveryItem]:
+    items: list[LiveryItem] = []
+    for i, livery in enumerate(v.liveries):
+        ident = f"{v.id}_{livery.id}"
+        names = {lang: f"{v.name[lang]} ({livery.name.get(lang, livery.name['en'])})" for lang in v.name}
+        items.append(
+            LiveryItem(
+                livery=livery,
+                ident=ident,
+                item_id=v.grf_id * MAX_LIVERIES + i,
+                name_string=strings.add(f"STR_NAME_{ident.upper()}", names),
+                variant_group=items[0].ident if i > 0 else None,
+            )
+        )
+    return items
+
+
+def _cargo(v: Vehicle, n_parts: int) -> dict | None:
+    if not v.capacity:
+        return None
+    if len(v.capacity) != 1:
+        raise ValueError(f"{v.id}: exactly one cargo type supported for now")
+    label, total = next(iter(v.capacity.items()))
+    return {
+        "label": label,
+        "total": total,
+        # every articulated part is the same item, so capacity is per part
+        "per_part": max(1, round(total / n_parts)),
+        "classes": ", ".join(v.refit_classes) if v.refit_classes else CARGO_CLASSES[label],
+    }
+
+
+def _te(v: Vehicle) -> float | None:
+    if not v.tractive_effort_kn:
+        return None
+    return round(min(1.0, v.tractive_effort_kn / (v.weight_t * 9.81)), 3)
+
+
+def road_vehicle_nml(v: Vehicle, strings: Strings) -> str:
+    """Road vehicle: one part per car (`cars:` = articulated bus), 8 views, no light variants."""
+    sprite_dir = paths.BUILD_SPRITES / v.id
+    specs = car_plans(v)
+    total_len = sum(car.ottd_length for car, _ in specs.values())
+    cargo = _cargo(v, len(specs))
+    cars = []
+    for car, plan in specs.values():
+        if len(plan.bodies) != 1 or plan.overlays:
+            raise ValueError(f"{v.id}: road vehicles have one body per car (no light variants yet)")
+        body = plan.default_body
+        cars.append(
+            {
+                "key": car.key,
+                "index": car.index,
+                "length": car.ottd_length,
+                "body": body,
+                "rects": {s: sprite_layout(s, car.ottd_length, "road") for s in SCALES},
+                "sheets": {
+                    s: {d: _rel(sheet_for(sprite_dir, body, "road", s, d)) for d in ("8bpp", "32bpp", "mask")}
+                    for s in SCALES
+                },
+                # capacity split by length
+                "capacity": max(1, round(cargo["total"] * car.ottd_length / total_len)) if cargo else 0,
+            }
+        )
+    up = v.id.upper()
+    desc_string = strings.add(f"STR_DESC_{up}", dict(v.description)) if v.description.get("en") else None
+    return _env.get_template("roadvehicle.nml.j2").render(
+        v=v,
+        cars=cars,
+        zooms=[(s, ZOOMS[s]) for s in SCALES],
+        liveries=_livery_items(v, strings),
+        desc_string=desc_string,
+        te_coefficient=_te(v),
+        badges=[operators()[v.operator].badge],
+        cargo=cargo,
+    )
+
+
 def vehicle_nml(v: Vehicle, strings: Strings) -> str:
     if len(v.liveries) > MAX_LIVERIES:
         raise ValueError(f"{v.id}: at most {MAX_LIVERIES} liveries")
+    if v.is_road:
+        return road_vehicle_nml(v, strings)
     sprite_dir = paths.BUILD_SPRITES / v.id
     specs = v.car_specs
     articulated = all(is_articulated(c.ottd_length) for c in specs)
@@ -163,38 +243,13 @@ def vehicle_nml(v: Vehicle, strings: Strings) -> str:
 
     up = v.id.upper()
     desc_string = strings.add(f"STR_DESC_{up}", dict(v.description)) if v.description.get("en") else None
-    items: list[LiveryItem] = []
-    for i, livery in enumerate(v.liveries):
-        ident = f"{v.id}_{livery.id}"
-        names = {lang: f"{v.name[lang]} ({livery.name.get(lang, livery.name['en'])})" for lang in v.name}
-        items.append(
-            LiveryItem(
-                livery=livery,
-                ident=ident,
-                item_id=v.grf_id * MAX_LIVERIES + i,
-                name_string=strings.add(f"STR_NAME_{ident.upper()}", names),
-                variant_group=items[0].ident if i > 0 else None,
-            )
-        )
+    items = _livery_items(v, strings)
 
     engine_class, running_cost_base, visual_effect = ENGINE[_traction(v)]
     if v.power_kw == 0:
         running_cost_base = "RUNNING_COST_STEAM"  # wagons: OpenTTD's usual base for wagon running costs
-    cargo = None
-    if v.capacity:
-        if len(v.capacity) != 1:
-            raise ValueError(f"{v.id}: exactly one cargo type supported for now")
-        label, total = next(iter(v.capacity.items()))
-        cargo = {
-            "label": label,
-            "total": total,
-            # every articulated part is the same item, so capacity is per part
-            "per_part": max(1, round(total / n_parts)),
-            "classes": ", ".join(v.refit_classes) if v.refit_classes else CARGO_CLASSES[label],
-        }
-    te = None
-    if v.tractive_effort_kn:
-        te = round(min(1.0, v.tractive_effort_kn / (v.weight_t * 9.81)), 3)
+    cargo = _cargo(v, n_parts)
+    te = _te(v)
     op = operators()[v.operator]
     return _env.get_template("vehicle.nml.j2").render(
         v=v,
@@ -233,7 +288,7 @@ def generate(out_dir: Path = paths.BUILD_NML, only: list[str] | None = None) -> 
     for op_id in used_ops:
         op = operators()[op_id]
         badges.append(Badge(op.badge, strings.add(f"STR_BADGE_{op.id.upper()}", {"en": op.name})))
-    used_rts = sorted({v.railtype for v in vs})
+    used_rts = sorted({v.railtype for v in vs if v.railtype})
     cargos = sorted(
         {label for v in vs for label in v.capacity}
         | {label for v in vs for _, plan in car_plans(v).values() for label in plan.cargo_labels}
@@ -250,7 +305,12 @@ def generate(out_dir: Path = paths.BUILD_NML, only: list[str] | None = None) -> 
             badges=badges,
         ),
         _env.get_template("procedures.nml.j2").render(
-            shape_procs={_shape_proc(c.ottd_length) for v in vs for c in v.car_specs if is_articulated(c.ottd_length)}
+            shape_procs={
+                _shape_proc(c.ottd_length)
+                for v in vs
+                for c in v.car_specs
+                if not v.is_road and is_articulated(c.ottd_length)
+            }
         ),
     ]
     for v in vs:

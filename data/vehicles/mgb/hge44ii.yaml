@@ -1,0 +1,40 @@
+# MGB HGe 4/4 II — metre-gauge rack and adhesion locomotive. Data approximate (see recipe).
+# Rack engine: only trains with a rack engine may enter rack track (data/tracks.yaml).
+id: hge44ii
+grf_id: 300          # never change — saved games reference this
+name:
+  en: MGB HGe 4/4 II
+  de: MGB HGe 4/4 II
+  fr: MGB HGe 4/4 II
+  it: MGB HGe 4/4 II
+operator: mgb
+kind: locomotive
+railtype: metre_rack_ac
+intro_year: 1985
+vehicle_life_years: 40
+model_life_years: 30
+max_speed_kmh: 90
+power_kw: 1932
+tractive_effort_kn: 240
+weight_t: 64
+length_m: 14.8
+cost_factor: 42
+running_cost_factor: 30
+liveries:
+  - id: mgb
+    name: { en: MGB red, de: MGB-Rot, fr: Rouge MGB, it: Rosso MGB }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: mgb/hge44ii
+  kind: recipe
+  lights: true
+reference: [mgb-hge44ii]
+description:
+  en: Rack and adhesion locomotive of the Matterhorn Gotthard Bahn. The only engine that can climb rack track.
+  de: Zahnrad- und Adhäsionslok der Matterhorn Gotthard Bahn. Nur sie kann Zahnstangenstrecken befahren.
+  fr: Locomotive à crémaillère et adhérence du Matterhorn Gotthard Bahn, seule capable de gravir la crémaillère.
+  it: Locomotiva a cremagliera e aderenza della Matterhorn Gotthard Bahn, l'unica in grado di salire sulla cremagliera.

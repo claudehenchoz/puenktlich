@@ -1,0 +1,108 @@
+// ---- {{ v.id }} (road vehicle) ---------------------------------------------------
+{%- for car in cars %}
+{%- if cars | length > 1 %}
+// part {{ car.index }} ({{ car.key }}), length {{ car.length }}
+{%- endif %}
+spriteset(ss_{{ car.body }}_road, "{{ car.sheets[1]['8bpp'] }}") {
+{%- for r in car.rects[1] %}
+    {{ r.nml() }}
+{%- endfor %}
+}
+{%- for scale, zoom in zooms %}
+alternative_sprites(ss_{{ car.body }}_road, {{ zoom }}, BIT_DEPTH_32BPP, "{{ car.sheets[scale]['32bpp'] }}", "{{ car.sheets[scale]['mask'] }}") {
+{%- for r in car.rects[scale] %}
+    {{ r.nml() }}
+{%- endfor %}
+}
+{%- endfor %}
+{%- endfor %}
+{%- if cars | length > 1 %}
+
+// articulated bus: one part per car, each drawing its own sprite
+switch (FEAT_ROADVEHS, SELF, sw_{{ v.id }}_parts, position_in_consist) {
+{%- for car in cars[1:] %}
+    {{ car.index }}: ss_{{ car.body }}_road;
+{%- endfor %}
+    ss_{{ cars[0].body }}_road;
+}
+
+switch (FEAT_ROADVEHS, SELF, sw_{{ v.id }}_length, position_in_consist) {
+{%- for car in cars[1:] %}
+    {{ car.index }}: return {{ car.length }};
+{%- endfor %}
+    return {{ cars[0].length }};
+}
+{%- if cargo %}
+
+switch (FEAT_ROADVEHS, SELF, sw_{{ v.id }}_capacity, position_in_consist) {
+{%- for car in cars[1:] %}
+    {{ car.index }}: return {{ car.capacity }};
+{%- endfor %}
+    return {{ cars[0].capacity }};
+}
+{%- endif %}
+{%- endif %}
+{% for l in liveries %}
+{%- if cars | length > 1 %}
+switch (FEAT_ROADVEHS, SELF, sw_{{ l.ident }}_articulated, extra_callback_info1) {
+    1..{{ cars | length - 1 }}: return {{ l.ident }};
+    return CB_RESULT_NO_MORE_ARTICULATED_PARTS;
+}
+{%- endif %}
+
+item(FEAT_ROADVEHS, {{ l.ident }}, {{ l.item_id }}) {
+    property {
+        name: string({{ l.name_string }});
+        climates_available: ALL_CLIMATES;
+        introduction_date: date({{ v.intro_year }}, 1, 1);
+        model_life: {{ v.model_life_years }};
+        vehicle_life: {{ v.vehicle_life_years }};
+        reliability_decay: {{ v.reliability_decay }};
+        {%- if cargo %}
+        refittable_cargo_classes: bitmask({{ cargo.classes }});
+        non_refittable_cargo_classes: bitmask();
+        default_cargo_type: {{ cargo.label }};
+        cargo_capacity: {{ cars[0].capacity if cars | length > 1 else cargo.total }};  // {{ cargo.total }} in total
+        {%- endif %}
+        loading_speed: 10;
+        cost_factor: {{ v.cost_factor }};
+        running_cost_factor: {{ v.running_cost_factor }};
+        running_cost_base: RUNNING_COST_ROADVEH;
+        sprite_id: SPRITE_ID_NEW_ROADVEH;
+        speed: {{ v.max_speed_kmh }} km/h;
+        power: {{ v.power_kw }} kW;
+        weight: {{ v.weight_t }} ton;
+        {%- if te_coefficient %}
+        tractive_effort_coefficient: {{ te_coefficient }};
+        {%- endif %}
+        sound_effect: SOUND_BUS_START_PULL_AWAY;
+        misc_flags: bitmask(ROADVEH_FLAG_2CC{{ ", ROADVEH_FLAG_TRAM" if v.road_type == "tram" else "" }});
+        badges: [{{ badges | map("tojson") | join(", ") }}];
+        {%- if l.variant_group %}
+        variant_group: {{ l.variant_group }};
+        {%- endif %}
+    }
+    graphics {
+        {%- if cars | length > 1 %}
+        default: sw_{{ v.id }}_parts;
+        articulated_part: sw_{{ l.ident }}_articulated;
+        length: sw_{{ v.id }}_length;
+        {%- if cargo %}
+        cargo_capacity: sw_{{ v.id }}_capacity;
+        {%- endif %}
+        {%- else %}
+        default: ss_{{ cars[0].body }}_road;
+        {%- if cars[0].length < 8 %}
+        length: return {{ cars[0].length }};
+        {%- endif %}
+        {%- endif %}
+        purchase: ss_{{ cars[0].body }}_road;
+        {%- if not l.livery.company_colours %}
+        colour_mapping: return palette_2cc(COLOUR_{{ l.livery.cc1 }}, COLOUR_{{ l.livery.cc2 }});
+        {%- endif %}
+        {%- if v.description.get("en") %}
+        additional_text: string({{ desc_string }});
+        {%- endif %}
+    }
+}
+{% endfor %}

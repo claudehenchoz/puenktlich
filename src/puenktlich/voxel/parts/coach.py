@@ -80,6 +80,15 @@ class CoachSpec:
     cab_colour: int | None = None  # paint the cab nose (e.g. CC1 for a red front)
     roof_line: bool = True  # red line at the roof edge (EW IV IC livery)
     extras: Callable[[Model, Shell], None] | None = None  # car-specific details (pantograph…)
+    # metre gauge / shorter cars
+    length_m: float | None = None  # over buffers; None = the full 8/8 canvas
+    gauge: Literal["standard", "metre"] = "standard"
+    body_colour: int | None = None  # None = BODY (CC2 sides); e.g. P.ramp(P.CC1, 0.6) for all-red RhB cars
+    buffer_spacing: float = 13
+    gangway_half_width: float = 9
+    roof_half_width: float = 15  # grey roof area
+    skirt_half_width: float = 16
+    first_class_z: tuple[float, float] | None = None  # yellow band; None = just below the roof line
 
 
 def _door(mdl: Model, shell: Shell, front: bool, span: tuple[float, float], top: float) -> None:
@@ -110,20 +119,25 @@ def build_coach(spec: CoachSpec, lights: Lights) -> Model:
 
     mdl = Model.new()
     sx = mdl.d.shape[0]
-    x_rear, x_front = BUFFER_DEPTH, sx - BUFFER_DEPTH - 1
+    if spec.length_m is None:
+        x_rear, x_front = BUFFER_DEPTH, sx - BUFFER_DEPTH - 1
+    else:
+        lob = spec.length_m * 10
+        x_rear, x_front = sx / 2 - lob / 2 + BUFFER_DEPTH, sx / 2 + lob / 2 - BUFFER_DEPTH - 1
     cs = spec.section
     shell = Shell(x_rear, x_front, cs, front=spec.cab.nose if spec.cab else spec.end, rear=spec.end)
     mid = shell.mid
     X, Y, Z = mdl.coords()
 
     # --- body ---------------------------------------------------------------
-    mdl.solid(shell.mask(mdl), BODY)
-    roof = (cs.roof - 4 <= Z) & (abs(Y - CENTRE_Y) <= 15)
+    mdl.solid(shell.mask(mdl), BODY if spec.body_colour is None else spec.body_colour)
+    roof = (cs.roof - 4 <= Z) & (abs(Y - CENTRE_Y) <= spec.roof_half_width)
     mdl.paint(roof, ROOF)
     if spec.roof_line:
         mdl.paint(side_band(mdl, x_rear, x_front + 1, cs.roof - 6, cs.roof - 5), LINE)  # red line at the roof edge
     if spec.first_class:
-        mdl.paint(side_band(mdl, x_rear + 40, x_front - 40, cs.roof - 8, cs.roof - 7), FIRST_CLASS_YELLOW)
+        z0, z1 = spec.first_class_z or (cs.roof - 8, cs.roof - 7)
+        mdl.paint(side_band(mdl, x_rear + 40, x_front - 40, z0, z1), FIRST_CLASS_YELLOW)
 
     # car ends black (not the cab nose)
     for front in (True, False):
@@ -168,7 +182,7 @@ def build_coach(spec: CoachSpec, lights: Lights) -> Model:
             continue
         xe = x_front if front else x_rear
         xa, xb = (xe + 1, xe + 4) if front else (xe - 3, xe)
-        mdl.solid(mdl.centred_box(xa, xb, 9, cs.floor + 1, cs.roof - 6), DARK)
+        mdl.solid(mdl.centred_box(xa, xb, spec.gangway_half_width, cs.floor + 1, cs.roof - 6), DARK)
 
     # --- lamps ----------------------------------------------------------------
     if spec.cab:
@@ -183,10 +197,10 @@ def build_coach(spec: CoachSpec, lights: Lights) -> Model:
     # --- running gear ----------------------------------------------------------
     off = spec.bogie_centres_m * 10
     for c in (mid - off, mid + off):
-        bogie(mdl, c, wheelbase=spec.wheelbase, wheel_diameter=spec.wheel_diameter, top=cs.floor)
-    skirt(mdl, mid - off + 22, mid + off - 22, 7, cs.floor, 16, colour=DARK)
-    buffers(mdl, x_front, front=True, z=cs.floor, length=BUFFER_DEPTH)
-    buffers(mdl, x_rear, front=False, z=cs.floor, length=BUFFER_DEPTH)
+        bogie(mdl, c, wheelbase=spec.wheelbase, wheel_diameter=spec.wheel_diameter, top=cs.floor, gauge=spec.gauge)
+    skirt(mdl, mid - off + 22, mid + off - 22, 7, cs.floor, spec.skirt_half_width, colour=DARK)
+    buffers(mdl, x_front, front=True, z=cs.floor, length=BUFFER_DEPTH, spacing=spec.buffer_spacing)
+    buffers(mdl, x_rear, front=False, z=cs.floor, length=BUFFER_DEPTH, spacing=spec.buffer_spacing)
 
     if turn_round:
         mdl.rotate_180()

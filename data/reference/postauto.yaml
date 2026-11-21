@@ -1,0 +1,10 @@
+# PostAuto (CarPostal / AutoPostale) — seed list of bus types.
+operator: postauto
+source: "PostAuto fleet overview (to be cross-checked), seeded manually"
+retrieved: "2026-11-21"
+entries:
+  - { id: postauto-citaro,   name: "Mercedes-Benz Citaro (12 m)",      category: bus, built: "1998–" }
+  - { id: postauto-citaro-g, name: "Mercedes-Benz Citaro G (18 m)",    category: bus, built: "2000–" }
+  - { id: postauto-setra,    name: "Setra S 415 / S 515 (regional)",   category: bus, built: "2002–" }
+  - { id: postauto-saurer,   name: "Saurer L4C (Alpine)",             category: bus, built: "1959–1970" }
+  - { id: postauto-ebusco,   name: "Battery-electric city bus",        category: bus, built: "2017–" }

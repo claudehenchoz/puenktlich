@@ -1,0 +1,65 @@
+{
+  "_comment": "Pünktlich road.json: 8 views (OpenTTD's 8 directions) for road vehicles. Copied from Timberwolf's Road Vehicles (github.com/mattkimber/timberwolfs_road_vehicles, MIT) files/manifest.json. Canvas 126x40x48 voxels = one 8/8 road vehicle (12.6 m at 10 vox/m).",
+  "lighting_angle": 50,
+  "lighting_elevation": 45,
+  "depth_influence": 0,
+  "soften_edges": 1.5,
+  "alpha_edge_threshold": 0.75,
+  "hard_edge_threshold": 0.25,
+  "sampler": "square",
+  "accuracy": 7,
+  "overlap": 0.05,
+  "brightness": -0.025,
+  "contrast": 0.025,
+  "pad_to_full_length": false,
+  "detail_boost": 5.0,
+  "falloff_adjustment": 0.25,
+  "joggle": -0.35,
+  "is_hill": false,
+  "dither_flat_areas": true,
+  "fosterise": true,
+  "size": {
+    "x": 126,
+    "y": 40,
+    "z": 48
+  },
+  "render_elevation": 30,
+  "sprites": [
+    {
+      "angle": 0,
+      "width": 9,
+      "height": 32
+    },
+    {
+      "angle": 45,
+      "width": 26
+    },
+    {
+      "angle": 90,
+      "width": 36,
+      "height": 14
+    },
+    {
+      "angle": 135,
+      "width": 26
+    },
+    {
+      "angle": 180,
+      "width": 9,
+      "height": 32
+    },
+    {
+      "angle": 225,
+      "width": 26
+    },
+    {
+      "angle": 270,
+      "width": 36,
+      "height": 14
+    },
+    {
+      "angle": 315,
+      "width": 26
+    }
+  ]
+}

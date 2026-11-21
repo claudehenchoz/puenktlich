@@ -35,6 +35,17 @@ def render_vehicle(vehicle: Vehicle, force: bool = False) -> tuple[Path, list[st
     up-to-date check, overlay mtimes), so a no-op build does no rendering."""
     vox_root = paths.BUILD_VOX / vehicle.id
     plans, base = write_models(vehicle, vox_root / "base")
+    out = sprite_dir(vehicle)
+    if vehicle.is_road:  # 8 views, no hill sprites
+        before = _sheet_mtimes(out)
+        gorender(base, out, manifest="road", force=force)
+        for plan in plans.values():
+            for ovl, (body, _) in plan.overlays.items():
+                make_overlay(out, ovl, body, force=force, road=True)
+        after = _sheet_mtimes(out)
+        LAST_RENDER_STATS[vehicle.id] = sum(1 for p, t in after.items() if before.get(p) != t)
+        applied = apply_overrides(vehicle.id, vehicle.id, out)
+        return out, lint_vehicle(vehicle), applied
 
     # hill models: every variant tilted ±10° (Cargopositor rotate_y -> <name>_up/_down.vox);
     # cached by content, files are only rewritten when they change
@@ -49,7 +60,6 @@ def render_vehicle(vehicle: Vehicle, force: bool = False) -> tuple[Path, list[st
         if stale not in hills:
             stale.unlink()
 
-    out = sprite_dir(vehicle)
     before = _sheet_mtimes(out)
     gorender(base, out, manifest="train", force=force)
     gorender(hills, out, manifest="train_hill", force=force)

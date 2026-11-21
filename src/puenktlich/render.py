@@ -6,6 +6,8 @@ with the manifest's views side by side, separated by 8 px (x scale).
 - `train.json` has 24 views every 15°. Angles 0, 45, … 315 are OpenTTD's 8 directions
   (N, NE, E, SE, S, SW, W, NW). Direction ±15° are the curve sprites `turn_1`/`turn_2`.
 - `train_hill.json` has the 4 diagonal views of a model tilted ±10° (hill sprites).
+- `road.json` has the 8 views of a road vehicle (canvas 126x40x48; kind "road"). Road
+  vehicles are not split into parts and have no curve or hill sprites.
 
 Vehicles are split into 3 articulated parts (`PARTS`); only the middle part draws the
 full-length sprite. Sprite rectangles and offsets are a straight port of Timberwolf's
@@ -69,6 +71,26 @@ BBOX_JOGGLES = {
 UPHILL_JOGGLES = {45: -1, 135: 0, 225: 0, 315: -1}
 DOWNHILL_JOGGLES = {45: 0, 135: -1, 225: -1, 315: 0}
 PLACEHOLDER_ANGLE = -1  # hill templates have no N/E/S/W views
+# road vehicles (temporarily_late -road)
+ROAD_Y_JOGGLE = 3
+ROAD_BBOX_JOGGLES = {
+    0: (1, 1),
+    45: (-2.5, 2),
+    90: (0, 2),
+    135: (2.5, 0.5),
+    180: (0, 1),
+    225: (-2, 3),
+    270: (0, 2),
+    315: (3, 2),
+}
+MANIFEST_FOR_KIND = {
+    "normal": "train",
+    "turn_1": "train",
+    "turn_2": "train",
+    "up": "train_hill",
+    "down": "train_hill",
+    "road": "road",
+}
 
 
 def parts_for(length: int) -> tuple[int, ...]:
@@ -141,6 +163,15 @@ def _rels(w: float, h: float, scale: int, length: int, direction: int) -> tuple[
     return xrel, yrel
 
 
+def _road_rels(w: float, h: float, scale: int, length: int, direction: int) -> tuple[float, float]:
+    """Port of temporarily_late getRoadRels."""
+    diff = (8 - length) / 2
+    xrel = -(w / 2) + UNIT_SHIFTS[direction][0] * diff * scale + ROAD_BBOX_JOGGLES[direction][0] * scale
+    yrel = -(h / 2) - ROAD_Y_JOGGLE * scale + UNIT_SHIFTS[direction][1] * diff * scale
+    yrel += ROAD_BBOX_JOGGLES[direction][1] * scale
+    return xrel, yrel
+
+
 def sprite_layout(scale: int, length: int, kind: str = "normal") -> list[SpriteRect]:
     """NML real-sprite rectangles + offsets (8 directions) for one sheet.
 
@@ -148,6 +179,14 @@ def sprite_layout(scale: int, length: int, kind: str = "normal") -> list[SpriteR
     up / down read the 4-view `train_hill` sheet (other directions are 1x1 placeholders).
     """
     rects: list[SpriteRect] = []
+    if kind == "road":
+        sprites = _sprite_x(load_manifest("road"))
+        for d in range(0, 360, 45):
+            x, spr = sprites[d]
+            w, h = spr["width"] * scale, spr["height"] * scale
+            xrel, yrel = _road_rels(w, h, scale, length, d)
+            rects.append(SpriteRect(d, x * scale, 0, w, h, int(xrel), int(yrel)))
+        return rects
     if kind in ("up", "down"):
         sprites = _sprite_x(load_manifest("train_hill"))
         joggles = UPHILL_JOGGLES if kind == "up" else DOWNHILL_JOGGLES

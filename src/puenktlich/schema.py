@@ -36,6 +36,13 @@ TTD_COLOURS = Literal[
     "WHITE",
 ]
 METRES_PER_UNIT = 3.2  # 8/8 = 25.6 m — docs/SCALE.md
+ROAD_METRES_PER_UNIT = 12.6 / 8  # road vehicles: 8/8 = the 126-voxel road canvas = 12.6 m
+ROAD_KINDS = ("bus", "tram")
+
+
+def units(length_m: float, road: bool = False) -> int:
+    """Length in metres -> OpenTTD length in 1/8 units, clamped to 1..8."""
+    return max(1, min(8, round(length_m / (ROAD_METRES_PER_UNIT if road else METRES_PER_UNIT))))
 
 
 class Strict(BaseModel):
@@ -94,7 +101,7 @@ class Car(Strict):
 
     @property
     def ottd_length(self) -> int:
-        return max(1, min(8, round(self.length_m / METRES_PER_UNIT)))
+        return units(self.length_m)
 
 
 class CarSpec(BaseModel):
@@ -104,6 +111,7 @@ class CarSpec(BaseModel):
     index: int
     model: ModelRef
     ottd_length: int
+    road: bool = False  # road vehicle: road canvas/manifest, no articulation split, no hill sprites
 
 
 class Vehicle(Strict):
@@ -112,7 +120,8 @@ class Vehicle(Strict):
     name: dict[Lang, str]
     operator: str
     kind: Literal["locomotive", "emu", "dmu", "coach", "control_car", "wagon", "bus", "tram"]
-    railtype: str
+    railtype: str | None = Field(None, description="Rail vehicles only (data/railtypes.yaml id)")
+    roadtype: Literal["road", "tram"] | None = Field(None, description="Road vehicles only (bus: road)")
     intro_year: int = Field(ge=1847, le=2100)
     retire_year: int | None = None
     vehicle_life_years: int = 40
@@ -146,22 +155,42 @@ class Vehicle(Strict):
     def _model_or_cars(self) -> Vehicle:
         if (self.model is None) == (not self.cars):
             raise ValueError(f"{self.id}: give exactly one of `model` or `cars`")
+        if self.is_road:
+            if self.railtype is not None:
+                raise ValueError(f"{self.id}: road vehicles have a `roadtype`, not a `railtype`")
+        elif self.railtype is None or self.roadtype is not None:
+            raise ValueError(f"{self.id}: rail vehicles need a `railtype` (and no `roadtype`)")
         return self
 
     @property
+    def is_road(self) -> bool:
+        return self.kind in ROAD_KINDS
+
+    @property
+    def road_type(self) -> str:
+        """Road vehicles: `roadtype`, defaulting to tram for trams and road otherwise."""
+        return self.roadtype or ("tram" if self.kind == "tram" else "road")
+
+    @property
     def ottd_length(self) -> int:
-        """Length in 1/8 units (per car for multiple units), clamped to 1..8."""
+        """Length in 1/8 units (per car for multiple units / articulated buses), 1..8."""
         if self.cars:
-            return max(c.ottd_length for c in self.cars)
-        return max(1, min(8, round(self.length_m / METRES_PER_UNIT)))
+            return max(units(c.length_m, self.is_road) for c in self.cars)
+        return units(self.length_m, self.is_road)
 
     @property
     def car_specs(self) -> list[CarSpec]:
         if not self.cars:
             assert self.model is not None
-            return [CarSpec(key=self.id, index=0, model=self.model, ottd_length=self.ottd_length)]
+            return [CarSpec(key=self.id, index=0, model=self.model, ottd_length=self.ottd_length, road=self.is_road)]
         return [
-            CarSpec(key=f"{self.id}_c{i}", index=i, model=c.model, ottd_length=c.ottd_length)
+            CarSpec(
+                key=f"{self.id}_c{i}",
+                index=i,
+                model=c.model,
+                ottd_length=units(c.length_m, self.is_road),
+                road=self.is_road,
+            )
             for i, c in enumerate(self.cars)
         ]
 
@@ -233,7 +262,7 @@ def validate_all() -> list[str]:
     for v in vs.values():
         if v.operator not in ops:
             problems.append(f"{v.id}: unknown operator {v.operator}")
-        if v.railtype not in rts:
+        if not v.is_road and v.railtype not in rts:
             problems.append(f"{v.id}: unknown railtype {v.railtype}")
         if v.grf_id in seen_grf:
             problems.append(f"{v.id}: grf_id {v.grf_id} already used by {seen_grf[v.grf_id]}")

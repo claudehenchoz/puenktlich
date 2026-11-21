@@ -2,13 +2,17 @@
 # Labels follow the Standardised Railtype Scheme (rack: special speed class "R"); vehicles pick
 # them via data/railtypes.yaml. `compatible` = track types engines of this type can run on,
 # `powered` = track types on which they have power (OpenTTD semantics).
+# Rack rule: a train may only enter track on which one of its engines has power (OpenTTD
+# Train::compatible_railtypes = union of the engines' powered types; wagons don't count).
+# So adhesion engines (NAA*) have no power on rack track (NRA*) and stop at the rack
+# boundary, while rack engines (NRA*) have power everywhere on metre gauge.
 # `style` selects the sprites in src/puenktlich/tracks/ (metre | metre_rack).
 - label: NAAN
   style: metre
   name: { en: Metre gauge railway, de: Meterspurbahn, fr: Voie métrique, it: Ferrovia a scartamento metrico }
   short: { en: Metre gauge, de: Meterspur, fr: Voie métrique, it: Scartamento metrico }
   compatible: [NAAN, NAAE, NRAN, NRAE]
-  powered: [NAAN, NAAE, NRAN, NRAE]
+  powered: [NAAN, NAAE]
   alternative: [NGRL]
   catenary: false
   intro_year: 1889
@@ -20,7 +24,7 @@
   name: { en: Electrified metre gauge railway, de: Elektrifizierte Meterspurbahn, fr: Voie métrique électrifiée, it: Ferrovia a scartamento metrico elettrificata }
   short: { en: Electrified metre gauge, de: Meterspur elektrisch, fr: Voie métrique électrifiée, it: Scartamento metrico elettrificato }
   compatible: [NAAN, NAAE, NRAN, NRAE]
-  powered: [NAAE, NRAE]
+  powered: [NAAE]
   alternative: [NAAA]
   catenary: true
   intro_year: 1903

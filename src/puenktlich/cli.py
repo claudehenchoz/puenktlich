@@ -140,12 +140,28 @@ def install(
             typer.echo(f"installed {dst_dir / src.name}")
 
 
+def _cargo_loco(wagons: list) -> str:
+    """First locomotive of the same gauge family as the wagons (standard / metre)."""
+    from puenktlich.schema import vehicles
+
+    family = wagons[0].railtype.split("_")[0]
+    for v in vehicles().values():
+        if v.kind == "locomotive" and v.railtype.split("_")[0] == family:
+            return f"{v.name['en']} ({v.liveries[0].name['en']})"
+    raise typer.BadParameter(f"no {family}-gauge locomotive to pull {wagons[0].id}")
+
+
 @app.command()
 def ingame(
     ids: IdsArg = None,
     zoom: Annotated[list[str] | None, typer.Option(help="Zoom levels: 1x, 2x, 4x or all (repeatable)")] = None,
     parallel: Annotated[bool, typer.Option(help="Run all zoom levels at once (heavy on laptops)")] = False,
-    scene: Annotated[str, typer.Option(help="loop | infra (crossing, bridge, tunnel, depots, rack)")] = "loop",
+    scene: Annotated[
+        str,
+        typer.Option(
+            help="loop | infra (crossing, bridge, tunnel, depots, rack) | cargo (wagons loading) | road (buses)"
+        ),
+    ] = "loop",
     shots: Annotated[int, typer.Option(help="Screenshots per zoom level (one per game month, ~67 s each)")] = 3,
     all_liveries: Annotated[bool, typer.Option(help="Every livery of each vehicle, not just the first")] = False,
 ) -> None:
@@ -167,6 +183,12 @@ def ingame(
         targets = [f"{v.name['en']} ({v.liveries[0].name['en']})" for v in vs]
     if scene == "infra":
         zoom, shots = ["2x"], min(shots, 4)  # one run: overview + close-up shots
+    if any(v.is_road for v in vs):
+        scene = "road"  # buses always run on the road loop
+    if scene == "cargo":
+        # a fitting locomotive in front of two of each selected wagon
+        targets = [_cargo_loco(vs)] + [t for t in targets for _ in range(2)]
+        shots = max(shots, 4)
     zooms = zoom or ["4x"]  # 4x shows the most detail; ask for others explicitly
     if "all" in zooms:
         zooms = ["1x", "2x", "4x"]

@@ -66,11 +66,15 @@ def test_light_variants_differ_at_lamps() -> None:
 def test_model_fits_canvas_with_tilt_headroom() -> None:
     from puenktlich.models import build_grid
     from puenktlich.schema import vehicles
+    from puenktlich.voxel.model import CANVAS, ROAD_CANVAS
 
     for v in vehicles().values():
         for car in v.car_specs:
-            (_, _), (_, _), (_, zmax) = build_grid(car).bounds()
-            assert zmax <= 68, f"{car.key}: z {zmax} leaves too little headroom for hill tilt"
+            grid = build_grid(car)
+            assert grid.data.shape == (ROAD_CANVAS if car.road else CANVAS), car.key
+            (_, _), (_, _), (_, zmax) = grid.bounds()
+            if not car.road:  # road vehicles have no hill sprites
+                assert zmax <= 68, f"{car.key}: z {zmax} leaves too little headroom for hill tilt"
 
 
 def test_control_car_turns_cab_outward_when_last() -> None:
@@ -127,6 +131,8 @@ def test_dark_lights_paint_no_lit_lamps() -> None:
 
     for v in vehicles().values():
         for car in v.car_specs:
+            if not car.model.lights:  # static lamps (e.g. buses): no dark body
+                continue
             for var in variants(car):
                 d = build_grid(car, var, dark=True).data
                 assert not ((d == LAMP_RED) | (d == LAMP_WHITE)).any(), (car.key, var)

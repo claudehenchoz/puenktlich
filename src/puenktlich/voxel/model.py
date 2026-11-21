@@ -19,7 +19,8 @@ from puenktlich.voxel.vox import VoxelGrid
 
 VOX_PER_M = 10  # along x — see docs/SCALE.md
 CANVAS = (256, 42, 72)
-CENTRE_Y = 20.5
+CENTRE_Y = 20.5  # train canvas; use Model.cy for code that also serves road vehicles
+ROAD_CANVAS = (126, 40, 48)  # road vehicles (render/manifests/road.json): 8/8 = 12.6 m
 
 
 def m(metres: float) -> int:
@@ -32,8 +33,13 @@ class Model:
     grid: VoxelGrid
 
     @classmethod
-    def new(cls) -> Model:
-        return cls(VoxelGrid.empty(*CANVAS))
+    def new(cls, canvas: tuple[int, int, int] = CANVAS) -> Model:
+        return cls(VoxelGrid.empty(*canvas))
+
+    @property
+    def cy(self) -> float:
+        """Centre line across the canvas (20.5 on the train canvas)."""
+        return (self.d.shape[1] - 1) / 2
 
     # --- coordinate helpers -------------------------------------------------
     @property
@@ -55,7 +61,7 @@ class Model:
         return (x0 <= X) & (x1 > X) & (y0 <= Y) & (y1 > Y) & (z0 <= Z) & (z1 > Z)
 
     def centred_box(self, x0: float, x1: float, half_width: float, z0: float, z1: float) -> np.ndarray:
-        return self.box(x0, x1, CENTRE_Y - half_width + 0.5, CENTRE_Y + half_width + 0.5, z0, z1)
+        return self.box(x0, x1, self.cy - half_width + 0.5, self.cy + half_width + 0.5, z0, z1)
 
     def cylinder_y(self, xc: float, zc: float, r: float, y0: float, y1: float) -> np.ndarray:
         """Cylinder with its axis along y (wheels, axles)."""

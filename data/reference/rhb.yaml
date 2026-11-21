@@ -14,3 +14,4 @@ entries:
   - { id: rhb-abe416,   name: "ABe 4/16 'Capricorn'", category: emu, gauge: metre, built: "2019–" }
   - { id: rhb-be44,     name: "Be 4/4",            category: emu, gauge: metre, built: "1971" }
   - { id: rhb-abe44iii, name: "ABe 4/4 III (Bernina)", category: emu, gauge: metre, built: "1988–1990" }
+  - { id: rhb-ew4,      name: "EW IV (A, B)",      category: coach, gauge: metre, built: "1984–1990" }

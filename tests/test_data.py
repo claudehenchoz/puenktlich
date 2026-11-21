@@ -37,3 +37,34 @@ def test_control_cars_are_nominal_engines() -> None:
         if v.kind == "control_car":
             assert 0 < v.power_kw <= 10, v.id
             assert v.capacity, v.id
+
+
+def test_rail_and_road_vehicles_have_the_right_track() -> None:
+    for v in vehicles().values():
+        if v.is_road:
+            assert v.railtype is None and v.road_type in ("road", "tram"), v.id
+            assert all(c.road for c in v.car_specs), v.id
+        else:
+            assert v.railtype is not None, v.id
+
+
+def test_road_vehicle_lengths() -> None:
+    vs = vehicles()
+    assert vs["citaro"].ottd_length == 8  # 12 m solo bus fills the 12.6 m road canvas
+    assert [c.ottd_length for c in vs["citaro_g"].car_specs] == [6, 4]  # Timberwolf's Citaro G
+
+
+def test_rack_track_needs_a_rack_engine() -> None:
+    """OpenTTD lets a train enter track on which one of its engines has power, so adhesion
+    railtypes must not be powered on rack railtypes, and rack railtypes power everywhere."""
+    import yaml
+
+    from puenktlich import paths
+
+    tracks = {t["label"]: t for t in yaml.safe_load((paths.DATA / "tracks.yaml").read_text(encoding="utf-8"))}
+    rack = {lab for lab, t in tracks.items() if t["style"] == "metre_rack"}
+    for lab, t in tracks.items():
+        if lab in rack:
+            assert {"NAAN", "NAAE"} & set(t["powered"]), lab
+        else:
+            assert not rack & set(t["powered"]), f"{lab} is powered on rack track"

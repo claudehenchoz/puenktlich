@@ -25,8 +25,8 @@ class CrossSection:
     tumblehome: float = 1.0  # inward lean of the side below `tumble_from` (voxels)
     tumble_from: float = 24  # z above which the side is vertical
 
-    def mask(self, Y: np.ndarray, Z: np.ndarray) -> np.ndarray:
-        dy = np.abs(Y - CENTRE_Y)
+    def mask(self, Y: np.ndarray, Z: np.ndarray, cy: float = CENTRE_Y) -> np.ndarray:
+        dy = np.abs(Y - cy)
         hw = np.full(np.broadcast(Y, Z).shape, self.half_width)
         # tumblehome: linearly narrower towards the floor
         below = self.tumble_from > Z
@@ -84,8 +84,8 @@ class Shell:
     def mask(self, model: Model) -> np.ndarray:
         X, Y, Z = model.coords()
         cs = self.section
-        inside = cs.mask(Y, Z)
-        dy = np.abs(Y - CENTRE_Y)
+        inside = cs.mask(Y, Z, model.cy)
+        dy = np.abs(Y - model.cy)
         rear = self.rear or self.front
         inside = inside & (self.x_front - self.front.setback(Z, dy, cs) >= X)
         inside = inside & (self.x_rear + rear.setback(Z, dy, cs) <= X)

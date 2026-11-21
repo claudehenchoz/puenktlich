@@ -62,6 +62,19 @@ def composite_cc(rgba: Image.Image, mask: Image.Image | None, cc1: str | None = 
     return Image.fromarray(out.astype(np.uint8), "RGBA")
 
 
+TRAIN_KINDS = ("normal", "turn_1", "turn_2", "up", "down")
+
+
+def layout_kinds(road: bool) -> tuple[str, ...]:
+    """Sprite kinds a car's sheets must provide."""
+    return ("road",) if road else TRAIN_KINDS
+
+
+def sheet_kinds(road: bool) -> tuple[str, ...]:
+    """Distinct sheet files per model: base (+ hill sheets for trains)."""
+    return ("road",) if road else ("normal", "up", "down")
+
+
 def sheet_for(sprite_dir: Path, name: str, kind: str, scale: int, depth: str) -> Path:
     """Sheet holding sprite `kind` for model `name` (e.g. re460_solo). depth: 8bpp|32bpp|mask."""
     stem = f"{name}_{kind}" if kind in ("up", "down") else name
@@ -76,14 +89,14 @@ def overlay_sheet_name(overlay: str) -> str:
     return overlay + OVERLAY_SUFFIX
 
 
-def make_overlay(sprite_dir: Path, lit: str, body: str, force: bool = False) -> list[Path]:
+def make_overlay(sprite_dir: Path, lit: str, body: str, force: bool = False, road: bool = False) -> list[Path]:
     """Write `<lit>_ovl` sheets: the pixels where the lit render differs from its dark
     body render (lamps), transparent elsewhere. GoRender is deterministic, so unchanged
     pixels are bit-identical. Drawn in-game as a second sprite layer over the body.
     Sheets newer than both inputs are left alone."""
     written = []
     out = overlay_sheet_name(lit)
-    for kind in ("normal", "up", "down"):  # the normal sheet also holds the turn views
+    for kind in sheet_kinds(road):  # the normal sheet also holds the turn views
         for scale in SCALES:
             depths = ("32bpp", "mask") + (("8bpp",) if scale == 1 else ())
             outs = [sheet_for(sprite_dir, out, kind, scale, d) for d in depths]
@@ -168,14 +181,14 @@ def contact_sheet(vehicle, sprite_dir: Path, out: Path) -> Path:
     plans = list(car_plans(vehicle).values())
     for car, plan in plans:
         length = car.ottd_length
+        base = "road" if car.road else "normal"
         tag = f"car {car.index}: " if len(plans) > 1 else ""
         main, main_ovl = plan.mapping[next(iter(plan.mapping))]
-        if car.index == 0:
+        if car.index == 0 or car.road:
             for scale in SCALES:
                 label = f"{tag}{scale}x normal, CC red/white (shown x{4 // scale})"
-                rows.append(
-                    (label, up(_views(sprite_dir, main, "normal", scale, length, overlay=main_ovl), 4 // scale))
-                )
+                rows.append((label, up(_views(sprite_dir, main, base, scale, length, overlay=main_ovl), 4 // scale)))
+        if car.index == 0 and not car.road:
             for kind, label in (
                 ("turn_1", "turn_1 (+15°, curves)"),
                 ("turn_2", "turn_2 (-15°, curves)"),
@@ -183,14 +196,14 @@ def contact_sheet(vehicle, sprite_dir: Path, out: Path) -> Path:
                 ("down", "down (hill)"),
             ):
                 rows.append((f"{tag}4x {label}", _views(sprite_dir, main, kind, 4, length, overlay=main_ovl)))
-        else:
+        elif not car.road:
             rows.append((f"{tag}4x normal", _views(sprite_dir, main, "normal", 4, length, overlay=main_ovl)))
         if len(plan.mapping) > 1:
             for var, (body, ovl) in plan.mapping.items():
                 label = (
                     f"{tag}4x lights: {var} = {body} + {ovl or 'no overlay'} (left: NE = rear end, right: SW = front)"
                 )
-                rows.append((label, _views(sprite_dir, body, "normal", 4, length, only=(5, 1), overlay=ovl)))
+                rows.append((label, _views(sprite_dir, body, base, 4, length, only=(5, 1), overlay=ovl)))
         if plan.cargo:
             for look, colour in plan.cargo_looks.items():
                 for stage, ovl in plan.cargo.items():
@@ -198,16 +211,14 @@ def contact_sheet(vehicle, sprite_dir: Path, out: Path) -> Path:
                     rows.append(
                         (
                             label,
-                            _views(
-                                sprite_dir, main, "normal", 4, length, only=(1, 2, 5), overlay=ovl, overlay_cc1=colour
-                            ),
+                            _views(sprite_dir, main, base, 4, length, only=(1, 2, 5), overlay=ovl, overlay_cc1=colour),
                         )
                     )
-    car, plan = plans[0]
-    main = plan.mapping[next(iter(plan.mapping))][0]
-    rows.append(
-        ("4x mask (magenta = CC1, cyan = CC2)", _views(sprite_dir, main, "normal", 4, car.ottd_length, mask_vis=True))
-    )
+    for car, plan in plans if plans[0][0].road else plans[:1]:
+        main = plan.mapping[next(iter(plan.mapping))][0]
+        kind = "road" if car.road else "normal"
+        label = "4x mask (magenta = CC1, cyan = CC2)"
+        rows.append((label, _views(sprite_dir, main, kind, 4, car.ottd_length, mask_vis=True)))
 
     label_h, pad = 14, 6
     width = max(r.width for _, r in rows) + 2 * pad
@@ -225,11 +236,11 @@ def contact_sheet(vehicle, sprite_dir: Path, out: Path) -> Path:
     return out
 
 
-def lint_sheets(sprite_dir: Path, name: str, length: int, allow_empty: bool = False) -> list[str]:
+def lint_sheets(sprite_dir: Path, name: str, length: int, allow_empty: bool = False, road: bool = False) -> list[str]:
     """Problems with one model's sheets (all kinds, scales, depths). Empty = OK.
     allow_empty: overlays legitimately have views without any lamp pixel."""
     problems: list[str] = []
-    for kind in ("normal", "turn_1", "turn_2", "up", "down"):
+    for kind in layout_kinds(road):
         for scale in SCALES:
             rects = [r for r in sprite_layout(scale, length, kind) if r.w > 1]
             need_w = max(r.x + r.w for r in rects)
@@ -260,7 +271,8 @@ def lint_vehicle(vehicle) -> list[str]:
     out: list[str] = []
     for car, plan in car_plans(vehicle).values():
         for body in plan.bodies:
-            out += lint_sheets(BUILD_SPRITES / vehicle.id, body, car.ottd_length)
+            out += lint_sheets(BUILD_SPRITES / vehicle.id, body, car.ottd_length, road=car.road)
         for ovl in plan.overlays:
-            out += lint_sheets(BUILD_SPRITES / vehicle.id, overlay_sheet_name(ovl), car.ottd_length, allow_empty=True)
+            name = overlay_sheet_name(ovl)
+            out += lint_sheets(BUILD_SPRITES / vehicle.id, name, car.ottd_length, allow_empty=True, road=car.road)
     return out

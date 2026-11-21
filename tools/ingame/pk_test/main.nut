@@ -38,9 +38,16 @@ function PKTest::Start() {
   local a = GSMap.GetTileIndex(x0 - 3, y0 - 3), b = GSMap.GetTileIndex(x1 + 3, y1 + 3);
   for (local x = x0 - 3; x <= x1 + 3; x++) for (local y = y0 - 3; y <= y1 + 3; y++) GSTile.DemolishTile(GSMap.GetTileIndex(x, y));
   GSTile.LevelTiles(a, b);
+  // cargo scene: the raw industry has to be built in deity mode, i.e. before company mode
+  local cargo_src = (SCENE == "cargo") ? this.BuildCargoSource() : -1;
   local cm = GSCompanyMode(0);
   GSCompany.SetPrimaryLiveryColour(GSCompany.LS_DEFAULT, GSCompany.COLOUR_DARK_BLUE);
   GSCompany.SetSecondaryLiveryColour(GSCompany.LS_DEFAULT, GSCompany.COLOUR_ORANGE);
+  if (SCENE == "road") {
+    local bus = this.BuildRoadScene();
+    if (bus != null) this.RunStops(bus, -1);
+    return;
+  }
 
   // find our engines
   // engines in TARGETS order (OpenTTD's internal engine ids don't follow GRF item order)
@@ -61,7 +68,11 @@ function PKTest::Start() {
   // the rack variant); otherwise the first railtype that carries and powers every target.
   local rt = -1;
   local own = GSEngine.GetRailType(engines[0]);
-  if (this.Fits(engines, own) == 2) rt = own;
+  // infra scene: the loop is plain track with rack sections, so a rack engine gets a
+  // plain (non-rack) railtype it has power on
+  if (SCENE == "infra") foreach (cand, _ in GSRailTypeList())
+    if (rt == -1 && GSRail.GetName(cand).find("rack") == null && this.Fits(engines, cand) == 2) rt = cand;
+  if (rt == -1 && this.Fits(engines, own) == 2) rt = own;
   if (rt == -1) foreach (cand, _ in GSRailTypeList()) if (this.Fits(engines, cand) == 2) { rt = cand; break; }
   if (rt == -1) foreach (cand, _ in GSRailTypeList()) if (this.Fits(engines, cand) == 1) { rt = cand; break; }
   if (rt == -1) { this.Log("ERROR no railtype fits all targets"); return; }
@@ -110,15 +121,20 @@ function PKTest::Start() {
     if (!GSVehicle.MoveWagon(v, 0, train, GSVehicle.GetNumWagons(train) - 1))
       this.Log("attach fail " + GSEngine.GetName(engines[i]) + " " + GSError.GetLastErrorString());
   }
+  local cargo = -1;
+  if (SCENE == "cargo" && cargo_src >= 0) cargo = this.SetupCargo(train, cargo_src);
   GSVehicle.StartStopVehicle(train);
   this.Log("train started, length " + GSVehicle.GetNumWagons(train));
 
-  // Month m (1-based): after day 10, stop the train when its front is on STOP_TILES[m-1].
-  // The console script for the 1st of the next month scrolls there and takes the shot.
   // Month m: stop on STOP_TILES[m-1] as soon as the train reaches it; the console script
   // screenshots on the 1st of month m+1, and the train restarts from day 2. (OpenTTD can't
   // shorten months: the calendar advances at most once per tick, and fast-forward is only
   // reachable through the GUI, so one game month ≈ 67 s real time is the floor per shot.)
+  this.RunStops(train, cargo);
+}
+
+// Stop the vehicle on STOP_TILES each month for the console screenshot scripts.
+function PKTest::RunStops(train, cargo) {
   local stopped = false, countdown = -1, reversed = false, stop_month = -1;
   while (true) {
     local date = GSDate.GetCurrentDate();
@@ -133,7 +149,8 @@ function PKTest::Start() {
       GSVehicle.StartStopVehicle(train); stopped = true; stop_month = month;
       this.Log("stopped at " + STOP_TILES[idx][0] + "," + STOP_TILES[idx][1] + " (head now " +
                GSMap.GetTileX(GSVehicle.GetLocation(train)) + "," + GSMap.GetTileY(GSVehicle.GetLocation(train)) +
-               ", leading: " + GSEngine.GetName(GSVehicle.GetWagonEngineType(train, 0)) + ")");
+               ", leading: " + GSEngine.GetName(GSVehicle.GetWagonEngineType(train, 0)) + ")" +
+               (cargo >= 0 ? " load " + GSVehicle.GetCargoLoad(train, cargo) + "/" + GSVehicle.GetCapacity(train, cargo) : ""));
     }
     if (countdown >= 0) countdown--;
     if (stopped && month != stop_month && day >= 2) {
@@ -211,6 +228,116 @@ function PKTest::BuildInfra(rt) {
       local tile = GSMap.GetTileIndex(t[0], t[1]);
       this.Check("rack " + t[0] + "," + t[1], GSRail.ConvertRailType(tile, tile, rack));
     }
+    // rack rule (data/tracks.yaml): only rack engines have power on rack track, so only
+    // trains with a rack engine may enter it. Engines named "H…" (HGe, HGm…) are rack engines.
+    foreach (e, _ in GSEngineList(GSVehicle.VT_RAIL)) {
+      local name = GSEngine.GetName(e);
+      if (name == null || GSEngine.GetPower(e) <= 1 || !GSEngine.CanRunOnRail(e, rack)) continue;
+      if (name.find("RhB") == null && name.find("MGB") == null) continue;
+      local is_rack = name.find(" H") != null;
+      this.Check((is_rack ? "rack engine powered on rack: " : "adhesion engine refused on rack: ") + name,
+                 GSEngine.HasPowerOnRail(e, rack) == is_rack);
+    }
   }
   GSRail.SetCurrentRailType(rt);
+}
+
+
+// --- cargo scene (pk ingame <wagon> --scene cargo): load the wagons at a station -----------
+// A raw industry producing a cargo the wagons carry (their default cargo first) is built
+// west of the loop at full production, a station sits on the loop's west side, and the train
+// has a single full-load order there. The monthly stop shots then show empty -> loading -> full.
+function PKTest::Produces(ind_type, cargo) {
+  foreach (c, _ in GSIndustryType.GetProducedCargo(ind_type)) if (c == cargo) return true;
+  return false;
+}
+
+// Deity mode: pick the cargo (the wagons' default cargo first) and build a raw industry
+// producing it west of the loop, at full production. Returns the cargo or -1.
+function PKTest::BuildCargoSource() {
+  local wagon = -1;
+  foreach (t in TARGETS) foreach (e, _ in GSEngineList(GSVehicle.VT_RAIL)) {
+    local name = GSEngine.GetName(e);
+    if (wagon == -1 && name != null && name.find(t) != null && GSEngine.IsWagon(e)) wagon = e;
+  }
+  if (wagon == -1) { this.Log("cargo FAIL no wagon among targets"); return -1; }
+  local cargos = [GSEngine.GetCargoType(wagon)];
+  foreach (c, _ in GSCargoList()) if (c != cargos[0]) cargos.append(c);
+  local cargo = -1, ind_type = -1;
+  foreach (c in cargos) {
+    if (!GSEngine.CanRefitCargo(wagon, c) && GSEngine.GetCargoType(wagon) != c) continue;
+    foreach (t, _ in GSIndustryTypeList()) {
+      if (GSIndustryType.IsRawIndustry(t) && this.Produces(t, c)) { cargo = c; ind_type = t; break; }
+    }
+    if (cargo != -1) break;
+  }
+  if (cargo == -1) { this.Log("cargo FAIL no raw industry produces a cargo the wagon carries"); return -1; }
+  this.Log("cargo " + GSCargo.GetCargoLabel(cargo) + " from " + GSIndustryType.GetName(ind_type));
+  local industry = -1;
+  // closest to the loop first: the station at x0 only catches industry tiles at x >= x0 - 3,
+  // and the loop clean-up needs x >= x0 - 1 free
+  for (local x = LOOP.x0 - 5; x >= LOOP.x0 - 7 && industry == -1; x--) for (local y = LOOP.y0 - 3; y <= LOOP.y1 + 2 && industry == -1; y++) {
+    // the industry layout is picked at random, so a site can fail on one run and work on the next
+    local ok = GSIndustryType.BuildIndustry(ind_type, GSMap.GetTileIndex(x, y));
+    if (ok) {
+      foreach (i, _ in GSIndustryList()) if (GSIndustry.GetIndustryType(i) == ind_type) industry = i;
+    }
+  }
+  if (industry == -1) { this.Log("cargo FAIL industry " + GSError.GetLastErrorString()); return -1; }
+  GSIndustry.SetProductionLevel(industry, 128, false, null);  // maximum production
+  local loc = GSIndustry.GetLocation(industry);
+  this.Log("industry at " + GSMap.GetTileX(loc) + "," + GSMap.GetTileY(loc));
+  return cargo;
+}
+
+// Company mode: station on the loop, refit the wagons, full-load order.
+function PKTest::SetupCargo(train, cargo) {
+  // station on the loop's west side (straight NW-SE track at x0)
+  local st = GSMap.GetTileIndex(LOOP.x0, LOOP.y0 + 1);
+  local ok = GSRail.BuildRailStation(st, GSRail.RAILTRACK_NW_SE, 1, 2, GSStation.STATION_NEW);
+  if (!ok) {
+    GSTile.DemolishTile(st); GSTile.DemolishTile(GSMap.GetTileIndex(LOOP.x0, LOOP.y0 + 2));
+    ok = GSRail.BuildRailStation(st, GSRail.RAILTRACK_NW_SE, 1, 2, GSStation.STATION_NEW);
+  }
+  this.Check("cargo station", ok);
+  local radius = GSStation.GetCoverageRadius(GSStation.STATION_TRAIN);
+  this.Check("station catches " + GSCargo.GetCargoLabel(cargo), GSTile.GetCargoProduction(st, cargo, 1, 2, radius) > 0);
+  this.Check("refit to " + GSCargo.GetCargoLabel(cargo), GSVehicle.RefitVehicle(train, cargo));
+  this.Check("full-load order", GSOrder.AppendOrder(train, st, GSOrder.OF_FULL_LOAD_ANY));
+  return cargo;
+}
+
+
+// --- road scene (pk ingame <bus> --scene road): a road loop with a road depot ----------------
+function PKTest::BuildRoadScene() {
+  local engines = [];
+  foreach (t in TARGETS) foreach (e, _ in GSEngineList(GSVehicle.VT_ROAD)) {
+    local name = GSEngine.GetName(e);
+    if (name != null && name.find(t) != null) { engines.append(e); this.Log("engine " + e + " " + name); }
+  }
+  if (engines.len() == 0) { this.Log("ERROR no road vehicles match TARGETS"); return null; }
+  local x0 = LOOP.x0, x1 = LOOP.x1, y0 = LOOP.y0, y1 = LOOP.y1;
+  local roads = GSRoadTypeList(GSRoad.ROADTRAMTYPES_ROAD);
+  GSRoad.SetCurrentRoadType(roads.Begin());
+  for (local x = x0 - 1; x <= x1 + 1; x++) for (local y = y0 - 2; y <= y1 + 1; y++) GSTile.DemolishTile(GSMap.GetTileIndex(x, y));
+  local corners = [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]];
+  local fails = 0;
+  for (local i = 0; i < 4; i++) {
+    local a = GSMap.GetTileIndex(corners[i][0], corners[i][1]), b = GSMap.GetTileIndex(corners[i + 1][0], corners[i + 1][1]);
+    if (!GSRoad.BuildRoad(a, b)) { fails++; this.Log("road fail " + corners[i][0] + "," + corners[i][1] + " " + GSError.GetLastErrorString()); }
+  }
+  local cx = (x0 + x1) / 2;
+  local front = GSMap.GetTileIndex(cx, y0), depot = GSMap.GetTileIndex(cx, y0 - 1);
+  if (!GSRoad.BuildRoadDepot(depot, front)) { fails++; this.Log("depot fail " + GSError.GetLastErrorString()); }
+  GSRoad.BuildRoad(depot, front);
+  this.Log("road loop built, " + fails + " failures");
+  // one vehicle per target (first match); the camera shows the first one
+  local bus = null;
+  foreach (e in engines) {
+    local v = GSVehicle.BuildVehicle(depot, e);
+    if (!GSVehicle.IsValidVehicle(v)) { this.Log("attach fail build " + GSEngine.GetName(e) + " " + GSError.GetLastErrorString()); continue; }
+    if (bus == null) { bus = v; GSVehicle.StartStopVehicle(v); }
+  }
+  this.Log("bus started: " + GSEngine.GetName(GSVehicle.GetEngineType(bus)) + ", parts " + GSVehicle.GetNumWagons(bus));
+  return bus;
 }

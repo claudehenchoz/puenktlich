@@ -28,3 +28,12 @@ Reference model for proportions: Timberwolf's `brel_class_90.vox` (18.7 m Bo'Bo'
 - Wheels: `bogie(..., gauge="metre")`, faces at y 11..13 and 28..30 (`running_gear.GAUGES`). That is the standard spacing scaled by 1000/1435.
 - Rails in the companion track GRF: half-gauge = 0.765 × 1000/1435 ≈ 0.53 world units (`tracks/raster.py`). Standard OpenTTD rails sit ≈ 1.53 units apart.
 - Rack (NRAN/NRAE): a central bar 0.44 units wide with lighter teeth every ~0.55 units, on every piece, slope, bridge and tunnel sprite.
+
+## Road vehicles
+Canvas **126 × 40 × 48** voxels = one 8/8 road vehicle (`render/manifests/road.json`, copied from
+Timberwolf's Road Vehicles). Same 10 voxels per metre along x, so 8/8 = 12.6 m and OpenTTD road
+length = round(length_m / 1.575): a 12 m solo bus is 8/8, the Citaro G (compressed to 16 m) is
+6 + 4. The road manifest draws 3.5 voxels per pixel against the trains' 4.1, so road vehicles
+appear about 15 % larger, as in Timberwolf's sets. Body 34 voxels wide (y 2..37, centre 19.5),
+floor at z ≈ 4 (low floor), roof at z ≈ 40, roof equipment up to z ≈ 44.
+

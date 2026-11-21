@@ -87,3 +87,51 @@ def test_parts_sum_to_length() -> None:
 def test_manifests() -> None:
     assert [s["angle"] for s in load_manifest("train")["sprites"]] == list(range(0, 360, 15))
     assert [s["angle"] for s in load_manifest("train_hill")["sprites"]] == [45, 135, 225, 315]
+
+
+# Hard-copied from Timberwolf's Road Vehicles templates/static/sprite_templates.nml
+# (temporarily_late -road): (length, scale) -> rects.
+ROAD_FIXTURE = {
+    (8, 1): [
+        (0, 0, 9, 32, -3, -18),
+        (17, 0, 26, 24, -15, -13),
+        (51, 0, 36, 14, -18, -8),
+        (95, 0, 26, 24, -10, -14),
+        (129, 0, 9, 32, -4, -18),
+        (146, 0, 26, 24, -15, -12),
+        (180, 0, 36, 14, -18, -8),
+        (224, 0, 26, 24, -10, -13),
+    ],
+    (6, 2): [
+        (0, 0, 18, 64, -7, -40),
+        (34, 0, 52, 48, -27, -28),
+        (102, 0, 72, 28, -28, -16),
+        (190, 0, 52, 48, -17, -27),
+        (258, 0, 18, 64, -9, -32),
+        (292, 0, 52, 48, -34, -22),
+        (360, 0, 72, 28, -44, -16),
+        (448, 0, 52, 48, -24, -28),
+    ],
+    (4, 1): [
+        (0, 0, 9, 32, -3, -22),
+        (17, 0, 26, 24, -11, -15),
+        (51, 0, 36, 14, -10, -8),
+        (95, 0, 26, 24, -6, -12),
+        (129, 0, 9, 32, -4, -14),
+        (146, 0, 26, 24, -19, -10),
+        (180, 0, 36, 14, -26, -8),
+        (224, 0, 26, 24, -14, -15),
+    ],
+}
+
+
+@pytest.mark.parametrize("key", list(ROAD_FIXTURE))
+def test_road_layout_matches_timberwolf(key: tuple[int, int]) -> None:
+    length, scale = key
+    assert _ours(scale, length, "road") == ROAD_FIXTURE[key]
+
+
+def test_road_manifest() -> None:
+    m = load_manifest("road")
+    assert [s["angle"] for s in m["sprites"]] == list(range(0, 360, 45))
+    assert (m["size"]["x"], m["size"]["y"], m["size"]["z"]) == (126, 40, 48)

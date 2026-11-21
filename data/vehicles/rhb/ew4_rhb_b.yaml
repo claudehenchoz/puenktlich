@@ -1,0 +1,41 @@
+# RhB EW IV B (2nd class) — Einheitswagen IV, metre gauge. Seats and mass approximate (not cited).
+id: ew4_rhb_b
+grf_id: 202         # never change — saved games reference this
+name:
+  en: RhB EW IV B (2nd class)
+  de: RhB EW IV B (2. Klasse)
+  fr: RhB B EW IV (2e classe)
+  it: FR B EW IV (2a classe)
+operator: rhb
+kind: coach
+railtype: metre_diesel
+intro_year: 1984
+vehicle_life_years: 40
+model_life_years: 30
+max_speed_kmh: 90
+power_kw: 0
+weight_t: 17
+length_m: 18.5
+capacity:
+  PASS: 56
+cost_factor: 14
+running_cost_factor: 6
+liveries:
+  - id: rhb
+    name: { en: RhB red, de: RhB-Rot, fr: Rouge RhB, it: Rosso FR }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: rhb/ew4
+  kind: recipe
+  lights: true         # tail lamps on the last vehicle
+  params: { cls: B }
+reference: [rhb-ew4]
+description:
+  en: Second-class standard coach of the Rhaetian Railway, the backbone of its loco-hauled trains.
+  de: Einheitswagen IV 2. Klasse der Rhätischen Bahn, Rückgrat der lokbespannten Züge.
+  fr: Voiture unifiée IV de 2e classe des Chemins de fer rhétiques.
+  it: Carrozza unificata IV di 2a classe della Ferrovia retica.

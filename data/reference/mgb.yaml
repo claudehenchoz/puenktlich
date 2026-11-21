@@ -1,0 +1,11 @@
+# Matterhorn Gotthard Bahn (MGB) — seed list of traction (metre gauge, Abt rack).
+operator: mgb
+source: "MGB fleet overview (to be cross-checked), seeded manually"
+retrieved: "2026-11-21"
+entries:
+  - { id: mgb-hge44ii,  name: "HGe 4/4 II",           category: locomotive, gauge: rack_metre, built: "1985–1990" }
+  - { id: mgb-hge44i,   name: "HGe 4/4 I",            category: locomotive, gauge: rack_metre, built: "1929–1930" }
+  - { id: mgb-deh44,    name: "Deh 4/4",              category: railcar,    gauge: rack_metre, built: "1972–1984" }
+  - { id: mgb-komet,    name: "ABDeh 4/10 'Komet'",   category: emu,        gauge: rack_metre, built: "2007–2008" }
+  - { id: mgb-orion,    name: "ABDeh 4/10 'Orion'",   category: emu,        gauge: rack_metre, built: "2019–" }
+  - { id: mgb-glacier,  name: "Glacier Express panorama coaches", category: coach, gauge: rack_metre, built: "2006–2009" }

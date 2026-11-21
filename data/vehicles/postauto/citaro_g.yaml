@@ -1,0 +1,41 @@
+# PostAuto Mercedes-Benz Citaro G (articulated, 18 m; compressed to OpenTTD lengths 6 + 4).
+id: citaro_g
+grf_id: 401          # never change — saved games reference this (road vehicle id space)
+name:
+  en: PostAuto Citaro G
+  de: PostAuto Citaro G
+  fr: CarPostal Citaro G
+  it: AutoPostale Citaro G
+operator: postauto
+kind: bus
+intro_year: 2000
+vehicle_life_years: 15
+model_life_years: 25
+max_speed_kmh: 80
+power_kw: 260
+tractive_effort_kn: 75
+weight_t: 27
+length_m: 18.1
+capacity:
+  PASS: 140
+cost_factor: 28
+running_cost_factor: 26
+liveries:
+  - id: postauto
+    name: { en: PostAuto yellow, de: PostAuto-Gelb, fr: Jaune CarPostal, it: Giallo AutoPostale }
+    cc1: YELLOW
+    cc2: RED
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+cars:
+  - model: { path: postauto/citaro, kind: recipe, params: { car: front } }
+    length_m: 9.5
+  - model: { path: postauto/citaro, kind: recipe, params: { car: rear } }
+    length_m: 6.5
+reference: [postauto-citaro-g]
+description:
+  en: Articulated PostAuto bus for busy agglomeration routes.
+  de: Gelenkbus von PostAuto für stark belastete Agglomerationslinien.
+  fr: Bus articulé de CarPostal pour les lignes d'agglomération très fréquentées.
+  it: Autobus articolato di AutoPostale per le linee d'agglomerato molto frequentate.

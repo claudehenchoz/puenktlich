@@ -84,3 +84,12 @@ def skirt(
 ) -> None:
     """Equipment skirt / underframe box between the bogies."""
     model.solid(model.centred_box(x0, x1, half_width, z0, z1), colour)
+
+
+def rack_drive(model: Model, centre: float, wheelbase: float = 25, colour: int = P.BLACK) -> None:
+    """Rack (cog) drive between the axles of a bogie: gear housing hanging low on the centre
+    line, with the cog wheels just above rail level. Mostly visible in the diagonal views."""
+    half = wheelbase / 2
+    model.solid(model.centred_box(centre - half + 5, centre + half - 5, 6, 1, 7), colour)
+    for c in (centre - half / 2, centre + half / 2):
+        model.solid(model.cylinder_y(c, 4, 3.5, CENTRE_Y - 3, CENTRE_Y + 3), P.DARK_GREY)
