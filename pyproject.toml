@@ -1,0 +1,44 @@
+[project]
+name = "puenktlich"
+version = "0.1.0"
+description = "Pünktlich — Swiss trains & buses for OpenTTD, built from voxel models"
+readme = "README.md"
+license = "GPL-2.0-only"
+requires-python = ">=3.13"
+dependencies = [
+    "jinja2>=3.1",
+    "nml>=0.9.0",
+    "numpy>=2.0",
+    "pillow>=11",
+    "pydantic>=2.9",
+    "pyyaml>=6",
+    "typer>=0.15",
+]
+
+[project.scripts]
+pk = "puenktlich.cli:app"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.8"]
+
+[build-system]
+requires = ["uv_build>=0.13.9,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+extend-exclude = [".tools"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E741"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+extraPaths = ["src"]
+exclude = [".tools", "build"]

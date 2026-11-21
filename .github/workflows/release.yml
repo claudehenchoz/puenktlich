@@ -1,0 +1,38 @@
+name: Release
+
+# Push a tag like v0.2.0 (matching pyproject version) to build and publish a GitHub release.
+# BaNaNaS upload is manual until a content id exists — see docs/RELEASING.md.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      - run: uv sync --locked
+      - run: ./tools/install.sh
+      - name: Check tag matches version
+        run: |
+          v=$(uv run python -c "import tomllib;print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          test "v$v" = "${GITHUB_REF_NAME}" || { echo "tag ${GITHUB_REF_NAME} != v$v"; exit 1; }
+      - run: uv run pytest -q
+      - run: uv run pk build
+      - name: Package
+        run: |
+          name="puenktlich-${GITHUB_REF_NAME#v}"
+          mkdir "$name"
+          cp build/puenktlich.grf LICENSE README.md "$name/"
+          tar -cf "$name.tar" "$name"
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: puenktlich-*.tar
+          generate_release_notes: true

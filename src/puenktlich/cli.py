@@ -1,0 +1,149 @@
+"""`pk` — the Pünktlich command line. Run `uv run pk --help`."""
+
+from __future__ import annotations
+
+import shutil
+from typing import Annotated
+
+import typer
+
+from puenktlich import paths
+
+app = typer.Typer(help="Pünktlich asset pipeline: data -> voxels -> sprites -> NML -> GRF.", no_args_is_help=True)
+
+IdsArg = Annotated[list[str] | None, typer.Argument(help="Vehicle ids (default: all)")]
+
+
+def _select(ids: list[str] | None):
+    from puenktlich.schema import vehicles
+
+    vs = vehicles()
+    if not ids:
+        return list(vs.values())
+    unknown = [i for i in ids if i not in vs]
+    if unknown:
+        raise typer.BadParameter(f"unknown vehicle id(s): {', '.join(unknown)}. Known: {', '.join(vs)}")
+    return [vs[i] for i in ids]
+
+
+@app.command("list")
+def list_vehicles() -> None:
+    """List vehicles with their key stats."""
+    for v in _select(None):
+        stats = f"{v.intro_year}  {v.max_speed_kmh:>3} km/h  L{v.ottd_length}"
+        typer.echo(f"{v.id:<16} {v.grf_id:>5}  {v.operator:<8} {v.kind:<12} {stats}  {v.name['en']}")
+
+
+@app.command()
+def vox(ids: IdsArg = None) -> None:
+    """Build voxel models (run recipes / copy .vox) into build/vox/."""
+    from puenktlich.models import write_model
+
+    for v in _select(ids):
+        p = write_model(v)
+        typer.echo(f"{v.id}: {p.relative_to(paths.ROOT)}")
+
+
+@app.command()
+def render(
+    ids: IdsArg = None, force: Annotated[bool, typer.Option(help="Re-render even if up to date")] = False
+) -> None:
+    """vox -> GoRender (1x/2x/4x, 8bpp/32bpp/mask) -> overrides -> lint."""
+    from puenktlich.models import write_model
+    from puenktlich.render import apply_overrides, gorender
+    from puenktlich.sprites import lint_sheets
+
+    failed = False
+    for v in _select(ids):
+        p = write_model(v)
+        out = paths.BUILD_SPRITES / v.id
+        gorender([p], out, manifest=v.model.manifest, force=force)
+        for o in apply_overrides(v.id, v.id, out):
+            typer.echo(f"  override: {o.relative_to(paths.ROOT)}")
+        problems = lint_sheets(out, v.id, v.ottd_length)
+        for pr in problems:
+            typer.secho(f"  {pr}", fg="red")
+        failed |= bool(problems)
+        typer.echo(f"{v.id}: rendered -> {out.relative_to(paths.ROOT)}")
+    if failed:
+        raise typer.Exit(1)
+
+
+@app.command()
+def preview(ids: IdsArg = None, render_first: Annotated[bool, typer.Option("--render/--no-render")] = True) -> None:
+    """Render and write a contact sheet to build/previews/<id>.png for review."""
+    from puenktlich.sprites import contact_sheet
+
+    if render_first:
+        render(ids)
+    for v in _select(ids):
+        out = contact_sheet(paths.BUILD_SPRITES / v.id, v.id, paths.BUILD_PREVIEWS / f"{v.id}.png")
+        typer.echo(f"{v.id}: {out}")
+
+
+@app.command()
+def build(ids: IdsArg = None, skip_render: Annotated[bool, typer.Option("--skip-render")] = False) -> None:
+    """Full build: lint data, render changed models, generate NML, compile build/puenktlich.grf."""
+    from puenktlich.nml.generate import compile_grf, generate
+
+    lint(sprites=False)
+    if not skip_render:
+        render(ids)
+    nml = generate(only=ids or None)
+    grf = compile_grf(nml)
+    typer.secho(f"built {grf.relative_to(paths.ROOT)} ({grf.stat().st_size // 1024} KiB)", fg="green")
+
+
+@app.command()
+def lint(sprites: Annotated[bool, typer.Option(help="Also lint rendered sprite sheets")] = True) -> None:
+    """Validate data files and (optionally) rendered sprites."""
+    from puenktlich.schema import validate_all, vehicles
+    from puenktlich.sprites import lint_sheets
+
+    problems = validate_all()
+    if sprites:
+        for v in vehicles().values():
+            problems += lint_sheets(paths.BUILD_SPRITES / v.id, v.id, v.ottd_length)
+    for p in problems:
+        typer.secho(p, fg="red")
+    if problems:
+        raise typer.Exit(1)
+    typer.secho("lint ok", fg="green")
+
+
+@app.command()
+def coverage(write: Annotated[bool, typer.Option(help="Write docs/COMPLETENESS.md")] = True) -> None:
+    """Report how much of the official fleet lists is implemented."""
+    from puenktlich.completeness import coverage as cov
+    from puenktlich.completeness import report_markdown
+
+    for c in cov():
+        typer.echo(f"{c.operator:<10} {len(c.done):>4}/{c.total:<4} {c.percent:5.1f}%")
+    if write:
+        (paths.ROOT / "docs" / "COMPLETENESS.md").write_text(report_markdown(), encoding="utf-8")
+
+
+@app.command()
+def install(
+    openttd_dir: Annotated[
+        str, typer.Argument(help="OpenTTD data dir, e.g. ~/.local/share/openttd")
+    ] = "~/.local/share/openttd",
+) -> None:
+    """Copy build/puenktlich.grf into OpenTTD's newgrf folder for testing."""
+    from pathlib import Path
+
+    src = paths.BUILD / f"{paths.GRF_NAME}.grf"
+    dst_dir = Path(openttd_dir).expanduser() / "newgrf"
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, dst_dir / src.name)
+    typer.echo(f"installed {dst_dir / src.name}")
+
+
+@app.command()
+def clean() -> None:
+    """Delete build/."""
+    shutil.rmtree(paths.BUILD, ignore_errors=True)
+
+
+if __name__ == "__main__":
+    app()

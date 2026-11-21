@@ -1,0 +1,44 @@
+# Operators -> purchase-menu badges ("operator/<id>"). Add operators as their vehicles arrive.
+- id: sbb
+  name: SBB
+  full_name:
+    en: Swiss Federal Railways
+    de: Schweizerische Bundesbahnen
+    fr: Chemins de fer fédéraux suisses
+    it: Ferrovie federali svizzere
+  badge: operator/sbb
+  founded: 1902
+- id: bls
+  name: BLS
+  full_name: { en: BLS, de: BLS AG, fr: BLS SA, it: BLS SA }
+  badge: operator/bls
+  founded: 1906
+- id: sob
+  name: SOB
+  full_name:
+    en: Southeastern Railway
+    de: Schweizerische Südostbahn
+    fr: Chemin de fer du Sud-Est
+    it: Ferrovia del Sud-Est
+  badge: operator/sob
+  founded: 2001
+- id: rhb
+  name: RhB
+  full_name:
+    en: Rhaetian Railway
+    de: Rhätische Bahn
+    fr: Chemins de fer rhétiques
+    it: Ferrovia retica
+    rm: Viafier retica
+  badge: operator/rhb
+  founded: 1889
+- id: mgb
+  name: MGB
+  full_name: { en: Matterhorn Gotthard Bahn, de: Matterhorn Gotthard Bahn, fr: Matterhorn Gotthard Bahn, it: Matterhorn Gotthard Bahn }
+  badge: operator/mgb
+  founded: 2003
+- id: postauto
+  name: PostAuto
+  full_name: { en: PostBus, de: PostAuto, fr: CarPostal, it: AutoPostale }
+  badge: operator/postauto
+  founded: 1906

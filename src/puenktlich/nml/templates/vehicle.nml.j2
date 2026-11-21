@@ -1,0 +1,60 @@
+
+// ---- {{ v.id }} -------------------------------------------------------------
+spriteset(ss_{{ v.id }}, "{{ sheets[1]['8bpp'] }}") {
+{%- for r in rects[1] %}
+    {{ r.nml() }}
+{%- endfor %}
+}
+{%- for scale, zoom in zooms %}
+alternative_sprites(ss_{{ v.id }}, {{ zoom }}, BIT_DEPTH_32BPP, "{{ sheets[scale]['32bpp'] }}", "{{ sheets[scale]['mask'] }}") {
+{%- for r in rects[scale] %}
+    {{ r.nml() }}
+{%- endfor %}
+}
+{%- endfor %}
+{% for l in liveries %}
+
+item(FEAT_TRAINS, {{ l.ident }}, {{ l.item_id }}) {
+    property {
+        name: string({{ l.name_string }});
+        climates_available: ALL_CLIMATES;
+        introduction_date: date({{ v.intro_year }}, 1, 1);
+        model_life: {{ v.model_life_years }};
+        vehicle_life: {{ v.vehicle_life_years }};
+        reliability_decay: {{ v.reliability_decay }};
+        refittable_cargo_classes: bitmask();
+        non_refittable_cargo_classes: bitmask();
+        cargo_capacity: 0;
+        cost_factor: {{ v.cost_factor }};
+        running_cost_factor: {{ v.running_cost_factor }};
+        running_cost_base: {{ running_cost_base }};
+        sprite_id: SPRITE_ID_NEW_TRAIN;
+        speed: {{ v.max_speed_kmh }} km/h;
+        power: {{ v.power_kw }} kW;
+        weight: {{ v.weight_t }} ton;
+        {%- if te_coefficient %}
+        tractive_effort_coefficient: {{ te_coefficient }};
+        {%- endif %}
+        track_type: {{ track_label }};
+        engine_class: {{ engine_class }};
+        visual_effect_and_powered: visual_effect_and_powered({{ visual_effect }}, 2, DISABLE_WAGON_POWER);
+        length: {{ v.ottd_length }};
+        misc_flags: bitmask(TRAIN_FLAG_2CC);
+        dual_headed: 0;
+        ai_special_flag: AI_FLAG_PASSENGER;
+        badges: [{{ badges | map("tojson") | join(", ") }}];
+        {%- if l.variant_group %}
+        variant_group: {{ l.variant_group }};
+        {%- endif %}
+    }
+    graphics {
+        default: ss_{{ v.id }};
+        {%- if not l.livery.company_colours %}
+        colour_mapping: return palette_2cc(COLOUR_{{ l.livery.cc1 }}, COLOUR_{{ l.livery.cc2 }});
+        {%- endif %}
+        {%- if v.description.get("en") %}
+        additional_text: string({{ desc_string }});
+        {%- endif %}
+    }
+}
+{% endfor %}

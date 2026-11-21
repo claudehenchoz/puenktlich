@@ -1,0 +1,67 @@
+{
+  "lighting_angle": 50,
+  "lighting_elevation": 45,
+  "depth_influence": 0,
+  "soften_edges": 1.5,
+  "alpha_edge_threshold": 0.75,
+  "hard_edge_threshold": 0.25,
+  "sampler": "square",
+  "accuracy": 7,
+  "overlap": 0.05,
+  "brightness": -0.025,
+  "contrast": 0.025,
+  "pad_to_full_length": false,
+  "detail_boost": 15.0,
+  "falloff_adjustment": 0.25,
+  "joggle": 0.5,
+  "is_hill": false,
+  "dither_flat_areas": true,
+  "fosterise": true,
+  "size": {
+    "x": 256,
+    "y": 42,
+    "z": 72
+  },
+  "render_elevation": 30,
+  "sprites": [
+    {
+      "angle": 0,
+      "width": 7,
+      "height": 45,
+      "render_elevation": 33
+    },
+    {
+      "angle": 45,
+      "width": 36
+    },
+    {
+      "angle": 90,
+      "width": 62,
+      "height": 17
+    },
+    {
+      "angle": 135,
+      "width": 36
+    },
+    {
+      "angle": 180,
+      "width": 7,
+      "height": 45,
+      "render_elevation": 33
+    },
+    {
+      "angle": 225,
+      "width": 36
+    },
+    {
+      "angle": 270,
+      "width": 62,
+      "height": 17
+    },
+    {
+      "angle": 315,
+      "width": 36
+    }
+  ],
+  "_comment": "Pünktlich train manifest. Derived from Timberwolf's Trains (github.com/mattkimber/timberwolfs_trains, MIT) files/manifest.json; reduced to the 8 OpenTTD directions. Canvas 256x42x72 voxels = one 8/8 vehicle (10 vox/m length, 15 vox/m width/height)."
+}

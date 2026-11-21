@@ -1,0 +1,17 @@
+# build outputs
+/build/
+/.tools/
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.grf
+*.tar
+
+# reference photos are often not redistributable — keep them local unless licensed
+models/**/refs/*
+!models/**/refs/README.md
+
+# local Claude settings
+.claude/settings.local.json

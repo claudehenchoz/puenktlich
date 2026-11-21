@@ -1,0 +1,52 @@
+# SBB traction & multiple units — seed list for completeness tracking.
+# Scope: classes that ran in regular service since 1902 (standard gauge + Brünig metre gauge).
+# Extend from the official SBB fleet statistics; one entry per class/series, not per unit.
+# `in_scope: false` keeps an entry visible but excluded from the percentage.
+operator: sbb
+source: "SBB Rollmaterial / Fahrzeugstatistik (to be cross-checked), seeded manually"
+retrieved: "2026-11-21"
+entries:
+  # --- Electric locomotives ---
+  - { id: sbb-ae36,     name: "Ae 3/6 I",          category: locomotive, built: "1921–1929" }
+  - { id: sbb-ce68,     name: "Ce 6/8 II 'Krokodil'", category: locomotive, built: "1919–1922" }
+  - { id: sbb-ae47,     name: "Ae 4/7",            category: locomotive, built: "1927–1934" }
+  - { id: sbb-ae86,     name: "Ae 8/14",           category: locomotive, built: "1931–1939" }
+  - { id: sbb-re44i,    name: "Re 4/4 I",          category: locomotive, built: "1946–1951" }
+  - { id: sbb-ae66,     name: "Ae 6/6",            category: locomotive, built: "1952–1966" }
+  - { id: sbb-re420,    name: "Re 420 (Re 4/4 II)", category: locomotive, built: "1964–1985" }
+  - { id: sbb-re430,    name: "Re 430 (Re 4/4 III)", category: locomotive, built: "1967–1971" }
+  - { id: sbb-re620,    name: "Re 620 (Re 6/6)",   category: locomotive, built: "1972–1980" }
+  - { id: sbb-re450,    name: "Re 450",            category: locomotive, built: "1989–1997" }
+  - { id: sbb-re460,    name: "Re 460",            category: locomotive, built: "1991–1996" }
+  - { id: sbb-re465,    name: "Re 465 (BLS)",      category: locomotive, built: "1994–1997", in_scope: false, notes: "BLS class, tracked in bls.yaml later" }
+  - { id: sbb-re474,    name: "Re 474",            category: locomotive, built: "2003–2004" }
+  - { id: sbb-re482,    name: "Re 482",            category: locomotive, built: "2002–2004" }
+  - { id: sbb-re484,    name: "Re 484",            category: locomotive, built: "2004" }
+  - { id: sbb-re475,    name: "Re 475 (Vectron)",  category: locomotive, built: "2017–" }
+  - { id: sbb-ee922,    name: "Ee 922",            category: locomotive, built: "2007–2009" }
+  - { id: sbb-eem923,   name: "Eem 923",           category: locomotive, built: "2010–2012" }
+  - { id: sbb-aem940,   name: "Aem 940",           category: locomotive, built: "2018–2019" }
+  # --- Diesel ---
+  - { id: sbb-am843,    name: "Am 843",            category: locomotive, built: "2003–2004" }
+  - { id: sbb-bm44,     name: "Bm 4/4",            category: locomotive, built: "1960–1970" }
+  # --- Multiple units ---
+  - { id: sbb-rbe44,    name: "RBe 540 (RBe 4/4)", category: emu, built: "1959–1966" }
+  - { id: sbb-rabde500, name: "RABDe 500 (ICN)",   category: emu, built: "1998–2005" }
+  - { id: sbb-rabe511,  name: "RABe 511 (KISS)",   category: emu, built: "2010–" }
+  - { id: sbb-rabe514,  name: "RABe 514 (DTZ)",    category: emu, built: "2006–2008" }
+  - { id: sbb-rabe521,  name: "RABe 521 (FLIRT)",  category: emu, built: "2004–" }
+  - { id: sbb-rabe523,  name: "RABe 523 (FLIRT)",  category: emu, built: "2004–" }
+  - { id: sbb-rabe502,  name: "RABe 502 (FV-Dosto)", category: emu, built: "2018–" }
+  - { id: sbb-rabe501,  name: "RABe 501 (Giruno)", category: emu, built: "2016–" }
+  - { id: sbb-rabe503,  name: "RABe 503 (ETR 610)", category: emu, built: "2007–" }
+  - { id: sbb-rabde12,  name: "RABDe 12/12 (Mirage)", category: emu, built: "1965–1967" }
+  - { id: sbb-rae_tee,  name: "RAe TEE II",        category: emu, built: "1961" }
+  - { id: sbb-npz,      name: "NPZ / Domino (RBDe 560)", category: emu, built: "1984–1996" }
+  # --- Coaches (series) ---
+  - { id: sbb-ew1,      name: "EW I",              category: coach, built: "1956–1967" }
+  - { id: sbb-ew2,      name: "EW II",             category: coach, built: "1965–1975" }
+  - { id: sbb-ew4,      name: "EW IV",             category: coach, built: "1981–1997" }
+  - { id: sbb-ic2000,   name: "IC2000 double-deck", category: coach, built: "1997–2004" }
+  - { id: sbb-apm61,    name: "Apm/Bpm 61 (EC)",   category: coach, built: "1990s" }
+  - { id: sbb-ew4-bt,   name: "EW IV Bt control car", category: control_car, built: "1987–1997" }
+  - { id: sbb-ic2000-bt, name: "IC2000 Bt control car", category: control_car, built: "1997–2004" }

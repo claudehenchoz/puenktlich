@@ -1,0 +1,38 @@
+# SBB Re 460 "Lok 2000" — universal Bo'Bo' electric locomotive (SLM/ABB, 1991–1996, 119 units)
+id: re460
+grf_id: 100          # never change — saved games reference this
+name:
+  en: SBB Re 460
+  de: SBB Re 460
+  fr: CFF Re 460
+  it: FFS Re 460
+operator: sbb
+kind: locomotive
+railtype: standard_ac
+intro_year: 1991
+vehicle_life_years: 40
+model_life_years: 35
+max_speed_kmh: 230      # design maximum; 200 in service
+power_kw: 6100
+tractive_effort_kn: 300
+weight_t: 84
+length_m: 18.5
+cost_factor: 40
+running_cost_factor: 30
+liveries:
+  - id: sbb
+    name: { en: SBB red, de: SBB-Rot, fr: Rouge CFF, it: Rosso FFS }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: sbb/re460
+  kind: recipe
+reference: [sbb-re460]
+description:
+  en: Fast universal locomotive of the Bahn 2000 era, hauling IC and IR trains across the network.
+  de: Schnelle Universallok der Bahn-2000-Ära für IC- und IR-Züge im ganzen Netz.
+  fr: Locomotive universelle rapide de l'ère Rail 2000, en tête des IC et IR sur tout le réseau.
+  it: Locomotiva universale veloce dell'era Ferrovia 2000, per treni IC e IR su tutta la rete.

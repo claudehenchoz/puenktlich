@@ -1,0 +1,17 @@
+# Static strings. Vehicle names/descriptions live in data/vehicles/*.yaml.
+# Languages: en (fallback, required), de, fr, it. OpenTTD has no Romansh translation,
+# so `rm` texts in data are kept for documentation only.
+STR_GRF_NAME:
+  en: "Pünktlich {VERSION}"
+STR_GRF_DESC:
+  en: "Swiss trains and buses — SBB, BLS, RhB, PostAuto and more.{}Licence: GPL v2."
+  de: "Schweizer Züge und Busse — SBB, BLS, RhB, PostAuto und mehr.{}Lizenz: GPL v2."
+  fr: "Trains et bus suisses — CFF, BLS, RhB, CarPostal et plus.{}Licence : GPL v2."
+  it: "Treni e autobus svizzeri — FFS, BLS, RhB, AutoPostale e altro.{}Licenza: GPL v2."
+STR_GRF_URL:
+  en: "https://github.com/OWNER/puenktlich"
+STR_BADGE_CLASS_OPERATOR:
+  en: "Operator"
+  de: "Betreiber"
+  fr: "Exploitant"
+  it: "Gestore"

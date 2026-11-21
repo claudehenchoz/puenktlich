@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      - name: Cache tools
+        uses: actions/cache@v4
+        with:
+          path: .tools
+          key: tools-${{ hashFiles('tools/install.sh') }}
+      - run: uv sync --locked
+      - run: ./tools/install.sh
+      - run: make lint
+      - run: uv run pytest -q
+      - run: uv run pk build
+      - run: uv run pk preview --no-render
+      - uses: actions/upload-artifact@v4
+        with:
+          name: puenktlich-${{ github.sha }}
+          path: |
+            build/puenktlich.grf
+            build/previews/*.png

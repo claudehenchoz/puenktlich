@@ -1,0 +1,34 @@
+# Railtypes used by Pünktlich, mapped onto the Standardised Railtype Scheme
+# (https://newgrf-specs.tt-wiki.net/wiki/Standardized_Railtype_Scheme).
+# We never define tracks ourselves; vehicles pick the first label a loaded track set provides.
+# Label format: [gauge][speed class][axle load][energy]. Train sets use speed class A.
+- id: standard_diesel
+  label: SAAN
+  fallbacks: [RAIL]
+  description: Standard gauge, non-electrified
+- id: standard_ac
+  label: SAAA
+  fallbacks: [SAAE, ELRL]
+  description: Standard gauge, AC catenary (SBB 15 kV 16.7 Hz)
+- id: standard_dc
+  label: SAAD
+  fallbacks: [SAAE, ELRL]
+  description: Standard gauge, DC catenary
+- id: metre_diesel
+  label: NAAN
+  fallbacks: []
+  description: Metre gauge (RhB, MGB, zb, MOB…), non-electrified
+- id: metre_ac
+  label: NAAA
+  fallbacks: [NAAE]
+  description: Metre gauge, AC catenary (RhB / MGB 11 kV 16.7 Hz)
+- id: metre_dc
+  label: NAAD
+  fallbacks: [NAAE]
+  description: Metre gauge, DC catenary (MOB, AB, …)
+# Rack railways use the scheme's special speed classes (extension, used by French Set Rails).
+# Verify against current track sets before the first rack vehicle ships.
+- id: metre_rack_ac
+  label: NRAA
+  fallbacks: [NRAE, NAAA, NAAE]
+  description: Metre gauge rack + adhesion, AC catenary (MGB, zb Brünig)
