@@ -140,9 +140,11 @@ def wheel(model: Model, x: float, diameter: float = 11, twin: bool = False) -> N
 
 
 def bellows(model: Model, body: BusBody, front: bool) -> None:
-    """Half of the articulation bellows (black concertina) at one end."""
+    """Half of the articulation bellows (black concertina) at one end, inside the body
+    length: OpenTTD butts articulated parts together at their length boundaries."""
     shell, cs = body.shell, body.cs
-    x0, x1 = (shell.x_front + 1, shell.x_front + 4) if front else (shell.x_rear - 3, shell.x_rear)
+    x0, x1 = (shell.x_front - 2, shell.x_front + 1) if front else (shell.x_rear, shell.x_rear + 3)
+    model.carve(model.centred_box(x0, x1, cs.half_width + 1, 0, model.d.shape[2]))
     box = model.centred_box(x0, x1, cs.half_width - 2, cs.floor + 1, cs.roof - 2)
     model.solid(box, P.BLACK)
     model.paint(box & ((model.coords()[2].astype(int) % 3) == 0), P.DARK_GREY)

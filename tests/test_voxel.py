@@ -233,3 +233,21 @@ def test_voxel_cache_hits(tmp_path, monkeypatch) -> None:
     b = build_grid(v, "solo")
     assert time.perf_counter() - t < 0.05 and np.array_equal(a.data, b.data)
     assert list(tmp_path.glob("vox/*.npy"))
+
+
+def test_rendered_length_fits_ottd_length() -> None:
+    """OpenTTD draws 1/8 unit as 4 px at 1x (90° view) = 16 rendered train voxels (after
+    voxel/squash.py) or 14 road voxels: a longer model overlaps its neighbours in the
+    train and in the depot window."""
+    from puenktlich.models import car_plans
+    from puenktlich.schema import vehicles
+
+    for v in vehicles().values():
+        for car, plan in car_plans(v).values():
+            per_unit = 14 if car.road else 16
+            for name, grid in plan.bodies.items():
+                (x0, x1), _, _ = grid.bounds()
+                assert x1 - x0 + 1 <= car.ottd_length * per_unit + 2, (
+                    f"{name}: {x1 - x0 + 1} voxels long, OpenTTD length {car.ottd_length} "
+                    f"allows {car.ottd_length * per_unit}"
+                )

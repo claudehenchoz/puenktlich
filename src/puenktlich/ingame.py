@@ -22,6 +22,7 @@ import os
 import re
 import shutil
 import subprocess
+import tarfile
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
@@ -89,7 +90,7 @@ general = off
 
 [game_scripts]
 PKTest =
-
+{graphicsset}
 [newgrf]
 {grfs}
 """
@@ -104,7 +105,36 @@ class Result:
     errors: list[str]
 
 
-def _profile(zoom_name: str, grf: Path, targets: list[str], shots: int, scene: str = "loop") -> Path:
+def _baseset_name(tar: Path) -> str:
+    """`name` from the .obg inside a base graphics set tar (e.g. aBase)."""
+    with tarfile.open(tar) as tf:
+        for m in tf.getmembers():
+            if m.name.endswith(".obg"):
+                text = tf.extractfile(m).read().decode("utf-8", "replace")  # type: ignore[union-attr]
+                found = re.search(r"^name\s*=\s*(.+)$", text, re.M)
+                if found:
+                    return found.group(1).strip()
+    raise ValueError(f"{tar}: no .obg with a name")
+
+
+def find_baseset(name: str) -> Path:
+    """A downloaded base graphics set tar by (part of) its file name, e.g. 'abase'."""
+    root = Path.home() / ".local" / "share" / "openttd" / "content_download" / "baseset"
+    for tar in sorted(root.glob("*.tar")):
+        if name.lower() in tar.name.lower():
+            return tar
+    raise FileNotFoundError(f"no base set matching {name!r} in {root}")
+
+
+def _profile(
+    zoom_name: str,
+    grf: Path,
+    targets: list[str],
+    shots: int,
+    scene: str = "loop",
+    extras: list[str] | None = None,
+    baseset: Path | None = None,
+) -> Path:
     root = OUT / zoom_name
     shutil.rmtree(root, ignore_errors=True)
     data = root / "data" / "openttd"
@@ -114,16 +144,23 @@ def _profile(zoom_name: str, grf: Path, targets: list[str], shots: int, scene: s
         shutil.copy2(g, data / "newgrf" / g.name)
     gs = data / "game" / "pk_test"
     shutil.copytree(GS_DIR, gs)
+    graphicsset = ""
+    if baseset is not None:  # e.g. aBase, to compare our sprites with its vehicles
+        (data / "baseset").mkdir()
+        shutil.copy2(baseset, data / "baseset" / baseset.name)
+        graphicsset = f"\n[graphicsset]\nname = {_baseset_name(baseset)}\n"
     stops = ", ".join(f"[{x}, {y}]" for x, y in STOP_TILES)
     loop = ", ".join(f"{k} = {v}" for k, v in LOOP.items())
     (gs / "targets.nut").write_text(
         f"TARGETS <- {json.dumps(targets)};\nLOOP <- {{{loop}}};\nSTOP_TILES <- [{stops}];\n"
         f"RAISE_X <- {RAISE_X};\nSTOP_DELAY <- {STOP_DELAY};\nREVERSE_AT_MONTH <- {REVERSE_AT_MONTH};\n"
-        f"SCENE <- {json.dumps(scene)};\n"
+        f"SCENE <- {json.dumps(scene)};\nEXTRAS <- {json.dumps(extras or [])};\n"
     )
     cfg = root / "config" / "openttd"
     cfg.mkdir(parents=True)
-    (cfg / "openttd.cfg").write_text(CONFIG.format(grfs="\n".join(f"{g.name} =" for g in grfs)))
+    (cfg / "openttd.cfg").write_text(
+        CONFIG.format(grfs="\n".join(f"{g.name} =" for g in grfs), graphicsset=graphicsset)
+    )
     scripts = data / "scripts"
     scripts.mkdir()
     (scripts / "game_start.scr").write_text("schedule on-next-calendar-month scripts/m1.scr\n")
@@ -139,8 +176,17 @@ def _profile(zoom_name: str, grf: Path, targets: list[str], shots: int, scene: s
     return root
 
 
-def _run(zoom_name: str, grf: Path, targets: list[str], shots: int, timeout: int, scene: str = "loop") -> Result:
-    root = _profile(zoom_name, grf, targets, shots, scene)
+def _run(
+    zoom_name: str,
+    grf: Path,
+    targets: list[str],
+    shots: int,
+    timeout: int,
+    scene: str = "loop",
+    extras: list[str] | None = None,
+    baseset: Path | None = None,
+) -> Result:
+    root = _profile(zoom_name, grf, targets, shots, scene, extras, baseset)
     env = dict(
         os.environ, SDL_VIDEODRIVER="offscreen", XDG_DATA_HOME=str(root / "data"), XDG_CONFIG_HOME=str(root / "config")
     )
@@ -195,10 +241,12 @@ def run(
     timeout: int = 600,
     parallel: bool = False,
     scene: str = "loop",
+    extras: list[str] | None = None,
+    baseset: Path | None = None,
 ) -> list[Result]:
     """One zoom level after another by default: several offscreen OpenTTDs plus renders can
     freeze a 4-core laptop. `parallel=True` runs all zoom levels at once."""
     if shutil.which("openttd") is None:
         raise FileNotFoundError("openttd not found on PATH")
     with ThreadPoolExecutor(len(zooms) if parallel else 1) as pool:
-        return list(pool.map(lambda z: _run(z, grf, targets, shots, timeout, scene), zooms))
+        return list(pool.map(lambda z: _run(z, grf, targets, shots, timeout, scene, extras, baseset), zooms))

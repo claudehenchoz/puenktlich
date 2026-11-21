@@ -36,7 +36,9 @@ TTD_COLOURS = Literal[
     "WHITE",
 ]
 METRES_PER_UNIT = 3.2  # 8/8 = 25.6 m — docs/SCALE.md
-ROAD_METRES_PER_UNIT = 12.6 / 8  # road vehicles: 8/8 = the 126-voxel road canvas = 12.6 m
+# road vehicles: OpenTTD draws 1/8 unit as 4 px (90° view) = 14 voxels on the road manifest
+# (126 voxels -> 36 px), i.e. 1.4 m at 10 vox/m: 8/8 = 11.2 m
+ROAD_METRES_PER_UNIT = 1.4
 ROAD_KINDS = ("bus", "tram")
 
 

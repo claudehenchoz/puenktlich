@@ -17,7 +17,7 @@ from puenktlich.voxel.cargo import CARGO_MASK, CargoSpec, CargoState
 from puenktlich.voxel.model import Model, m
 from puenktlich.voxel.parts.running_gear import bogie, buffers
 
-LENGTH_M = 14.04
+LENGTH_M = 12.8  # real 14.04 m, fitted to its OpenTTD length 4/8 (12.8 m) so it does not overlap neighbours
 BUFFER_DEPTH = 6
 FLOOR = 15
 BOX_TOP = 39

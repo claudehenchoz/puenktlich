@@ -27,6 +27,7 @@ from puenktlich import paths
 from puenktlich.schema import CarSpec, Vehicle
 from puenktlich.voxel.model import Model
 from puenktlich.voxel.palette import rgb_palette
+from puenktlich.voxel.squash import body_split, colour_counts, for_road_render, squash_x, widen_y
 from puenktlich.voxel.variants import DEFAULT_VARIANT, LIGHT_VARIANTS
 from puenktlich.voxel.vox import VoxelGrid, read_vox, write_vox
 
@@ -137,13 +138,15 @@ def _cargo_plan(car: CarSpec, recipe) -> VariantPlan:
     spec = recipe.CARGO
     kwargs = dict(car.model.params)
     masked = recipe.build(**kwargs)
-    masked = masked.grid if isinstance(masked, Model) else masked
+    masked = widen_y(squash_x(masked.grid if isinstance(masked, Model) else masked))  # render scale
     with tempfile.TemporaryDirectory(prefix=f"pk_cargo_{car.key}_") as tmp:
         src, out = Path(tmp) / "in", Path(tmp) / "out"
         write_vox(masked, src / f"{car.key}.vox", rgb_palette())
         for name, make in spec.shapes.items():
             shape = make()
-            write_vox(shape.grid if isinstance(shape, Model) else shape, src / f"{name}.vox", rgb_palette())
+            shape = squash_x(shape.grid if isinstance(shape, Model) else shape, centre=False)
+            shape = widen_y(shape, full=True)
+            write_vox(shape, src / f"{name}.vox", rgb_palette())
         batch = Path(tmp) / "batch.json"
         batch.write_text(json.dumps({"files": [f"{car.key}.vox"], "operations": spec.batch_operations()}))
         cargopositor(batch, src, out)
@@ -188,12 +191,19 @@ def _plan(vehicle_id: str, vehicle: CarSpec) -> VariantPlan:
     mapping: dict[str, tuple[str, str | None]] = {}
     for var in variants(vehicle):
         dark = build_grid(vehicle, var, dark=True)
+        lit = build_grid(vehicle, var)
+        if not vehicle.road:  # trains: half length, widened body (voxel/squash.py, docs/SCALE.md)
+            counts = colour_counts(dark)
+            dark, lit = squash_x(dark, counts), squash_x(lit, counts)
+            split = body_split(dark)  # same widening for lit and dark: overlays stay lamp diffs
+            dark, lit = widen_y(dark, split), widen_y(lit, split)
+        else:  # buses: wider and taller (aBase proportions)
+            dark, lit = for_road_render(dark), for_road_render(lit)
         dd = _digest(dark)
         if dd not in body_by_digest:
             body_by_digest[dd] = f"{vehicle_id}_body{len(body_by_digest)}"
             bodies[body_by_digest[dd]] = dark
         body = body_by_digest[dd]
-        lit = build_grid(vehicle, var)
         ld = _digest(lit)
         overlay = None
         if ld != dd:

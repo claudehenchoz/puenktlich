@@ -121,6 +121,18 @@ function PKTest::Start() {
     if (!GSVehicle.MoveWagon(v, 0, train, GSVehicle.GetNumWagons(train) - 1))
       this.Log("attach fail " + GSEngine.GetName(engines[i]) + " " + GSError.GetLastErrorString());
   }
+  // --with: base-set (or other GRF) vehicles appended by exact name, e.g. to check that our
+  // vehicles meet default wagons without overlapping
+  foreach (want in EXTRAS) {
+    local found = -1;
+    foreach (e, _ in GSEngineList(GSVehicle.VT_RAIL))
+      if (found == -1 && GSEngine.GetName(e) == want && GSEngine.IsBuildable(e) && GSEngine.CanRunOnRail(e, rt)) found = e;
+    if (found == -1) { this.Log("attach fail no buildable '" + want + "' for this railtype"); continue; }
+    local v = GSVehicle.BuildVehicle(depot, found);
+    if (!GSVehicle.MoveWagon(v, 0, train, GSVehicle.GetNumWagons(train) - 1))
+      this.Log("attach fail " + want + " " + GSError.GetLastErrorString());
+    else this.Log("attached " + want);
+  }
   local cargo = -1;
   if (SCENE == "cargo" && cargo_src >= 0) cargo = this.SetupCargo(train, cargo_src);
   GSVehicle.StartStopVehicle(train);

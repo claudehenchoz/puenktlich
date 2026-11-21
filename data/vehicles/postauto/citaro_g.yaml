@@ -1,4 +1,4 @@
-# PostAuto Mercedes-Benz Citaro G (articulated, 18 m; compressed to OpenTTD lengths 6 + 4).
+# PostAuto Mercedes-Benz Citaro G (articulated, 18 m; cars fitted to OpenTTD lengths 6 + 4, 1/8 = 1.4 m).
 id: citaro_g
 grf_id: 401          # never change — saved games reference this (road vehicle id space)
 name:
@@ -30,9 +30,9 @@ liveries:
     company_colours: true
 cars:
   - model: { path: postauto/citaro, kind: recipe, params: { car: front } }
-    length_m: 9.5
+    length_m: 8.4
   - model: { path: postauto/citaro, kind: recipe, params: { car: rear } }
-    length_m: 6.5
+    length_m: 5.6
 reference: [postauto-citaro-g]
 description:
   en: Articulated PostAuto bus for busy agglomeration routes.

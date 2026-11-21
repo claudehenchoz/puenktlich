@@ -27,7 +27,8 @@ def _parse_tw() -> dict[str, list[tuple[int, ...]]]:
 
 
 def _ours(scale: int, length: int, kind: str) -> list[tuple[int, ...]]:
-    return [(r.x, r.y, r.w, r.h, r.xrel, r.yrel) for r in sprite_layout(scale, length, kind)]
+    """Our layout formula on Timberwolf's original manifests (raw), as pinned to his templates."""
+    return [(r.x, r.y, r.w, r.h, r.xrel, r.yrel) for r in sprite_layout(scale, length, kind, raw=True)]
 
 
 # Hard-coded copy of Timberwolf's template_auto_6_1x / turn_1 / up so CI needs no clone.
@@ -72,7 +73,7 @@ def test_layout_matches_timberwolf(kind: str, scale: int, length: int) -> None:
 
 def test_layout_scales_linearly() -> None:
     for kind in KINDS:
-        one, four = sprite_layout(1, 8, kind), sprite_layout(4, 8, kind)
+        one, four = sprite_layout(1, 8, kind), sprite_layout(4, 8, kind)  # widened (rendered) layout
         for a, b in zip(one, four, strict=True):
             if a.w > 1:
                 assert (b.x, b.w, b.h) == (a.x * 4, a.w * 4, a.h * 4)
@@ -132,6 +133,24 @@ def test_road_layout_matches_timberwolf(key: tuple[int, int]) -> None:
 
 
 def test_road_manifest() -> None:
-    m = load_manifest("road")
+    m = load_manifest("road", raw=True)
     assert [s["angle"] for s in m["sprites"]] == list(range(0, 360, 45))
     assert (m["size"]["x"], m["size"]["y"], m["size"]["z"]) == (126, 40, 48)
+
+
+def test_widened_manifest_keeps_pixels_per_voxel() -> None:
+    """The render manifest only adds the extra body width: the 90° length is unchanged and
+    the end-on view is ~1.5x wider (aBase calibration, voxel/squash.py)."""
+    raw = {s["angle"]: s for s in load_manifest("train", raw=True)["sprites"]}
+    new = {s["angle"]: s for s in load_manifest("train")["sprites"]}
+    assert load_manifest("train")["size"]["y"] == 64
+    assert new[90]["width"] == raw[90]["width"]
+    assert new[0]["width"] == 11 and raw[0]["width"] == 7
+    assert all(new[a]["width"] >= raw[a]["width"] for a in raw)
+
+
+def test_road_render_manifest_is_wider_and_taller() -> None:
+    raw = {s["angle"]: s for s in load_manifest("road", raw=True)["sprites"]}
+    new = {s["angle"]: s for s in load_manifest("road")["sprites"]}
+    assert new[90]["width"] == raw[90]["width"]  # length unchanged
+    assert new[0]["width"] > raw[0]["width"] and new[90]["height"] > raw[90]["height"]

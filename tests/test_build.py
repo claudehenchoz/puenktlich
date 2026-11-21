@@ -17,12 +17,34 @@ pytestmark = [
 ]
 
 
+def _assert_sprites_fit_length(v) -> None:
+    """In the 1x 90° view OpenTTD advances 4 px per 1/8 unit: a wider sprite overlaps the
+    neighbouring vehicles (and the depot window's next wagon)."""
+    import numpy as np
+    from PIL import Image
+
+    from puenktlich.models import car_plans
+    from puenktlich.render import sprite_layout
+    from puenktlich.sprites import sheet_for
+
+    for car, plan in car_plans(v).values():
+        kind = "road" if car.road else "normal"
+        rect = next(r for r in sprite_layout(1, car.ottd_length, kind) if r.angle == 90)
+        for body in plan.bodies:
+            img = Image.open(sheet_for(paths.BUILD_SPRITES / v.id, body, kind, 1, "32bpp")).convert("RGBA")
+            alpha = np.array(img)[rect.y : rect.y + rect.h, rect.x : rect.x + rect.w, 3] > 0
+            cols = np.flatnonzero(alpha.any(axis=0))
+            width = cols.max() - cols.min() + 1
+            assert width <= 4 * car.ottd_length + 2, f"{body}: {width} px for length {car.ottd_length}"
+
+
 def test_full_build(tmp_path) -> None:
     if shutil.which("nmlc") is None:
         pytest.skip("nmlc not installed")
     for v in vehicles().values():
         _, problems, _ = render_vehicle(v)
         assert problems == []
+        _assert_sprites_fit_length(v)
     nml = generate(tmp_path / "nml")
     text = nml.read_text()
     # 3-part articulation with invisible ends, curve and hill sprites

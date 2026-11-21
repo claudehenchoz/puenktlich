@@ -164,6 +164,13 @@ def ingame(
     ] = "loop",
     shots: Annotated[int, typer.Option(help="Screenshots per zoom level (one per game month, ~67 s each)")] = 3,
     all_liveries: Annotated[bool, typer.Option(help="Every livery of each vehicle, not just the first")] = False,
+    with_: Annotated[
+        list[str] | None,
+        typer.Option("--with", help='Append a vehicle by exact in-game name, e.g. "Passenger Carriage" (repeatable)'),
+    ] = None,
+    baseset: Annotated[
+        str | None, typer.Option(help="Base graphics set from OpenTTD's content downloads, e.g. abase")
+    ] = None,
 ) -> None:
     """Run OpenTTD headless with build/puenktlich.grf and screenshot the vehicles in-game.
 
@@ -171,7 +178,7 @@ def ingame(
     vehicles in the given order (first livery each unless --all-liveries), turns it round
     after shot 3 (push-pull check) and writes screenshots to build/ingame/<zoom>/.
     Takes ~1 min per shot."""
-    from puenktlich.ingame import run
+    from puenktlich.ingame import find_baseset, run
 
     grf = paths.BUILD / f"{paths.GRF_NAME}.grf"
     if not grf.exists():
@@ -192,7 +199,16 @@ def ingame(
     zooms = zoom or ["4x"]  # 4x shows the most detail; ask for others explicitly
     if "all" in zooms:
         zooms = ["1x", "2x", "4x"]
-    results = run(grf, targets, zooms, shots=shots, parallel=parallel, scene=scene)
+    results = run(
+        grf,
+        targets,
+        zooms,
+        shots=shots,
+        parallel=parallel,
+        scene=scene,
+        extras=with_,
+        baseset=find_baseset(baseset) if baseset else None,
+    )
     failed = False
     for r in results:
         typer.secho(f"== {r.zoom}", bold=True)
