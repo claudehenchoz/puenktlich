@@ -38,7 +38,7 @@ uv run pk preview <id>
 ```sh
 uv run pk build && make lint test && uv run pk coverage
 ```
-- If OpenTTD is installed, run `uv run pk install` and ask the user to check it in-game: offsets, colours, zoom.
+- In-game: `uv run pk ingame <id>` (in the background, ~4 min). Read the screenshots for each zoom. Check that the vehicle sits on the rails in every direction, the livery colours are right, there are no offset jumps, and couplings have no gaps.
 
 ## 6. Report
 Tell the user what you modelled, what is approximate, and which visual details still need work. Include the preview path.

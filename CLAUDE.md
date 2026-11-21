@@ -9,6 +9,7 @@ Swiss trains & buses for OpenTTD. Vision: `docs/IDEA.md`. Architecture: `docs/AR
 - `uv run pk list`: list vehicles
 - `uv run pk preview <id>`: build the model, render it, and write the contact sheet `build/previews/<id>.png`. **Look at it** (Read the PNG) after every model change.
 - `uv run pk build`: full build to `build/puenktlich.grf`
+- `uv run pk ingame <id> [--zoom 4x]`: headless OpenTTD 15+ run (isolated profile in `build/ingame/`). It builds a test loop, runs the vehicle in all its liveries, and screenshots `build/ingame/<zoom>/…/screenshot/*.png`. Takes ~1 min per shot, so run it in the background. Read the screenshots.
 - `uv run pk lint`, `make lint`, `make test`: always green before committing
 - `uv run pk coverage`: completeness vs `data/reference/*.yaml`, writes `docs/COMPLETENESS.md`
 - First-time setup: `make setup` (needs Go; builds gorender + cargopositor into `.tools/bin`)
@@ -36,4 +37,4 @@ Use the `new-vehicle` skill (`.claude/skills/new-vehicle/SKILL.md`). In short: a
 - Don't name scratch scripts after stdlib modules (`re.py`, `types.py`…).
 - GoRender skips outputs newer than the input. Use `pk render --force` after changing the manifest or palette.
 - GoRender fills unused sheet area with opaque white / index 255. Only the manifest rectangles matter.
-- In-game checks need OpenTTD 15+. Run `pk install`, then enable "Pünktlich" in NewGRF settings.
+- In-game checks: use `pk ingame` (automated) or `pk install`, then enable "Pünktlich" in your own game. OpenTTD's null video driver can't take screenshots; `pk ingame` uses SDL's offscreen backend instead.

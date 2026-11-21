@@ -140,6 +140,37 @@ def install(
 
 
 @app.command()
+def ingame(
+    ids: IdsArg = None,
+    zoom: Annotated[list[str] | None, typer.Option(help="Zoom levels: 1x, 2x, 4x (repeatable)")] = None,
+    shots: Annotated[int, typer.Option(help="Screenshots per zoom level (one per game month)")] = 4,
+) -> None:
+    """Run OpenTTD headless with build/puenktlich.grf and screenshot the vehicles in-game.
+
+    Builds a test loop via a Game Script, runs one train of the selected vehicles (all
+    liveries) and writes screenshots to build/ingame/<zoom>/. Takes ~1 min per shot."""
+    from puenktlich.ingame import run
+
+    grf = paths.BUILD / f"{paths.GRF_NAME}.grf"
+    if not grf.exists():
+        raise typer.BadParameter("build/puenktlich.grf missing — run `pk build` first")
+    targets = [v.name["en"] for v in _select(ids)]
+    results = run(grf, targets, zoom or ["1x", "2x", "4x"], shots=shots)
+    failed = False
+    for r in results:
+        typer.secho(f"== {r.zoom}", bold=True)
+        for line in r.script_lines:
+            typer.echo(f"  {line}")
+        for e in r.errors:
+            typer.secho(f"  {e}", fg="red")
+        for s in r.screenshots:
+            typer.echo(f"  screenshot: {s}")
+        failed |= bool(r.errors) or not r.screenshots
+    if failed:
+        raise typer.Exit(1)
+
+
+@app.command()
 def clean() -> None:
     """Delete build/."""
     shutil.rmtree(paths.BUILD, ignore_errors=True)
