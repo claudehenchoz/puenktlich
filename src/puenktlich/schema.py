@@ -77,7 +77,10 @@ class Livery(Strict):
 class ModelRef(Strict):
     path: str = Field(description="Directory under models/, e.g. 'sbb/re460'")
     kind: Literal["recipe", "vox"] = "recipe"
-    manifest: str = "train"
+    lights: bool = Field(
+        False,
+        description="Recipe takes build(lights=...); render solo/head/tail/none lamp variants (voxel/variants.py)",
+    )
 
 
 class Vehicle(Strict):

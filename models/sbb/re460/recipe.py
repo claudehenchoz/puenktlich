@@ -13,8 +13,10 @@ Colour plan (docs/STYLE.md):
 from puenktlich.voxel import palette as P
 from puenktlich.voxel.model import CENTRE_Y, Model, m
 from puenktlich.voxel.parts.body import CrossSection, EndShape, Shell, end_band, end_span, side_band
+from puenktlich.voxel.parts.lights import lamps
 from puenktlich.voxel.parts.roof import main_switch, pantograph, roof_box, roof_cable
 from puenktlich.voxel.parts.running_gear import bogie, buffers, skirt
+from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
 
 LENGTH_OVER_BUFFERS_M = 18.5
 BUFFER_DEPTH = 6
@@ -24,7 +26,7 @@ BODY_SEAM = P.ramp(P.CC1, 0.25)
 ROOF = P.ramp(P.GREY, 0.45)
 
 
-def build() -> Model:
+def build(lights: Lights = LIGHT_VARIANTS["solo"]) -> Model:
     mdl = Model.new()
     canvas_mid = mdl.d.shape[0] / 2
     lob = m(LENGTH_OVER_BUFFERS_M)
@@ -48,12 +50,9 @@ def build() -> Model:
     for front in (True, False):
         mdl.paint(end_band(mdl, shell, 31, 50, 18, front=front, depth=26), P.BLACK)
         mdl.inset(end_band(mdl, shell, 33, 48, 16, front=front, depth=26), P.GLASS)
-        # headlights: two low, one high
-        for dy in (-12, 12):
-            lamp = end_band(mdl, shell, 21, 24, 2, front=front, depth=8)
-            lamp = lamp & (abs(Y - (CENTRE_Y + dy)) <= 1.5)
-            mdl.paint(lamp, P.LAMP)
-        mdl.paint(end_band(mdl, shell, 49, 51, 1.5, front=front, depth=26), P.LAMP)
+
+    # head/tail lamps: white at the leading end, red at the trailing end (see variants.py)
+    lamps(mdl, shell, lights)
 
     # cab side windows and doors, both ends
     for front in (True, False):

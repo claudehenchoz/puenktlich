@@ -42,3 +42,31 @@ def test_inset_recesses_surface() -> None:
     mdl.inset(band, P.GLASS)
     assert mdl.grid.count() < before
     assert (mdl.d == P.GLASS).any()
+
+
+def test_light_variants_differ_at_lamps() -> None:
+    from puenktlich.models import build_grid, variants
+    from puenktlich.schema import vehicles
+    from puenktlich.voxel.parts.lights import LAMP_RED, LAMP_WHITE
+
+    v = vehicles()["re460"]
+    assert variants(v) == ["solo", "head", "tail", "none"]
+    grids = {var: build_grid(v, var).data for var in variants(v)}
+    mid = grids["solo"].shape[0] // 2
+    front, rear = (slice(mid, None),), (slice(0, mid),)
+    assert (grids["solo"][front] == LAMP_WHITE).any() and (grids["solo"][rear] == LAMP_RED).any()
+    assert (grids["head"][front] == LAMP_WHITE).any() and not (grids["head"] == LAMP_RED).any()
+    assert (grids["tail"] == LAMP_RED).any() and not (grids["tail"][front] == LAMP_WHITE).any()
+    assert not (grids["none"] == LAMP_RED).any()
+    # only the lamp clusters differ (painted through their depth, so a few hundred voxels)
+    diff = grids["solo"] != grids["none"]
+    assert 0 < diff.sum() < 2000
+
+
+def test_model_fits_canvas_with_tilt_headroom() -> None:
+    from puenktlich.models import build_grid
+    from puenktlich.schema import vehicles
+
+    for v in vehicles().values():
+        (_, _), (_, _), (_, zmax) = build_grid(v).bounds()
+        assert zmax <= 68, f"{v.id}: z {zmax} leaves too little headroom for hill tilt"

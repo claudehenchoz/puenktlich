@@ -1,13 +1,16 @@
 """GoRender / Cargopositor wrappers and sprite-sheet geometry.
 
-GoRender writes one sheet per bit depth and zoom: `<scale>x/<name>_{8bpp,32bpp,mask}.png`.
-The 8 views sit side by side in manifest order (angle 0, 45, … 315 = OpenTTD direction
-N, NE, E, SE, S, SW, W, NW), separated by 8 px (× scale) spacing.
+GoRender writes one sheet per bit depth and zoom: `<scale>x/<name>_{8bpp,32bpp,mask}.png`,
+with the manifest's views side by side, separated by 8 px (x scale).
 
-Sprite offsets follow the formula of Timberwolf's `temporarily_late` template
-generator (github.com/mattkimber/temporarily_late, MIT), simplified to single-unit
-vehicles: the model is centred in the 8/8 canvas and OpenTTD's shortened-vehicle
-position shift is compensated with `(8 - length) / 2` units.
+- `train.json` has 24 views every 15°. Angles 0, 45, … 315 are OpenTTD's 8 directions
+  (N, NE, E, SE, S, SW, W, NW). Direction ±15° are the curve sprites `turn_1`/`turn_2`.
+- `train_hill.json` has the 4 diagonal views of a model tilted ±10° (hill sprites).
+
+Vehicles are split into 3 articulated parts (`PARTS`); only the middle part draws the
+full-length sprite. Sprite rectangles and offsets are a straight port of Timberwolf's
+`temporarily_late` template generator (github.com/mattkimber/temporarily_late, MIT);
+tests pin the output to his generated templates.
 """
 
 from __future__ import annotations
@@ -25,6 +28,18 @@ from puenktlich import paths
 SCALES = (1, 2, 4)
 SPRITE_SPACING = 8  # GoRender constant
 Y_JOGGLE = 4
+KINDS = ("normal", "turn_1", "turn_2", "up", "down")
+
+# OpenTTD length -> (front, middle, rear) articulated part lengths. The middle part
+# carries the sprite; the short invisible ends let it lag behind on curves and slopes.
+PARTS: dict[int, tuple[int, int, int]] = {
+    3: (1, 1, 1),
+    4: (1, 1, 2),
+    5: (2, 1, 2),
+    6: (2, 2, 2),
+    7: (2, 3, 2),
+    8: (2, 4, 2),
+}
 
 # Screen shift (px at 1x) per vehicle-length unit, by direction angle.
 UNIT_SHIFTS = {
@@ -48,6 +63,18 @@ BBOX_JOGGLES = {
     270: (0, -0.5),
     315: (3, 0.5),
 }
+UPHILL_JOGGLES = {45: -1, 135: 0, 225: 0, 315: -1}
+DOWNHILL_JOGGLES = {45: 0, 135: -1, 225: -1, 315: 0}
+PLACEHOLDER_ANGLE = -1  # hill templates have no N/E/S/W views
+
+
+def parts_for(length: int) -> tuple[int, ...]:
+    """Articulated part lengths for an OpenTTD length; (length,) = not articulated."""
+    return PARTS.get(length, (length,))
+
+
+def is_articulated(length: int) -> bool:
+    return len(parts_for(length)) == 3
 
 
 @dataclass(frozen=True)
@@ -89,20 +116,57 @@ def canvas_size(manifest: str = "train") -> tuple[int, int, int]:
     return int(s["x"]), int(s["y"]), int(s["z"])
 
 
-def sprite_layout(scale: int, length: int, manifest: str = "train") -> list[SpriteRect]:
-    """NML real-sprite rectangles + offsets for one vehicle sheet."""
-    m = load_manifest(manifest)
-    rects: list[SpriteRect] = []
-    x = 0
-    diff = (8 - length) / 2
-    for spr in m["sprites"]:
-        ang = int(spr["angle"])
-        w = spr["width"] * scale
-        h = spr["height"] * scale
-        xrel = -(w / 2) + (UNIT_SHIFTS[ang][0] * diff + BBOX_JOGGLES[ang][0]) * scale
-        yrel = -(h / 2) - Y_JOGGLE * scale + (UNIT_SHIFTS[ang][1] * diff + BBOX_JOGGLES[ang][1]) * scale
-        rects.append(SpriteRect(ang, x * scale, 0, w, h, int(xrel), int(yrel)))
+def _sprite_x(manifest: dict) -> dict[int, tuple[int, dict]]:
+    """angle -> (unscaled x position in the sheet, sprite definition)."""
+    out, x = {}, 0
+    for spr in manifest["sprites"]:
+        out[int(spr["angle"])] = (x, spr)
         x += spr["width"] + SPRITE_SPACING
+    return out
+
+
+def _rels(w: float, h: float, scale: int, length: int, direction: int) -> tuple[float, float]:
+    """Port of temporarily_late getRels (unitOffset 0)."""
+    xrel = -(w / 2)
+    yrel = -(h / 2) - Y_JOGGLE * scale
+    mid = parts_for(length)[1] if is_articulated(length) else length
+    diff = (8 - mid) / 2
+    if length == 4:
+        diff -= 0.5
+    xrel += UNIT_SHIFTS[direction][0] * diff * scale + BBOX_JOGGLES[direction][0] * scale
+    yrel += UNIT_SHIFTS[direction][1] * diff * scale + BBOX_JOGGLES[direction][1] * scale
+    return xrel, yrel
+
+
+def sprite_layout(scale: int, length: int, kind: str = "normal") -> list[SpriteRect]:
+    """NML real-sprite rectangles + offsets (8 directions) for one sheet.
+
+    kind: normal / turn_1 (+15°) / turn_2 (-15°) read the 24-view `train` sheet;
+    up / down read the 4-view `train_hill` sheet (other directions are 1x1 placeholders).
+    """
+    rects: list[SpriteRect] = []
+    if kind in ("up", "down"):
+        sprites = _sprite_x(load_manifest("train_hill"))
+        joggles = UPHILL_JOGGLES if kind == "up" else DOWNHILL_JOGGLES
+        for d in range(0, 360, 45):
+            if d not in sprites:
+                rects.append(SpriteRect(PLACEHOLDER_ANGLE, 0, 0, 1, 1, 0, 0))
+                continue
+            x, spr = sprites[d]
+            w, h = spr["width"] * scale, spr["height"] * scale
+            xrel, yrel = _rels(w, h, scale, length, d)
+            yrel += 0.25 * length * scale + joggles[d] * scale
+            rects.append(SpriteRect(d, x * scale, 0, w, h, int(xrel), int(yrel)))
+        return rects
+
+    offset = {"normal": 0, "turn_1": 15, "turn_2": -15}[kind]
+    sprites = _sprite_x(load_manifest("train"))
+    for d in range(0, 360, 45):
+        ang = (d + offset) % 360
+        x, spr = sprites[ang]
+        w, h = spr["width"] * scale, spr["height"] * scale
+        xrel, yrel = _rels(w, h, scale, length, d)
+        rects.append(SpriteRect(ang, x * scale, 0, w, h, int(xrel), int(yrel)))
     return rects
 
 

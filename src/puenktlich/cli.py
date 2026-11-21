@@ -36,31 +36,26 @@ def list_vehicles() -> None:
 
 @app.command()
 def vox(ids: IdsArg = None) -> None:
-    """Build voxel models (run recipes / copy .vox) into build/vox/."""
-    from puenktlich.models import write_model
+    """Build voxel models (every variant) into build/vox/<id>/base/."""
+    from puenktlich.models import write_models
 
     for v in _select(ids):
-        p = write_model(v)
-        typer.echo(f"{v.id}: {p.relative_to(paths.ROOT)}")
+        for p in write_models(v):
+            typer.echo(f"{v.id}: {p.relative_to(paths.ROOT)}")
 
 
 @app.command()
 def render(
     ids: IdsArg = None, force: Annotated[bool, typer.Option(help="Re-render even if up to date")] = False
 ) -> None:
-    """vox -> GoRender (1x/2x/4x, 8bpp/32bpp/mask) -> overrides -> lint."""
-    from puenktlich.models import write_model
-    from puenktlich.render import apply_overrides, gorender
-    from puenktlich.sprites import lint_sheets
+    """Variants -> hill tilt (Cargopositor) -> GoRender 1x/2x/4x (24 views + hills) -> overrides -> lint."""
+    from puenktlich.pipeline import render_vehicle
 
     failed = False
     for v in _select(ids):
-        p = write_model(v)
-        out = paths.BUILD_SPRITES / v.id
-        gorender([p], out, manifest=v.model.manifest, force=force)
-        for o in apply_overrides(v.id, v.id, out):
+        out, problems, applied = render_vehicle(v, force=force)
+        for o in applied:
             typer.echo(f"  override: {o.relative_to(paths.ROOT)}")
-        problems = lint_sheets(out, v.id, v.ottd_length)
         for pr in problems:
             typer.secho(f"  {pr}", fg="red")
         failed |= bool(problems)
@@ -71,13 +66,13 @@ def render(
 
 @app.command()
 def preview(ids: IdsArg = None, render_first: Annotated[bool, typer.Option("--render/--no-render")] = True) -> None:
-    """Render and write a contact sheet to build/previews/<id>.png for review."""
+    """Render and write a review contact sheet to build/previews/<id>.png."""
     from puenktlich.sprites import contact_sheet
 
     if render_first:
         render(ids)
     for v in _select(ids):
-        out = contact_sheet(paths.BUILD_SPRITES / v.id, v.id, paths.BUILD_PREVIEWS / f"{v.id}.png")
+        out = contact_sheet(v, paths.BUILD_SPRITES / v.id, paths.BUILD_PREVIEWS / f"{v.id}.png")
         typer.echo(f"{v.id}: {out}")
 
 
@@ -98,12 +93,12 @@ def build(ids: IdsArg = None, skip_render: Annotated[bool, typer.Option("--skip-
 def lint(sprites: Annotated[bool, typer.Option(help="Also lint rendered sprite sheets")] = True) -> None:
     """Validate data files and (optionally) rendered sprites."""
     from puenktlich.schema import validate_all, vehicles
-    from puenktlich.sprites import lint_sheets
+    from puenktlich.sprites import lint_vehicle
 
     problems = validate_all()
     if sprites:
         for v in vehicles().values():
-            problems += lint_sheets(paths.BUILD_SPRITES / v.id, v.id, v.ottd_length)
+            problems += lint_vehicle(v)
     for p in problems:
         typer.secho(p, fg="red")
     if problems:
@@ -143,7 +138,7 @@ def install(
 def ingame(
     ids: IdsArg = None,
     zoom: Annotated[list[str] | None, typer.Option(help="Zoom levels: 1x, 2x, 4x (repeatable)")] = None,
-    shots: Annotated[int, typer.Option(help="Screenshots per zoom level (one per game month)")] = 4,
+    shots: Annotated[int, typer.Option(help="Screenshots per zoom level (one per game month)")] = 6,
 ) -> None:
     """Run OpenTTD headless with build/puenktlich.grf and screenshot the vehicles in-game.
 

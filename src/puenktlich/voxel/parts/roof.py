@@ -43,8 +43,9 @@ def pantograph(
             )
     hinge = (x_base - 4 * s, roof_z + 3)
     if raised:
-        knee = (x_base + 12 * s, roof_z + 12)
-        head = (x_base - 1 * s, roof_z + 20)
+        # head stays <= z 67 so a model tilted 10° for hill sprites is not clipped at z 72
+        knee = (x_base + 12 * s, roof_z + 10)
+        head = (x_base - 1 * s, roof_z + 15)
     else:
         knee = (x_base + 14 * s, roof_z + 4.5)
         head = (x_base - 2 * s, roof_z + 5.5)

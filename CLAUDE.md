@@ -30,6 +30,12 @@ Swiss trains & buses for OpenTTD. Vision: `docs/IDEA.md`. Architecture: `docs/AR
 - Hand-edited models: set `model.kind: vox` and put `model.vox` in the model dir. It can be opened in MagicaVoxel.
 - Hand touch-ups of rendered sprites go in `overrides/<id>/<scale>x/<id>_<kind>.png` and replace the whole sheet. Re-check them after model changes.
 
+## Rendering model (curves, hills, lights)
+- Vehicles of length 3–8 are 3 articulated parts of the same item (`render.PARTS`). Only the middle part draws. It picks ±15° curve views and ±10° hill views from its neighbours. **Articulated engines can't be flipped in the depot.**
+- Recipes can take `build(lights: Lights)` and set `model.lights: true` in YAML. That gets them 4 variants (`<id>_solo/head/tail/none`) chosen in-game by position in the train. Use `voxel.parts.lights.lamps()`.
+- Keep models at z ≤ 68 so the 10° hill tilt has headroom (a test checks this).
+- A full render of a light-variant vehicle is ~1 min (4 variants × 3 renders). Unchanged vox files are skipped.
+
 ## Adding a vehicle
 Use the `new-vehicle` skill (`.claude/skills/new-vehicle/SKILL.md`). In short: add a reference entry → write the YAML → write the recipe → `pk preview` loop → `pk build` → tests.
 

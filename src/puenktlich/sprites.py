@@ -40,48 +40,72 @@ def composite_cc(rgba: Image.Image, mask: Image.Image | None) -> Image.Image:
     return Image.fromarray(out.astype(np.uint8), "RGBA")
 
 
-def _only_sprites(img: Image.Image, scale: int) -> Image.Image:
-    """Blank everything outside the manifest's sprite rectangles (GoRender fills the
-    rest of the sheet with opaque white / index 255, which the game never sees)."""
-    a = np.array(img.convert("RGBA"))
-    keep = np.zeros(a.shape[:2], dtype=bool)
-    for r in sprite_layout(scale, 8):
-        keep[r.y : r.y + r.h, r.x : r.x + r.w] = True
-    a[~keep] = 0
-    return Image.fromarray(a, "RGBA")
+def sheet_for(sprite_dir: Path, name: str, kind: str, scale: int, depth: str) -> Path:
+    """Sheet holding sprite `kind` for model `name` (e.g. re460_solo). depth: 8bpp|32bpp|mask."""
+    stem = f"{name}_{kind}" if kind in ("up", "down") else name
+    return sheet_path(sprite_dir, stem, scale, depth)
 
 
-def contact_sheet(sprite_dir: Path, name: str, out: Path) -> Path:
-    """All 8 views x 3 zooms with company colours applied, plus the 1x 8bpp sheet and the
-    raw mask, upscaled with nearest-neighbour so pixels stay readable."""
+def _views(
+    sprite_dir: Path,
+    name: str,
+    kind: str,
+    scale: int,
+    length: int,
+    only: tuple[int, ...] | None = None,
+    mask_vis: bool = False,
+) -> Image.Image:
+    """The 8 (or 4 for hills) direction views of one sheet, cropped and laid out in a row."""
+    p32 = sheet_for(sprite_dir, name, kind, scale, "32bpp")
+    pm = sheet_for(sprite_dir, name, kind, scale, "mask")
+    mask = Image.open(pm) if pm.exists() else None
+    if mask_vis and mask is not None:
+        m = np.array(mask)
+        vis = np.zeros((*m.shape, 4), dtype=np.uint8)
+        vis[(m >= CC1[0]) & (m <= CC1[1])] = (255, 0, 255, 255)
+        vis[(m >= CC2[0]) & (m <= CC2[1])] = (0, 255, 255, 255)
+        img = Image.fromarray(vis, "RGBA")
+    else:
+        img = composite_cc(Image.open(p32), mask)
+    crops = []
+    for i, r in enumerate(sprite_layout(scale, length, kind)):
+        if r.w <= 1 or (only is not None and i not in only):
+            continue
+        crops.append(img.crop((r.x, r.y, r.x + r.w, r.y + r.h)))
+    gap = 6 * scale
+    row = Image.new("RGBA", (sum(c.width for c in crops) + gap * len(crops), max(c.height for c in crops)))
+    x = 0
+    for c in crops:
+        row.alpha_composite(c, (x, 0))
+        x += c.width + gap
+    return row
+
+
+def contact_sheet(vehicle, sprite_dir: Path, out: Path) -> Path:
+    """Review sheet: normal views at 1x/2x/4x, curve (±15°) and hill views, every light
+    variant and the company-colour mask, upscaled nearest-neighbour to 4x."""
+    from puenktlich.models import sprite_name, variants  # local: avoid import cycle
+
+    length = vehicle.ottd_length
+    names = {v: sprite_name(vehicle, v) for v in variants(vehicle)}
+    main = names.get("solo", next(iter(names.values())))
     rows: list[tuple[str, Image.Image]] = []
 
     def up(img: Image.Image, f: int) -> Image.Image:
         return img.resize((img.width * f, img.height * f), Image.Resampling.NEAREST)
 
     for scale in SCALES:
-        p32 = sheet_path(sprite_dir, name, scale, "32bpp")
-        if not p32.exists():
-            continue
-        pm = sheet_path(sprite_dir, name, scale, "mask")
-        img = composite_cc(Image.open(p32), Image.open(pm) if pm.exists() else None)
-        rows.append((f"{scale}x 32bpp + CC red/white (shown x{4 // scale})", up(_only_sprites(img, scale), 4 // scale)))
-    p8 = sheet_path(sprite_dir, name, 1, "8bpp")
-    if p8.exists():
-        pal8 = Image.open(p8)
-        img = pal8.convert("RGBA")
-        a = np.array(img)
-        a[np.array(pal8) == 0, 3] = 0  # index 0 is transparent in TTD
-        rows.append(("1x 8bpp fallback (shown x4)", up(_only_sprites(Image.fromarray(a), 1), 4)))
-    pm = sheet_path(sprite_dir, name, 4, "mask")
-    if pm.exists():
-        m = np.array(Image.open(pm))
-        vis = np.zeros((*m.shape, 4), dtype=np.uint8)
-        vis[(m >= CC1[0]) & (m <= CC1[1])] = (255, 0, 255, 255)
-        vis[(m >= CC2[0]) & (m <= CC2[1])] = (0, 255, 255, 255)
-        rows.append(("4x mask (magenta = CC1, cyan = CC2)", _only_sprites(Image.fromarray(vis, "RGBA"), 4)))
-    if not rows:
-        raise FileNotFoundError(f"no rendered sheets for {name} in {sprite_dir}")
+        label = f"{scale}x normal, CC red/white (shown x{4 // scale})"
+        rows.append((label, up(_views(sprite_dir, main, "normal", scale, length), 4 // scale)))
+    rows.append(("4x turn_1 (+15°, curves)", _views(sprite_dir, main, "turn_1", 4, length)))
+    rows.append(("4x turn_2 (-15°, curves)", _views(sprite_dir, main, "turn_2", 4, length)))
+    rows.append(("4x up (hill)", _views(sprite_dir, main, "up", 4, length)))
+    rows.append(("4x down (hill)", _views(sprite_dir, main, "down", 4, length)))
+    if len(names) > 1:
+        for var, name in names.items():
+            label = f"4x lights: {var} (SW view = front end, NE view = rear end)"
+            rows.append((label, _views(sprite_dir, name, "normal", 4, length, only=(5, 1))))
+    rows.append(("4x mask (magenta = CC1, cyan = CC2)", _views(sprite_dir, main, "normal", 4, length, mask_vis=True)))
 
     label_h, pad = 14, 6
     width = max(r.width for _, r in rows) + 2 * pad
@@ -100,25 +124,37 @@ def contact_sheet(sprite_dir: Path, name: str, out: Path) -> Path:
 
 
 def lint_sheets(sprite_dir: Path, name: str, length: int) -> list[str]:
-    """Return a list of problems (empty = OK)."""
+    """Problems with one model's sheets (all kinds, scales, depths). Empty = OK."""
     problems: list[str] = []
-    for scale in SCALES:
-        rects = sprite_layout(scale, length)
-        need_w = rects[-1].x + rects[-1].w
-        need_h = max(r.h for r in rects)
-        for kind in ("32bpp", "mask") + (("8bpp",) if scale == 1 else ()):
-            p = sheet_path(sprite_dir, name, scale, kind)
-            if not p.exists():
-                problems.append(f"missing {p}")
-                continue
-            im = Image.open(p)
-            if im.width < need_w or im.height < need_h:
-                problems.append(f"{p}: {im.size} smaller than layout {need_w}x{need_h}")
-            if kind in ("8bpp", "mask") and im.mode != "P":
-                problems.append(f"{p}: expected palette image, got {im.mode}")
-            if kind == "32bpp":
-                alpha = np.array(im.convert("RGBA"))[..., 3]
-                for r in rects:
-                    if not alpha[r.y : r.y + r.h, r.x : r.x + r.w].any():
-                        problems.append(f"{p}: view {r.angle}° is empty")
+    for kind in ("normal", "turn_1", "turn_2", "up", "down"):
+        for scale in SCALES:
+            rects = [r for r in sprite_layout(scale, length, kind) if r.w > 1]
+            need_w = max(r.x + r.w for r in rects)
+            need_h = max(r.h for r in rects)
+            for depth in ("32bpp", "mask") + (("8bpp",) if scale == 1 else ()):
+                p = sheet_for(sprite_dir, name, kind, scale, depth)
+                if not p.exists():
+                    if f"missing {p}" not in problems:
+                        problems.append(f"missing {p}")
+                    continue
+                im = Image.open(p)
+                if im.width < need_w or im.height < need_h:
+                    problems.append(f"{p}: {im.size} smaller than layout {need_w}x{need_h}")
+                if depth in ("8bpp", "mask") and im.mode != "P":
+                    problems.append(f"{p}: expected palette image, got {im.mode}")
+                if depth == "32bpp":
+                    alpha = np.array(im.convert("RGBA"))[..., 3]
+                    for r in rects:
+                        if not alpha[r.y : r.y + r.h, r.x : r.x + r.w].any():
+                            problems.append(f"{p}: {kind} view {r.angle}° is empty")
     return problems
+
+
+def lint_vehicle(vehicle) -> list[str]:
+    from puenktlich.models import sprite_name, variants
+    from puenktlich.paths import BUILD_SPRITES
+
+    out: list[str] = []
+    for var in variants(vehicle):
+        out += lint_sheets(BUILD_SPRITES / vehicle.id, sprite_name(vehicle, var), vehicle.ottd_length)
+    return out

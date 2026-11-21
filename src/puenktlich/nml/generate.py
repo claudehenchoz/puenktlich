@@ -16,8 +16,10 @@ import yaml
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from puenktlich import paths
-from puenktlich.render import SCALES, sheet_path, sprite_layout
+from puenktlich.models import sprite_name, variants
+from puenktlich.render import KINDS, SCALES, is_articulated, parts_for, sprite_layout
 from puenktlich.schema import Livery, Vehicle, operators, railtypes, vehicles
+from puenktlich.sprites import sheet_for
 
 GRFID = "PK\\43\\48"  # "PKCH" — never change after the first public release
 MAX_LIVERIES = 8
@@ -92,12 +94,27 @@ def _traction(v: Vehicle) -> str:
     return "diesel" if rt.label.endswith("N") else "electric"
 
 
+def _shape_proc(length: int) -> str:
+    """Timberwolf: vehicles longer than 4/8 compare with the part in front only."""
+    return "pk_shape_medium" if length > 4 else "pk_shape_short"
+
+
 def vehicle_nml(v: Vehicle, strings: Strings) -> str:
     if len(v.liveries) > MAX_LIVERIES:
         raise ValueError(f"{v.id}: at most {MAX_LIVERIES} liveries")
     sprite_dir = paths.BUILD_SPRITES / v.id
-    sheets = {s: {k: _rel(sheet_path(sprite_dir, v.id, s, k)) for k in ("8bpp", "32bpp", "mask")} for s in SCALES}
-    rects = {s: sprite_layout(s, v.ottd_length, v.model.manifest) for s in SCALES}
+    length = v.ottd_length
+    articulated = is_articulated(length)
+    kinds = list(KINDS) if articulated else ["normal"]
+    rects = {k: {s: sprite_layout(s, length, k) for s in SCALES} for k in kinds}
+    var_list = []
+    for var in variants(v):
+        name = sprite_name(v, var)
+        sheets = {
+            k: {s: {d: _rel(sheet_for(sprite_dir, name, k, s, d)) for d in ("8bpp", "32bpp", "mask")} for s in SCALES}
+            for k in kinds
+        }
+        var_list.append({"name": name, "sheets": sheets})
 
     up = v.id.upper()
     desc_string = strings.add(f"STR_DESC_{up}", dict(v.description)) if v.description.get("en") else None
@@ -122,8 +139,12 @@ def vehicle_nml(v: Vehicle, strings: Strings) -> str:
     op = operators()[v.operator]
     return _env.get_template("vehicle.nml.j2").render(
         v=v,
-        sheets=sheets,
+        variants=var_list,
+        kinds=kinds,
         rects=rects,
+        articulated=articulated,
+        parts=parts_for(length),
+        shape_proc=_shape_proc(length),
         zooms=[(s, ZOOMS[s]) for s in SCALES],
         liveries=items,
         desc_string=desc_string,
@@ -160,7 +181,10 @@ def generate(out_dir: Path = paths.BUILD_NML, only: list[str] | None = None) -> 
             min_compatible_version=0,
             railtypes=[railtypes()[r] for r in used_rts],
             badges=badges,
-        )
+        ),
+        _env.get_template("procedures.nml.j2").render(
+            shape_procs={_shape_proc(v.ottd_length) for v in vs if is_articulated(v.ottd_length)}
+        ),
     ]
     for v in vs:
         parts.append(vehicle_nml(v, strings))

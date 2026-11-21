@@ -47,7 +47,16 @@ function PKTest::Start() {
   GSRail.SetCurrentRailType(rt);
   this.Log("railtype " + rt + " " + GSRail.GetName(rt));
 
-  // loop rectangle, centred on the map
+  // Slope for hill sprites: raise every vertex with x >= RAISE_X by one level. Tiles
+  // x = RAISE_X - 1 then slope up along X (both long sides of the loop get a ramp),
+  // and everything beyond is flat one level higher.
+  if (RAISE_X > 0) {
+    local raised = 0;
+    for (local x = RAISE_X; x <= x1 + 4; x++) for (local y = y0 - 4; y <= y1 + 4; y++)
+      if (GSTile.RaiseTile(GSMap.GetTileIndex(x, y), GSTile.SLOPE_N)) raised++;
+    this.Log("raised " + raised + " vertices at x >= " + RAISE_X);
+  }
+
   // company mode clean-up pass for anything deity mode left (trees etc.)
   for (local x = x0 - 1; x <= x1 + 1; x++) for (local y = y0 - 2; y <= y1 + 1; y++) GSTile.DemolishTile(GSMap.GetTileIndex(x, y));
 
@@ -81,16 +90,21 @@ function PKTest::Start() {
 
   // Month m (1-based): after day 10, stop the train when its front is on STOP_TILES[m-1].
   // The console script for the 1st of the next month scrolls there and takes the shot.
-  local stopped = false;
+  local stopped = false, countdown = -1;
   while (true) {
     local date = GSDate.GetCurrentDate();
     local day = GSDate.GetDayOfMonth(date);
     local idx = (GSDate.GetMonth(date) - 1) % STOP_TILES.len();
     local target = GSMap.GetTileIndex(STOP_TILES[idx][0], STOP_TILES[idx][1]);
-    if (!stopped && day >= 10 && GSVehicle.GetLocation(train) == target) {
+    // When the head (front articulated part) enters the target tile, run a few more
+    // ticks so the sprite-carrying middle part is on the tile too, then stop.
+    if (!stopped && day >= 10 && countdown < 0 && GSVehicle.GetLocation(train) == target) countdown = STOP_DELAY;
+    if (!stopped && countdown == 0) {
       GSVehicle.StartStopVehicle(train); stopped = true;
-      this.Log("stopped at " + STOP_TILES[idx][0] + "," + STOP_TILES[idx][1]);
+      this.Log("stopped at " + STOP_TILES[idx][0] + "," + STOP_TILES[idx][1] + " (head now " +
+               GSMap.GetTileX(GSVehicle.GetLocation(train)) + "," + GSMap.GetTileY(GSVehicle.GetLocation(train)) + ")");
     }
+    if (countdown >= 0) countdown--;
     if (stopped && day < 10) { GSVehicle.StartStopVehicle(train); stopped = false; }
     this.Sleep(1);
   }

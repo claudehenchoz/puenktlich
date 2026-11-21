@@ -30,6 +30,7 @@ liveries:
 model:
   path: sbb/re460
   kind: recipe
+  lights: true         # direction-aware head/tail lamps
 reference: [sbb-re460]
 description:
   en: Fast universal locomotive of the Bahn 2000 era, hauling IC and IR trains across the network.

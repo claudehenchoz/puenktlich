@@ -66,8 +66,12 @@ def write_vox(grid: VoxelGrid, path: Path, rgb_palette: list[tuple[int, int, int
             rgba += bytes((r, g, b, 255))
         children += _chunk(b"RGBA", bytes(rgba))
     main = _chunk(b"MAIN", b"", children)
+    data = b"VOX " + struct.pack("<i", 150) + main
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(b"VOX " + struct.pack("<i", 150) + main)
+    # keep the mtime of unchanged files so GoRender's up-to-date check can skip them
+    if path.exists() and path.read_bytes() == data:
+        return
+    path.write_bytes(data)
 
 
 def read_vox(path: Path) -> VoxelGrid:

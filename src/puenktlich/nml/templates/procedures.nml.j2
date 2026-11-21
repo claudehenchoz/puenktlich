@@ -1,0 +1,39 @@
+
+// ---- shared procedures (3-part articulation, curve/hill sprites) --------------
+// Ported from Timberwolf's Trains (github.com/mattkimber/timberwolfs_trains, MIT).
+// Each vehicle is 3 articulated parts; only the middle one draws the sprite. Its
+// neighbours turn and climb first, so the middle part can pick an in-between view.
+
+const PK_NORMAL = 1;
+const PK_TURN_1 = 2;   // rendered +15°
+const PK_TURN_2 = 3;   // rendered -15°
+const PK_UP     = 4;   // tilted +10°
+const PK_DOWN   = 5;   // tilted -10°
+
+spriteset(ss_invisible, "render/transparent.png") {
+    [0, 0, 1, 1, 0, 0]
+}
+
+{%- for kind, z_expr in [("medium", "other_veh_z_offset(-1)"), ("short", "other_veh_z_offset(-1) + other_veh_z_offset(1)")] %}
+{%- if "pk_shape_" ~ kind in shape_procs %}
+
+// {{ kind }} middle part: height difference to {{ "the part in front" if kind == "medium" else "both neighbours" }}
+switch (FEAT_TRAINS, SELF, pk_height_{{ kind }}, {{ z_expr }}) {
+    -128..-1: return PK_DOWN;
+    1..127: return PK_UP;
+    return PK_NORMAL;
+}
+
+switch (FEAT_TRAINS, SELF, pk_shape_{{ kind }}, curv_info) {
+    vehicle_curv_info(1, 0): return PK_TURN_1;
+    vehicle_curv_info(0, 1): return PK_TURN_2;
+    vehicle_curv_info(-1, 0): return PK_TURN_2;
+    vehicle_curv_info(0, -1): return PK_TURN_1;
+    pk_height_{{ kind }};
+}
+{%- endif %}
+{%- endfor %}
+
+// Light variants (voxel/variants.py) are chosen per vehicle in sw_<id>_lights from
+//   lead = position_in_consist == position_in_articulated_veh      (unit leads the train)
+//   tail = position_in_consist_from_end + position_in_articulated_veh == 2  (unit is last)

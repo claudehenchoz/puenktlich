@@ -37,7 +37,9 @@ ZOOM_LEVELS = {"4x": 0, "2x": 1, "1x": 2}  # OpenTTD ZoomLevel: 0 = 4x in, 2 = n
 # The train is stopped on a different tile each month: straight sides give the
 # diagonal-on-screen views, corners the N/E/S/W views.
 LOOP = {"x0": 31, "x1": 34, "y0": 31, "y1": 34}
-STOP_TILES = [(32, 31), (34, 31), (34, 33), (34, 34), (32, 34), (31, 34)]
+RAISE_X = 34  # vertices x >= 34 one level up: tiles (33, y0) and (33, y1) are ramps
+STOP_DELAY = 4  # ticks after the head enters a stop tile
+STOP_TILES = [(32, 31), (33, 31), (34, 31), (34, 33), (33, 34), (31, 34)]
 
 CONFIG = """\
 [misc]
@@ -106,6 +108,7 @@ def _profile(zoom_name: str, grf: Path, targets: list[str], shots: int) -> Path:
     loop = ", ".join(f"{k} = {v}" for k, v in LOOP.items())
     (gs / "targets.nut").write_text(
         f"TARGETS <- {json.dumps(targets)};\nLOOP <- {{{loop}}};\nSTOP_TILES <- [{stops}];\n"
+        f"RAISE_X <- {RAISE_X};\nSTOP_DELAY <- {STOP_DELAY};\n"
     )
     cfg = root / "config" / "openttd"
     cfg.mkdir(parents=True)
@@ -168,7 +171,7 @@ def _run(zoom_name: str, grf: Path, targets: list[str], shots: int, timeout: int
     return Result(zoom_name, found, log, lines, errors)
 
 
-def run(grf: Path, targets: list[str], zooms: list[str], shots: int = 4, timeout: int = 400) -> list[Result]:
+def run(grf: Path, targets: list[str], zooms: list[str], shots: int = 6, timeout: int = 600) -> list[Result]:
     if shutil.which("openttd") is None:
         raise FileNotFoundError("openttd not found on PATH")
     with ThreadPoolExecutor(len(zooms)) as pool:
