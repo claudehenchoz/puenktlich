@@ -6,6 +6,5 @@
 4. **BaNaNaS** (in-game content service): upload the tar at <https://bananas.openttd.org> (OpenTTD account via GitHub). The first upload assigns the content id. After that, uploads can be automated with [bananas-cli](https://github.com/OpenTTD/bananas-cli) and a `BANANAS_TOKEN` secret.
 
 Before the first public release:
-- Fill in `STR_GRF_URL` in `lang/strings.yaml`.
 - Set `min_compatible_version` deliberately in `nml/generate.py` once save compatibility matters.
 - Never change the GRFID, item ids or livery order after release.
