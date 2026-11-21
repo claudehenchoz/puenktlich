@@ -1,4 +1,4 @@
-.PHONY: setup tools build grf preview lint test fmt coverage install clean
+.PHONY: setup tools build grf preview lint test test-fast fmt coverage install clean
 
 PK := uv run pk
 
@@ -21,6 +21,9 @@ lint:                 ## data + sprite lint, ruff
 
 test:                 ## unit + end-to-end tests
 	uv run pytest -q
+
+test-fast:            ## unit tests only (skips GRF compiles / renders)
+	uv run pytest -q -m "not slow"
 
 fmt:
 	uv run ruff format .

@@ -12,6 +12,7 @@ they are not rendered as full sprite sets each. `variant_plan` splits them into:
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import importlib.util
 import inspect
@@ -58,12 +59,45 @@ def load_recipe(path: Path):
     return mod
 
 
+_VOXEL_SRC = Path(__file__).parent / "voxel"
+
+
+@functools.cache
+def _library_digest() -> str:
+    """Digest of the modelling library: any change to it invalidates every cached grid."""
+    h = hashlib.sha1()
+    for f in sorted(_VOXEL_SRC.rglob("*.py")):
+        h.update(f.relative_to(_VOXEL_SRC).as_posix().encode())
+        h.update(f.read_bytes())
+    return h.hexdigest()
+
+
 def build_grid(target: Vehicle | CarSpec, variant: str = DEFAULT_VARIANT, dark: bool = False) -> VoxelGrid:
+    """Run the car's recipe for one variant. Cached in build/.cache/vox/ by the recipe source,
+    the voxel library source, params, variant and dark flag."""
     car = _car(target)
     d = model_dir(car)
     if car.model.kind == "vox":
         return read_vox(d / "model.vox")
-    build = load_recipe(d / "recipe.py").build
+    recipe = d / "recipe.py"
+    key = hashlib.sha1(
+        recipe.read_bytes()
+        + _library_digest().encode()
+        + json.dumps([sorted(car.model.params.items()), variant, dark]).encode()
+    ).hexdigest()
+    cached = paths.CACHE / "vox" / f"{key}.npy"
+    if cached.exists():
+        return VoxelGrid(np.load(cached))
+    grid = _run_recipe(car, recipe, variant, dark)
+    cached.parent.mkdir(parents=True, exist_ok=True)
+    tmp = cached.with_suffix(".tmp.npy")
+    np.save(tmp, grid.data)
+    tmp.replace(cached)
+    return grid
+
+
+def _run_recipe(car: CarSpec, recipe: Path, variant: str, dark: bool) -> VoxelGrid:
+    build = load_recipe(recipe).build
     kwargs: dict = dict(car.model.params)
     if "lights" in inspect.signature(build).parameters:
         lights = LIGHT_VARIANTS[variant]

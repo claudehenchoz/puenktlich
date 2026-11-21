@@ -49,17 +49,18 @@ def render(
     ids: IdsArg = None, force: Annotated[bool, typer.Option(help="Re-render even if up to date")] = False
 ) -> None:
     """Variants -> hill tilt (Cargopositor) -> GoRender 1x/2x/4x (24 views + hills) -> overrides -> lint."""
-    from puenktlich.pipeline import render_vehicle
+    from puenktlich.pipeline import LAST_RENDER_STATS, render_vehicle
 
     failed = False
     for v in _select(ids):
         out, problems, applied = render_vehicle(v, force=force)
+        n = LAST_RENDER_STATS.get(v.id, 0)
+        typer.echo(f"{v.id}: {n} sheet(s) rendered" if n else f"{v.id}: up to date")
         for o in applied:
             typer.echo(f"  override: {o.relative_to(paths.ROOT)}")
         for pr in problems:
             typer.secho(f"  {pr}", fg="red")
         failed |= bool(problems)
-        typer.echo(f"{v.id}: rendered -> {out.relative_to(paths.ROOT)}")
     if failed:
         raise typer.Exit(1)
 
@@ -142,10 +143,10 @@ def install(
 @app.command()
 def ingame(
     ids: IdsArg = None,
-    zoom: Annotated[list[str] | None, typer.Option(help="Zoom levels: 1x, 2x, 4x (repeatable)")] = None,
+    zoom: Annotated[list[str] | None, typer.Option(help="Zoom levels: 1x, 2x, 4x or all (repeatable)")] = None,
     parallel: Annotated[bool, typer.Option(help="Run all zoom levels at once (heavy on laptops)")] = False,
     scene: Annotated[str, typer.Option(help="loop | infra (crossing, bridge, tunnel, depots, rack)")] = "loop",
-    shots: Annotated[int, typer.Option(help="Screenshots per zoom level (one per game month)")] = 6,
+    shots: Annotated[int, typer.Option(help="Screenshots per zoom level (one per game month, ~67 s each)")] = 3,
     all_liveries: Annotated[bool, typer.Option(help="Every livery of each vehicle, not just the first")] = False,
 ) -> None:
     """Run OpenTTD headless with build/puenktlich.grf and screenshot the vehicles in-game.
@@ -166,7 +167,10 @@ def ingame(
         targets = [f"{v.name['en']} ({v.liveries[0].name['en']})" for v in vs]
     if scene == "infra":
         zoom, shots = ["2x"], min(shots, 4)  # one run: overview + close-up shots
-    results = run(grf, targets, zoom or ["1x", "2x", "4x"], shots=shots, parallel=parallel, scene=scene)
+    zooms = zoom or ["4x"]  # 4x shows the most detail; ask for others explicitly
+    if "all" in zooms:
+        zooms = ["1x", "2x", "4x"]
+    results = run(grf, targets, zooms, shots=shots, parallel=parallel, scene=scene)
     failed = False
     for r in results:
         typer.secho(f"== {r.zoom}", bold=True)

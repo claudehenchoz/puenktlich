@@ -10,7 +10,7 @@ Swiss trains & buses for OpenTTD. Vision: `docs/IDEA.md`. Architecture: `docs/AR
 - `uv run pk preview <id>`: build the model, render it, and write the contact sheet `build/previews/<id>.png`. **Look at it** (Read the PNG) after every model change.
 - `uv run pk build`: full build to `build/puenktlich.grf`
 - `uv run pk ingame <id> [--zoom 4x]`: headless OpenTTD 15+ run (isolated profile in `build/ingame/`). It builds a test loop, runs the vehicle in all its liveries, and screenshots `build/ingame/<zoom>/…/screenshot/*.png`. Takes ~1 min per shot, so run it in the background. Read the screenshots.
-- `uv run pk lint`, `make lint`, `make test`: always green before committing
+- `uv run pk lint`, `make lint`, `make test` (~8 s; `make test-fast` ~1 s skips GRF compiles): always green before committing
 - `uv run pk coverage`: completeness vs `data/reference/*.yaml`, writes `docs/COMPLETENESS.md`
 - First-time setup: `make setup` (needs Go; builds gorender + cargopositor into `.tools/bin`)
 
@@ -45,7 +45,8 @@ Swiss trains & buses for OpenTTD. Vision: `docs/IDEA.md`. Architecture: `docs/AR
 Use the `new-vehicle` skill (`.claude/skills/new-vehicle/SKILL.md`). In short: add a reference entry → write the YAML → write the recipe → `pk preview` loop → `pk build` → tests.
 
 ## Gotchas
-- Laptops: `pk ingame` runs one zoom level at a time (`--parallel` opts in), and renderers run under `nice`. Prefer `--zoom 4x` for quick checks; never start several heavy runs at once.
+- `pk ingame` defaults to 4x and 3 shots (straight, ramp, corner) ≈ 3.5 min; `--shots 6 --zoom all` for the full set. Each shot costs one game month ≈ 67 s, and OpenTTD can't run faster headless (no fast-forward without the GUI; the calendar can only be slowed). Zoom levels run one after another (`--parallel` opts in); renderers run under `nice`.
+- Caches: `build/.cache/vox/` (recipe grids, keyed by recipe + voxel library source), `build/.cache/cargopositor/` (keyed by batch + inputs; Cargopositor's `scale` is non-deterministic, the cache pins the first result), track GRF skipped by a source digest. A no-op `pk build` takes ~3 s and renders nothing; `pk render` reports how many sheets it rewrote. `pk clean` wipes all caches.
 - Don't name scratch scripts after stdlib modules (`re.py`, `types.py`…).
 - GoRender skips outputs newer than the input. Use `pk render --force` after changing the manifest or palette.
 - GoRender fills unused sheet area with opaque white / index 255. Only the manifest rectangles matter.

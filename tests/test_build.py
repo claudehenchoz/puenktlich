@@ -9,9 +9,12 @@ from puenktlich.nml.generate import compile_grf, generate
 from puenktlich.pipeline import render_vehicle
 from puenktlich.schema import vehicles
 
-pytestmark = pytest.mark.skipif(
-    not (paths.GORENDER.exists() and paths.CARGOPOSITOR.exists()), reason="run tools/install.sh first"
-)
+pytestmark = [
+    pytest.mark.slow,
+    pytest.mark.skipif(
+        not (paths.GORENDER.exists() and paths.CARGOPOSITOR.exists()), reason="run tools/install.sh first"
+    ),
+]
 
 
 def test_full_build(tmp_path) -> None:

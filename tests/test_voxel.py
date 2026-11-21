@@ -192,3 +192,38 @@ def test_metre_gauge_wheels() -> None:
     wheels = d[:, :, 0:3]  # rail level: only wheel rims touch z 0..2
     ys = sorted(set(int(y) for y in wheels.nonzero()[1]))
     assert ys and min(ys) >= wy and max(ys) <= d.shape[1] - wy - 1
+
+
+def test_cargo_models_are_stable_between_builds() -> None:
+    """Cargopositor's `scale` is not deterministic; its cached output must make repeated
+    plans identical, or every build would re-render the wagon."""
+    from puenktlich import paths
+
+    if not paths.CARGOPOSITOR.exists():
+        import pytest
+
+        pytest.skip("cargopositor not installed")
+    import puenktlich.models as M
+    from puenktlich.schema import vehicles
+
+    car = vehicles()["eanos"].car_specs[0]
+    first = M._plan("eanos", car)
+    second = M._plan("eanos", car)
+    for name in first.overlays:
+        assert np.array_equal(first.overlays[name][1].data, second.overlays[name][1].data), name
+
+
+def test_voxel_cache_hits(tmp_path, monkeypatch) -> None:
+    import time
+
+    from puenktlich import paths
+    from puenktlich.models import build_grid
+    from puenktlich.schema import vehicles
+
+    monkeypatch.setattr(paths, "CACHE", tmp_path)
+    v = vehicles()["re460"]
+    a = build_grid(v, "solo")
+    t = time.perf_counter()
+    b = build_grid(v, "solo")
+    assert time.perf_counter() - t < 0.05 and np.array_equal(a.data, b.data)
+    assert list(tmp_path.glob("vox/*.npy"))

@@ -4,6 +4,7 @@ procedurally drawn ballast (underlay) and rails (track_overlay). Everything else
 
 from __future__ import annotations
 
+import hashlib
 import subprocess
 from pathlib import Path
 
@@ -144,7 +145,28 @@ def _nml(sheets: dict, railtypes: list[dict], strings: Strings) -> str:
     return "\n".join(lines)
 
 
-def build_tracks(out_grf: Path | None = None) -> Path:
+def _inputs_digest() -> str:
+    """Everything the track GRF is generated from (code, data, strings, version, palette)."""
+    h = hashlib.sha1()
+    files = sorted(Path(__file__).parent.glob("*.py")) + [
+        paths.DATA / "tracks.yaml",
+        paths.LANG / "strings.yaml",
+        paths.ROOT / "pyproject.toml",
+        paths.PALETTE_JSON,
+    ]
+    for f in files:
+        h.update(f.name.encode())
+        h.update(f.read_bytes())
+    return h.hexdigest()
+
+
+def build_tracks(out_grf: Path | None = None, force: bool = False) -> Path:
+    """Build the track GRF; skipped when nothing it depends on changed (digest stamp)."""
+    grf = out_grf or paths.BUILD / "puenktlich_tracks.grf"
+    stamp = grf.with_suffix(".grf.sha1")
+    digest = _inputs_digest()
+    if not force and grf.exists() and stamp.exists() and stamp.read_text() == digest:
+        return grf
     railtypes = yaml.safe_load((paths.DATA / "tracks.yaml").read_text(encoding="utf-8"))
     strings = Strings()
     static = yaml.safe_load((paths.LANG / "strings.yaml").read_text(encoding="utf-8"))
@@ -156,7 +178,6 @@ def build_tracks(out_grf: Path | None = None) -> Path:
     nml = nml_dir / "puenktlich_tracks.nml"
     nml.write_text(_nml(sheets, railtypes, strings), encoding="utf-8")
     strings.write(nml_dir / "lang")
-    grf = out_grf or paths.BUILD / "puenktlich_tracks.grf"
     subprocess.run(
         [
             "nmlc",
@@ -173,6 +194,7 @@ def build_tracks(out_grf: Path | None = None) -> Path:
         cwd=paths.ROOT,
         check=True,
     )
+    stamp.write_text(digest)
     return grf
 
 

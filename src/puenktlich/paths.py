@@ -24,4 +24,5 @@ BUILD_VOX = BUILD / "vox"
 BUILD_SPRITES = BUILD / "sprites"
 BUILD_PREVIEWS = BUILD / "previews"
 BUILD_NML = BUILD / "nml"
+CACHE = BUILD / ".cache"  # content-addressed caches (voxel grids, Cargopositor output)
 GRF_NAME = "puenktlich"

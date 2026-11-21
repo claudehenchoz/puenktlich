@@ -36,6 +36,7 @@ ignore = ["E741"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["slow: compiles GRFs / renders (excluded by `make test-fast`)"]
 
 [tool.pyright]
 venvPath = "."

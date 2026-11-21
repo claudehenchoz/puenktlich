@@ -1,3 +1,4 @@
+import functools
 import re
 
 import pytest
@@ -15,6 +16,7 @@ TW_NAMES = {
 }
 
 
+@functools.cache
 def _parse_tw() -> dict[str, list[tuple[int, ...]]]:
     out: dict[str, list[tuple[int, ...]]] = {}
     for f in ("sprite_templates.nml", "sprite_templates_hills.nml"):

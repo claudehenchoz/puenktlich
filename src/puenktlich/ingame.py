@@ -41,9 +41,11 @@ ZOOM_LEVELS = {"4x": 0, "2x": 1, "1x": 2}  # OpenTTD ZoomLevel: 0 = 4x in, 2 = n
 LOOP = {"x0": 31, "x1": 34, "y0": 31, "y1": 34}
 RAISE_X = 34  # vertices x >= 34 one level up: tiles (33, y0) and (33, y1) are ramps
 STOP_DELAY = 4  # ticks after the head enters a stop tile
+ALL_ZOOMS = ["1x", "2x", "4x"]
 # Optionally reverse the whole train when restarting in this month (0 = never). Note that
 # OpenTTD then swaps the vehicles end to end, so the locomotive still leads.
 REVERSE_AT_MONTH = 0
+# first three = straight, ramp (hill sprite), corner (curve sprite): the default --shots 3
 STOP_TILES = [(32, 31), (33, 31), (34, 31), (34, 33), (33, 34), (31, 34)]
 
 CONFIG = """\

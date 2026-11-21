@@ -15,6 +15,7 @@ tests pin the output to his generated templates.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import shutil
@@ -207,16 +208,41 @@ def gorender(
     subprocess.run(cmd, cwd=out_dir, check=True, stdout=subprocess.DEVNULL)
 
 
+@cache
+def _tool_digest(tool: Path) -> str:
+    return hashlib.sha1(tool.read_bytes()).hexdigest()
+
+
 def cargopositor(batch: Path, voxel_dir: Path, out_dir: Path) -> None:
-    """Run a Cargopositor batch (JSON) — composites cargo/variants onto base models."""
+    """Run a Cargopositor batch (JSON) — composites cargo/variants onto base models.
+
+    Results are cached by content (batch + every input .vox + the binary): Cargopositor's
+    `scale` operation is not deterministic, so re-running it on unchanged input would change
+    the models, and with them every rendered sheet. The cache makes the first result stick.
+    """
     if not paths.CARGOPOSITOR.exists():
         raise FileNotFoundError(f"{paths.CARGOPOSITOR} missing — run tools/install.sh")
+    h = hashlib.sha1(batch.read_bytes())
+    h.update(_tool_digest(paths.CARGOPOSITOR).encode())
+    for vox in sorted(voxel_dir.glob("*.vox")):
+        h.update(vox.name.encode())
+        h.update(vox.read_bytes())
+    cached = paths.CACHE / "cargopositor" / h.hexdigest()
     out_dir.mkdir(parents=True, exist_ok=True)
-    subprocess.run(
-        [*NICE, str(paths.CARGOPOSITOR), "-o", str(out_dir), "-v", str(voxel_dir), str(batch)],
-        check=True,
-        stdout=subprocess.DEVNULL,
-    )
+    if not cached.is_dir():
+        tmp = cached.with_name(cached.name + ".tmp")
+        shutil.rmtree(tmp, ignore_errors=True)
+        tmp.mkdir(parents=True)
+        subprocess.run(
+            [*NICE, str(paths.CARGOPOSITOR), "-o", str(tmp), "-v", str(voxel_dir), str(batch)],
+            check=True,
+            stdout=subprocess.DEVNULL,
+        )
+        tmp.rename(cached)
+    for f in cached.iterdir():
+        dst = out_dir / f.name
+        if not dst.exists() or dst.read_bytes() != f.read_bytes():
+            shutil.copy2(f, dst)
 
 
 def apply_overrides(vehicle_id: str, name: str, sprite_dir: Path) -> list[Path]:

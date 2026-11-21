@@ -115,23 +115,28 @@ function PKTest::Start() {
 
   // Month m (1-based): after day 10, stop the train when its front is on STOP_TILES[m-1].
   // The console script for the 1st of the next month scrolls there and takes the shot.
-  local stopped = false, countdown = -1, reversed = false;
+  // Month m: stop on STOP_TILES[m-1] as soon as the train reaches it; the console script
+  // screenshots on the 1st of month m+1, and the train restarts from day 2. (OpenTTD can't
+  // shorten months: the calendar advances at most once per tick, and fast-forward is only
+  // reachable through the GUI, so one game month ≈ 67 s real time is the floor per shot.)
+  local stopped = false, countdown = -1, reversed = false, stop_month = -1;
   while (true) {
     local date = GSDate.GetCurrentDate();
     local day = GSDate.GetDayOfMonth(date);
-    local idx = (GSDate.GetMonth(date) - 1) % STOP_TILES.len();
+    local month = GSDate.GetMonth(date);
+    local idx = (month - 1) % STOP_TILES.len();
     local target = GSMap.GetTileIndex(STOP_TILES[idx][0], STOP_TILES[idx][1]);
     // When the head (front articulated part) enters the target tile, run a few more
     // ticks so the sprite-carrying middle part is on the tile too, then stop.
-    if (!stopped && day >= 10 && countdown < 0 && GSVehicle.GetLocation(train) == target) countdown = STOP_DELAY;
+    if (!stopped && month != stop_month && countdown < 0 && GSVehicle.GetLocation(train) == target) countdown = STOP_DELAY;
     if (!stopped && countdown == 0) {
-      GSVehicle.StartStopVehicle(train); stopped = true;
+      GSVehicle.StartStopVehicle(train); stopped = true; stop_month = month;
       this.Log("stopped at " + STOP_TILES[idx][0] + "," + STOP_TILES[idx][1] + " (head now " +
                GSMap.GetTileX(GSVehicle.GetLocation(train)) + "," + GSMap.GetTileY(GSVehicle.GetLocation(train)) +
                ", leading: " + GSEngine.GetName(GSVehicle.GetWagonEngineType(train, 0)) + ")");
     }
     if (countdown >= 0) countdown--;
-    if (stopped && day < 10) {
+    if (stopped && month != stop_month && day >= 2) {
       GSVehicle.StartStopVehicle(train); stopped = false;
       // push-pull check: turn the whole train round once, so the far end leads.
       // OpenTTD only acts on a reverse order while the train is moving.

@@ -47,6 +47,7 @@ def test_metre_gauge_is_narrower() -> None:
     assert METRE_GAUGE.half_gauge == pytest.approx(STANDARD_HALF_GAUGE * 1000 / 1435)
 
 
+@pytest.mark.slow
 def test_track_grf_compiles(tmp_path) -> None:
     if shutil.which("nmlc") is None:
         pytest.skip("nmlc not installed")

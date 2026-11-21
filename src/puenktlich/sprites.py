@@ -76,14 +76,22 @@ def overlay_sheet_name(overlay: str) -> str:
     return overlay + OVERLAY_SUFFIX
 
 
-def make_overlay(sprite_dir: Path, lit: str, body: str) -> list[Path]:
+def make_overlay(sprite_dir: Path, lit: str, body: str, force: bool = False) -> list[Path]:
     """Write `<lit>_ovl` sheets: the pixels where the lit render differs from its dark
     body render (lamps), transparent elsewhere. GoRender is deterministic, so unchanged
-    pixels are bit-identical. Drawn in-game as a second sprite layer over the body."""
+    pixels are bit-identical. Drawn in-game as a second sprite layer over the body.
+    Sheets newer than both inputs are left alone."""
     written = []
     out = overlay_sheet_name(lit)
     for kind in ("normal", "up", "down"):  # the normal sheet also holds the turn views
         for scale in SCALES:
+            depths = ("32bpp", "mask") + (("8bpp",) if scale == 1 else ())
+            outs = [sheet_for(sprite_dir, out, kind, scale, d) for d in depths]
+            ins = [sheet_for(sprite_dir, n, kind, scale, d) for n in (lit, body) for d in depths]
+            if not force and all(o.exists() for o in outs):
+                newest_in = max(i.stat().st_mtime for i in ins)
+                if min(o.stat().st_mtime for o in outs) >= newest_in:
+                    continue
             a32 = np.array(Image.open(sheet_for(sprite_dir, lit, kind, scale, "32bpp")).convert("RGBA"))
             b32 = np.array(Image.open(sheet_for(sprite_dir, body, kind, scale, "32bpp")).convert("RGBA"))
             diff = (a32 != b32).any(axis=2)
