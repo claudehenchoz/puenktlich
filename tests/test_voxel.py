@@ -251,3 +251,27 @@ def test_rendered_length_fits_ottd_length() -> None:
                     f"{name}: {x1 - x0 + 1} voxels long, OpenTTD length {car.ottd_length} "
                     f"allows {car.ottd_length * per_unit}"
                 )
+
+
+def test_double_deck_floor_profile() -> None:
+    """FV-Dosto: lower deck reaches down to z 3 between the bogies, the intermediate levels
+    over the bogies start at z 12, and the double-deck roof is at z 56 (REFERENCE.md)."""
+    from puenktlich.voxel.parts.dosto import HIGH_FLOOR, LOW_FLOOR, ROOF, DostoSpec, build_dosto_car
+    from puenktlich.voxel.variants import LIGHT_VARIANTS
+
+    d = build_dosto_car(DostoSpec(), LIGHT_VARIANTS["none"]).grid.data
+    side = d[:, 2, :]  # body side (y 2: inside the tumblehome, outside the bogie frames)
+    mid, end = d.shape[0] // 2, 20
+    assert np.flatnonzero(side[mid])[0] == LOW_FLOOR
+    assert np.flatnonzero(side[end])[0] >= HIGH_FLOOR
+    assert np.flatnonzero(d[mid, 20, :])[-1] == ROOF
+
+
+def test_face_mask_only_touches_the_front_skin() -> None:
+    from puenktlich.voxel.parts.body import face_mask
+
+    m = Model.new()
+    m.solid(m.centred_box(10, 50, 10, 5, 20), 6)
+    f = face_mask(m, True, depth=2)
+    X, _, _ = m.coords()
+    assert f.any() and (np.broadcast_to(X, f.shape)[f] >= 48).all()

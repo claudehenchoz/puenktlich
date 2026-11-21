@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from puenktlich.voxel import palette as P
 from puenktlich.voxel.model import CENTRE_Y, Model
-from puenktlich.voxel.parts.body import Shell, end_band
+from puenktlich.voxel.parts.body import Shell, end_band, face_mask
 from puenktlich.voxel.variants import Lights
 
 LAMP_WHITE = P.WHITE
@@ -25,20 +25,29 @@ def lamp_cluster(
     top_z: tuple[float, float] | None = (49, 51),
     spacing: float = 12,
     lamp_half_width: float = 2,
+    face: bool = False,
 ) -> None:
-    """Paint one end's lamps. state: 'white' | 'red' | 'off'. top_z=None: no top lamp (coach ends)."""
-    _, Y, _ = model.coords()
+    """Paint one end's lamps. state: 'white' | 'red' | 'off'. top_z=None: no top lamp (coach ends).
+    face=True: paint the end's front skin (face_mask) instead of a fixed depth, for raked noses."""
+    _, Y, Z = model.coords()
     low = {"white": LAMP_WHITE, "red": LAMP_RED, "off": LAMP_OFF}[state]
     top = LAMP_WHITE if state == "white" else LAMP_OFF
     z0, z1 = low_z
+    skin = face_mask(model, front, depth=3) if face else None
+
+    def region(za: float, zb: float, hw: float, depth: float):
+        if skin is not None:
+            return skin & (za <= Z) & (zb > Z) & (abs(Y - CENTRE_Y) <= hw)
+        return end_band(model, shell, za, zb, hw, front=front, depth=depth)
+
     for dy in (-spacing, spacing):
         # dark housing one voxel larger than the lamp, so a red lamp reads on a red body
-        housing = end_band(model, shell, z0 - 1, z1 + 1, spacing + lamp_half_width + 2, front=front, depth=8)
+        housing = region(z0 - 1, z1 + 1, spacing + lamp_half_width + 2, 8)
         model.paint(housing & (abs(Y - (CENTRE_Y + dy)) <= lamp_half_width + 1), P.BLACK)
-        band = end_band(model, shell, z0, z1, spacing + lamp_half_width + 1, front=front, depth=8)
+        band = region(z0, z1, spacing + lamp_half_width + 1, 8)
         model.paint(band & (abs(Y - (CENTRE_Y + dy)) <= lamp_half_width), low)
     if top_z is not None:
-        model.paint(end_band(model, shell, *top_z, lamp_half_width, front=front, depth=26), top)
+        model.paint(region(*top_z, lamp_half_width, 26), top)
 
 
 def lamps(model: Model, shell: Shell, lights: Lights, **kw) -> None:

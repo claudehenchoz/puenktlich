@@ -151,6 +151,16 @@ def _cargo_loco(wagons: list) -> str:
     raise typer.BadParameter(f"no {family}-gauge locomotive to pull {wagons[0].id}")
 
 
+@app.command("elevation")
+def elevation_cmd(ids: IdsArg = None) -> None:
+    """Orthographic side/front/rear views of every car (build/previews/<id>_elevation.png),
+    for comparing proportions with photos. Seconds, no GoRender."""
+    from puenktlich.elevation import elevation
+
+    for v in _select(ids):
+        typer.echo(f"{v.id}: {elevation(v)}")
+
+
 @app.command()
 def ingame(
     ids: IdsArg = None,

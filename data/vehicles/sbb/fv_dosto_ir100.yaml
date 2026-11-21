@@ -1,0 +1,47 @@
+# SBB RABe 502 4xx "FV-Dosto" IR 100 — 4-car Twindexx Swiss Express. See models/sbb/fv_dosto/REFERENCE.md.
+# Car order and class split from photos (approximate). Mass estimated as half the IC 200.
+id: fv_dosto_ir100
+grf_id: 107          # never change — saved games reference this
+name:
+  en: SBB RABe 502 FV-Dosto IR 100
+  de: SBB RABe 502 FV-Dosto IR 100
+  fr: CFF RABe 502 FV-Dosto IR 100
+  it: FFS RABe 502 FV-Dosto IR 100
+operator: sbb
+kind: emu
+railtype: standard_ac
+intro_year: 2018
+vehicle_life_years: 35
+model_life_years: 30
+max_speed_kmh: 200
+power_kw: 3750
+tractive_effort_kn: 241
+weight_t: 227
+length_m: 101.0
+capacity:
+  PASS: 330
+cost_factor: 120
+running_cost_factor: 70
+liveries:
+  - id: sbb
+    name: { en: SBB, de: SBB, fr: CFF, it: FFS }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+cars:
+  - model: { path: sbb/fv_dosto, lights: true, params: { car: cab_first, role: front } }
+    length_m: 25.6
+  - model: { path: sbb/fv_dosto, lights: true, params: { car: second, role: middle } }
+    length_m: 25.6
+  - model: { path: sbb/fv_dosto, lights: true, params: { car: second, role: middle } }
+    length_m: 25.6
+  - model: { path: sbb/fv_dosto, lights: true, params: { car: cab, role: rear } }
+    length_m: 25.6
+reference: [sbb-rabe502]
+description:
+  en: Long-distance double-decker (Twindexx Swiss Express), the short 4-car InterRegio version.
+  de: Fernverkehrs-Doppelstockzug (Twindexx Swiss Express), die kurze vierteilige InterRegio-Version.
+  fr: Train duplex grandes lignes (Twindexx Swiss Express), version InterRegio courte à quatre voitures.
+  it: Treno a due piani a lunga percorrenza (Twindexx Swiss Express), versione InterRegio corta a quattro carrozze.

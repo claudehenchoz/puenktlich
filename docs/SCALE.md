@@ -42,3 +42,18 @@ as 8.4 + 5.6 m (6 + 4), with the bellows inside each part. For rendering, road m
 and ~1.3× taller than a bus on Timberwolf's road canvas; widening alone already adds some height). Body 34 voxels wide (y 2..37, centre 19.5),
 floor at z ≈ 4 (low floor), roof at z ≈ 40, roof equipment up to z ≈ 44.
 
+## Double-deck cars
+FV-Dosto (4.59 m high, `voxel/parts/dosto.py`):
+
+| Level | z |
+|---|---|
+| Lower-deck body bottom (between the bogies) | 3 |
+| Intermediate levels over the bogies | 12 |
+| Door bottom (platform height) | 6 |
+| Black lower band top | 17 |
+| Lower windows | 14–26 |
+| Upper windows | 42–51 |
+| Double-deck roof / cab roof | 56 / 53 |
+
+A raised pantograph on the cab roof uses `raise_height=12` to stay within the z ≤ 68 tilt headroom.
+

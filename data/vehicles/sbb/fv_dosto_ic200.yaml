@@ -1,0 +1,55 @@
+# SBB RABDe 502 0xx "FV-Dosto" IC 200 — 8-car Twindexx Swiss Express with dining car.
+# See models/sbb/fv_dosto/REFERENCE.md. Car order and class split from photos (approximate).
+id: fv_dosto_ic200
+grf_id: 108          # never change — saved games reference this
+name:
+  en: SBB RABDe 502 FV-Dosto IC 200
+  de: SBB RABDe 502 FV-Dosto IC 200
+  fr: CFF RABDe 502 FV-Dosto IC 200
+  it: FFS RABDe 502 FV-Dosto IC 200
+operator: sbb
+kind: emu
+railtype: standard_ac
+intro_year: 2020
+vehicle_life_years: 35
+model_life_years: 30
+max_speed_kmh: 200
+power_kw: 7500
+tractive_effort_kn: 482
+weight_t: 453
+length_m: 200.6
+capacity:
+  PASS: 606
+cost_factor: 220
+running_cost_factor: 130
+liveries:
+  - id: sbb
+    name: { en: SBB, de: SBB, fr: CFF, it: FFS }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+cars:
+  - model: { path: sbb/fv_dosto, lights: true, params: { car: cab_first, role: front } }
+    length_m: 25.6
+  - model: { path: sbb/fv_dosto, lights: true, params: { car: first, role: middle } }
+    length_m: 25.6
+  - model: { path: sbb/fv_dosto, lights: true, params: { car: dining, role: middle } }
+    length_m: 25.6
+  - model: { path: sbb/fv_dosto, lights: true, params: { car: second, role: middle } }
+    length_m: 25.6
+  - model: { path: sbb/fv_dosto, lights: true, params: { car: second, role: middle } }
+    length_m: 25.6
+  - model: { path: sbb/fv_dosto, lights: true, params: { car: second, role: middle } }
+    length_m: 25.6
+  - model: { path: sbb/fv_dosto, lights: true, params: { car: second, role: middle } }
+    length_m: 25.6
+  - model: { path: sbb/fv_dosto, lights: true, params: { car: cab, role: rear } }
+    length_m: 25.6
+reference: [sbb-rabe502]
+description:
+  en: Long-distance double-decker (Twindexx Swiss Express), 8-car InterCity with dining car.
+  de: Fernverkehrs-Doppelstockzug (Twindexx Swiss Express), achtteiliger InterCity mit Speisewagen.
+  fr: Train duplex grandes lignes (Twindexx Swiss Express), InterCity à huit voitures avec voiture-restaurant.
+  it: Treno a due piani a lunga percorrenza (Twindexx Swiss Express), InterCity a otto carrozze con carrozza ristorante.

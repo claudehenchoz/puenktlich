@@ -29,8 +29,11 @@ def pantograph(
     raised: bool = False,
     facing_front: bool = True,
     colour: int = P.LIGHT_GREY,
+    raise_height: float = 15,
 ) -> None:
-    """Single-arm (Schunk WBL-style) pantograph. The knee points towards `facing_front`."""
+    """Single-arm (Schunk WBL-style) pantograph. The knee points towards `facing_front`.
+    raise_height: head above the roof when raised (lower on tall double-deck roofs, so the
+    model stays within the hill-tilt headroom)."""
     s = 1 if facing_front else -1
     base = model.centred_box(x_base - 6, x_base + 7, 6, roof_z + 1, roof_z + 3)
     model.solid(base, P.DARK_GREY)
@@ -44,8 +47,8 @@ def pantograph(
     hinge = (x_base - 4 * s, roof_z + 3)
     if raised:
         # head stays <= z 67 so a model tilted 10° for hill sprites is not clipped at z 72
-        knee = (x_base + 12 * s, roof_z + 10)
-        head = (x_base - 1 * s, roof_z + 15)
+        knee = (x_base + 12 * s, roof_z + 10 * raise_height / 15)
+        head = (x_base - 1 * s, roof_z + raise_height)
     else:
         knee = (x_base + 14 * s, roof_z + 4.5)
         head = (x_base - 2 * s, roof_z + 5.5)

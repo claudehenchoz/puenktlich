@@ -55,7 +55,8 @@ CONFIG = """\
 language = english.lng
 
 [game_creation]
-starting_year = 2000
+; 2025: every vehicle is introduced (never_expire_vehicles keeps the old ones)
+starting_year = 2025
 map_x = 6
 map_y = 6
 land_generator = original
