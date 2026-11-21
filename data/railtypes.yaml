@@ -2,10 +2,10 @@
 # (https://newgrf-specs.tt-wiki.net/wiki/Standardized_Railtype_Scheme).
 # We never define tracks ourselves; vehicles pick the first label a loaded track set provides.
 # Label format: [gauge][speed class][axle load][energy]. Train sets use speed class A.
-- id: standard_diesel
+- id: standard
   label: SAAN
   fallbacks: [RAIL]
-  description: Standard gauge, non-electrified
+  description: Standard gauge, any traction (wagons, coaches, diesels; also runs under catenary)
 - id: standard_ac
   label: SAAA
   fallbacks: [SAAE, ELRL]

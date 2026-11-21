@@ -70,3 +70,34 @@ def test_model_fits_canvas_with_tilt_headroom() -> None:
     for v in vehicles().values():
         (_, _), (_, _), (_, zmax) = build_grid(v).bounds()
         assert zmax <= 68, f"{v.id}: z {zmax} leaves too little headroom for hill tilt"
+
+
+def test_control_car_turns_cab_outward_when_last() -> None:
+    """Push-pull: the Bt's cab (windscreen glass) is at the front normally and at the
+    rear (low x) in the `tail` variant, i.e. when it is the last vehicle of the train."""
+    from puenktlich.models import build_grid
+    from puenktlich.schema import vehicles
+
+    v = vehicles()["ew4_bt"]
+
+    def windscreen_glass(var: str) -> tuple[int, int]:
+        d = build_grid(v, var).data
+        mid = d.shape[0] // 2
+        upper = d[:, :, 33:48] == P.GLASS
+        return int(upper[mid + 100 :].sum()), int(upper[: mid - 100].sum())  # (front end, rear end)
+
+    front, rear = windscreen_glass("head")
+    assert front > 3 * max(rear, 1)
+    front, rear = windscreen_glass("tail")
+    assert rear > 3 * max(front, 1)
+
+
+def test_coaches_never_show_white_lamps() -> None:
+    from puenktlich.models import build_grid, variants
+    from puenktlich.schema import vehicles
+    from puenktlich.voxel.parts.lights import LAMP_WHITE
+
+    for vid in ("ew4_a", "ew4_b"):
+        v = vehicles()[vid]
+        for var in variants(v):
+            assert not (build_grid(v, var).data == LAMP_WHITE).any(), (vid, var)

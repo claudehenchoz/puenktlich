@@ -1,0 +1,40 @@
+# SBB EW IV A (1st class coach) — Einheitswagen IV. Seat count approximate (not in the cited source).
+id: ew4_a
+grf_id: 101         # never change — saved games reference this
+name:
+  en: SBB EW IV A (1st class)
+  de: SBB EW IV A (A, 1. Klasse)
+  fr: CFF A EW IV (A, 1re classe)
+  it: FFS A EW IV (A, 1a classe)
+operator: sbb
+kind: coach
+railtype: standard
+intro_year: 1981
+vehicle_life_years: 40
+model_life_years: 30
+max_speed_kmh: 200
+power_kw: 0
+weight_t: 40
+length_m: 26.4
+capacity:
+  PASS: 54
+cost_factor: 18
+running_cost_factor: 8
+liveries:
+  - id: sbb
+    name: { en: SBB IC, de: SBB IC, fr: CFF IC, it: FFS IC }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: sbb/ew4_a
+  kind: recipe
+  lights: true         # tail lamps on the last vehicle; control car turns its cab outward
+reference: [sbb-ew4]
+description:
+  en: First-class Einheitswagen IV, the standard SBB intercity coach of the 1980s and 90s.
+  de: Einheitswagen IV 1. Klasse, der Standard-Fernverkehrswagen der SBB.
+  fr: Voiture unifiée IV de 1re classe, la voiture grandes lignes standard des CFF.
+  it: Carrozza unificata IV di 1a classe, la carrozza standard a lunga percorrenza delle FFS.

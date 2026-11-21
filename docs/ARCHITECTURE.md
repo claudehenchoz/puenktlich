@@ -47,11 +47,12 @@ src/puenktlich/
 - **Railtypes** use standard labels (`SAAA`→`SAAE`→`ELRL`). We never ship tracks.
 - **3-part articulation** (from Timberwolf's Trains). Every vehicle of length 3–8 is an invisible front part, a sprite-carrying middle part and an invisible rear part, all the same item (`render.PARTS`). The middle part reads `curv_info` and the height of its neighbours to pick the ±15° curve views or the tilted hill views. Articulated parts add no weight or power in OpenTTD, so stats are unaffected.
   - Consequence: **articulated engines can't be flipped** in the depot (OpenTTD rejects it for any engine with the articulation callback).
+- **Push-pull** reuses the light variants: the control car recipe turns the model round for the `tail` variant (last in the train), so no extra NML logic is needed. OpenTTD keeps the locomotive leading when a train reverses, so this is the look players see in both directions.
 - **Direction-aware lights.** OpenTTD always draws a vehicle front-first, so the model's front end faces the direction of travel. The middle part picks a light variant from its position in the train: white lamps when the unit leads, red when it is last, dark in between. Pantographs need no switching for symmetric locos: the rear (trailing) one is modelled raised.
 
 ## Roadmap after milestone 1
 1. ~~Verify in-game~~: done with `pk ingame`. Lighting could still be tuned in `render/manifests/train.json`.
-2. Coaches (EW IV, IC2000) with the same parts library. Push-pull control cars choose their cab-end view from their position in the train (same mechanism as the lights). Flipping isn't available for articulated vehicles.
+2. ~~EW IV coaches + push-pull~~: done (A, B, Bt IC). `voxel/parts/coach.py` builds coaches and control cars from a spec. A control car that is last in the train (`tail` light variant) is built turned round, so its cab faces outward with red lamps. Verified in OpenTTD 15.3: a reversing train swaps its vehicles end to end and the locomotive stays in front, and wagons can't lead. So the control car always rides last, cab outward. A true "pushing" look would need the Bt to be a (lightly) powered engine so players can put it first; not done. Open: IC2000 double-deckers, older EW I/II, EW IV liveries before 2000.
 3. ~~Curve sprites~~ and ~~hill sprites~~ for vehicles ≤ 8/8: done. Still open: vehicles longer than 8/8 and multiple units (Timberwolf's front/mid/rear section sheets).
 4. ~~Pantograph switching~~: not needed for symmetric electrics. Done instead: direction-aware head/tail lights. Open: dual-mode locos lowering pantographs off the wire (`tile_powers_railtype`).
 5. Cargopositor for SBB Cargo wagons (containers, car carriers). Cargopositor is already used for hill tilting.

@@ -34,15 +34,19 @@ function PKTest::Start() {
   GSCompany.SetSecondaryLiveryColour(GSCompany.LS_DEFAULT, GSCompany.COLOUR_ORANGE);
 
   // find our engines
+  // engines in TARGETS order (OpenTTD's internal engine ids don't follow GRF item order)
   local engines = [];
-  foreach (e, _ in GSEngineList(GSVehicle.VT_RAIL)) {
-    local name = GSEngine.GetName(e);
-    local hit = false;
-    if (name != null) foreach (t in TARGETS) if (name.find(t) != null) hit = true;
-    if (hit) { engines.append(e); this.Log("engine " + e + " " + name + " buildable=" + GSEngine.IsBuildable(e)); }
+  foreach (t in TARGETS) {
+    foreach (e, _ in GSEngineList(GSVehicle.VT_RAIL)) {
+      local name = GSEngine.GetName(e);
+      if (name != null && name.find(t) != null) {
+        engines.append(e);
+        this.Log("engine " + e + " " + name + " buildable=" + GSEngine.IsBuildable(e));
+      }
+    }
   }
-  engines.sort();
   if (engines.len() == 0) { this.Log("ERROR no engines match TARGETS"); return; }
+  // track type of the first target (normally the locomotive), so electric locos get catenary
   local rt = GSEngine.GetRailType(engines[0]);
   GSRail.SetCurrentRailType(rt);
   this.Log("railtype " + rt + " " + GSRail.GetName(rt));
@@ -83,14 +87,16 @@ function PKTest::Start() {
   this.Log("train " + train + " valid=" + GSVehicle.IsValidVehicle(train) + " " + GSError.GetLastErrorString());
   for (local i = 1; i < engines.len(); i++) {
     local v = GSVehicle.BuildVehicle(depot, engines[i]);
-    GSVehicle.MoveWagon(v, 0, train, 0);
+    // append at the end so the consist keeps TARGETS/engine-id order (loco first)
+    if (!GSVehicle.MoveWagon(v, 0, train, GSVehicle.GetNumWagons(train) - 1))
+      this.Log("attach fail " + GSEngine.GetName(engines[i]) + " " + GSError.GetLastErrorString());
   }
   GSVehicle.StartStopVehicle(train);
   this.Log("train started, length " + GSVehicle.GetNumWagons(train));
 
   // Month m (1-based): after day 10, stop the train when its front is on STOP_TILES[m-1].
   // The console script for the 1st of the next month scrolls there and takes the shot.
-  local stopped = false, countdown = -1;
+  local stopped = false, countdown = -1, reversed = false;
   while (true) {
     local date = GSDate.GetCurrentDate();
     local day = GSDate.GetDayOfMonth(date);
@@ -102,10 +108,20 @@ function PKTest::Start() {
     if (!stopped && countdown == 0) {
       GSVehicle.StartStopVehicle(train); stopped = true;
       this.Log("stopped at " + STOP_TILES[idx][0] + "," + STOP_TILES[idx][1] + " (head now " +
-               GSMap.GetTileX(GSVehicle.GetLocation(train)) + "," + GSMap.GetTileY(GSVehicle.GetLocation(train)) + ")");
+               GSMap.GetTileX(GSVehicle.GetLocation(train)) + "," + GSMap.GetTileY(GSVehicle.GetLocation(train)) +
+               ", leading: " + GSEngine.GetName(GSVehicle.GetWagonEngineType(train, 0)) + ")");
     }
     if (countdown >= 0) countdown--;
-    if (stopped && day < 10) { GSVehicle.StartStopVehicle(train); stopped = false; }
+    if (stopped && day < 10) {
+      GSVehicle.StartStopVehicle(train); stopped = false;
+      // push-pull check: turn the whole train round once, so the far end leads.
+      // OpenTTD only acts on a reverse order while the train is moving.
+      if (REVERSE_AT_MONTH > 0 && GSDate.GetMonth(date) == REVERSE_AT_MONTH && !reversed) {
+        reversed = true;
+        this.Sleep(20);
+        this.Log("reverse train: " + GSVehicle.ReverseVehicle(train) + " " + GSError.GetLastErrorString());
+      }
+    }
     this.Sleep(1);
   }
 }

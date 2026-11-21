@@ -1,0 +1,40 @@
+# SBB EW IV B (2nd class coach) — Einheitswagen IV. Seat count approximate (not in the cited source).
+id: ew4_b
+grf_id: 102         # never change — saved games reference this
+name:
+  en: SBB EW IV B (2nd class)
+  de: SBB EW IV B (B, 2. Klasse)
+  fr: CFF B EW IV (B, 2e classe)
+  it: FFS B EW IV (B, 2a classe)
+operator: sbb
+kind: coach
+railtype: standard
+intro_year: 1983
+vehicle_life_years: 40
+model_life_years: 30
+max_speed_kmh: 200
+power_kw: 0
+weight_t: 42
+length_m: 26.4
+capacity:
+  PASS: 80
+cost_factor: 18
+running_cost_factor: 8
+liveries:
+  - id: sbb
+    name: { en: SBB IC, de: SBB IC, fr: CFF IC, it: FFS IC }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: sbb/ew4_b
+  kind: recipe
+  lights: true         # tail lamps on the last vehicle; control car turns its cab outward
+reference: [sbb-ew4]
+description:
+  en: Second-class Einheitswagen IV, the backbone of SBB intercity trains.
+  de: Einheitswagen IV 2. Klasse, das Rückgrat der SBB-Intercityzüge.
+  fr: Voiture unifiée IV de 2e classe, la colonne vertébrale des trains intercités CFF.
+  it: Carrozza unificata IV di 2a classe, la spina dorsale dei treni intercity FFS.

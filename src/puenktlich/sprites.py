@@ -103,7 +103,7 @@ def contact_sheet(vehicle, sprite_dir: Path, out: Path) -> Path:
     rows.append(("4x down (hill)", _views(sprite_dir, main, "down", 4, length)))
     if len(names) > 1:
         for var, name in names.items():
-            label = f"4x lights: {var} (SW view = front end, NE view = rear end)"
+            label = f"4x lights: {var} (left: NE view = rear end, right: SW view = front end)"
             rows.append((label, _views(sprite_dir, name, "normal", 4, length, only=(5, 1))))
     rows.append(("4x mask (magenta = CC1, cyan = CC2)", _views(sprite_dir, main, "normal", 4, length, mask_vis=True)))
 

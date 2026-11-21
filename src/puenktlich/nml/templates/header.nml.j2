@@ -8,6 +8,12 @@ grf {
     min_compatible_version: {{ min_compatible_version }};
 }
 
+{%- if cargos %}
+cargotable {
+    {{ cargos | join(", ") }}
+}
+
+{% endif -%}
 railtypetable {
 {%- for rt in railtypes %}
     {{ rt.label }}: [{{ ([rt.label] + rt.fallbacks) | map("tojson") | join(", ") }}],

@@ -25,6 +25,7 @@ GRFID = "PK\\43\\48"  # "PKCH" — never change after the first public release
 MAX_LIVERIES = 8
 LANG_IDS = {"en": 0x01, "de": 0x02, "fr": 0x03, "it": 0x27}
 LANG_FILES = {"en": "english", "de": "german", "fr": "french", "it": "italian"}
+CARGO_CLASSES = {"PASS": "CC_PASSENGERS", "MAIL": "CC_MAIL"}
 ZOOMS = {1: "ZOOM_LEVEL_NORMAL", 2: "ZOOM_LEVEL_IN_2X", 4: "ZOOM_LEVEL_IN_4X"}
 
 ENGINE = {  # traction -> (engine_class, running_cost_base, visual effect)
@@ -133,6 +134,21 @@ def vehicle_nml(v: Vehicle, strings: Strings) -> str:
         )
 
     engine_class, running_cost_base, visual_effect = ENGINE[_traction(v)]
+    if v.power_kw == 0:
+        running_cost_base = "RUNNING_COST_STEAM"  # wagons: OpenTTD's usual base for wagon running costs
+    cargo = None
+    if v.capacity:
+        if len(v.capacity) != 1:
+            raise ValueError(f"{v.id}: exactly one cargo type supported for now")
+        label, total = next(iter(v.capacity.items()))
+        n_parts = len(parts_for(length))
+        cargo = {
+            "label": label,
+            "total": total,
+            # every articulated part is the same item, so capacity is per part
+            "per_part": max(1, round(total / n_parts)),
+            "classes": CARGO_CLASSES[label],
+        }
     te = None
     if v.tractive_effort_kn:
         te = round(min(1.0, v.tractive_effort_kn / (v.weight_t * 9.81)), 3)
@@ -154,6 +170,7 @@ def vehicle_nml(v: Vehicle, strings: Strings) -> str:
         te_coefficient=te,
         track_label=railtypes()[v.railtype].label,
         badges=[op.badge],
+        cargo=cargo,
     )
 
 
@@ -172,6 +189,7 @@ def generate(out_dir: Path = paths.BUILD_NML, only: list[str] | None = None) -> 
         op = operators()[op_id]
         badges.append(Badge(op.badge, strings.add(f"STR_BADGE_{op.id.upper()}", {"en": op.name})))
     used_rts = sorted({v.railtype for v in vs})
+    cargos = sorted({label for v in vs for label in v.capacity})
 
     major, minor, patch = (int(x) for x in version.split(".")[:3])
     parts = [
@@ -180,6 +198,7 @@ def generate(out_dir: Path = paths.BUILD_NML, only: list[str] | None = None) -> 
             version=major * 10000 + minor * 100 + patch,
             min_compatible_version=0,
             railtypes=[railtypes()[r] for r in used_rts],
+            cargos=cargos,
             badges=badges,
         ),
         _env.get_template("procedures.nml.j2").render(

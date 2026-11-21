@@ -139,17 +139,24 @@ def ingame(
     ids: IdsArg = None,
     zoom: Annotated[list[str] | None, typer.Option(help="Zoom levels: 1x, 2x, 4x (repeatable)")] = None,
     shots: Annotated[int, typer.Option(help="Screenshots per zoom level (one per game month)")] = 6,
+    all_liveries: Annotated[bool, typer.Option(help="Every livery of each vehicle, not just the first")] = False,
 ) -> None:
     """Run OpenTTD headless with build/puenktlich.grf and screenshot the vehicles in-game.
 
-    Builds a test loop via a Game Script, runs one train of the selected vehicles (all
-    liveries) and writes screenshots to build/ingame/<zoom>/. Takes ~1 min per shot."""
+    Builds a test loop with a ramp via a Game Script, runs one train of the selected
+    vehicles in the given order (first livery each unless --all-liveries), turns it round
+    after shot 3 (push-pull check) and writes screenshots to build/ingame/<zoom>/.
+    Takes ~1 min per shot."""
     from puenktlich.ingame import run
 
     grf = paths.BUILD / f"{paths.GRF_NAME}.grf"
     if not grf.exists():
         raise typer.BadParameter("build/puenktlich.grf missing — run `pk build` first")
-    targets = [v.name["en"] for v in _select(ids)]
+    vs = _select(ids)
+    if all_liveries:
+        targets = [v.name["en"] for v in vs]
+    else:
+        targets = [f"{v.name['en']} ({v.liveries[0].name['en']})" for v in vs]
     results = run(grf, targets, zoom or ["1x", "2x", "4x"], shots=shots)
     failed = False
     for r in results:

@@ -70,26 +70,37 @@ item(FEAT_TRAINS, {{ l.ident }}, {{ l.item_id }}) {
         model_life: {{ v.model_life_years }};
         vehicle_life: {{ v.vehicle_life_years }};
         reliability_decay: {{ v.reliability_decay }};
+        {%- if cargo %}
+        refittable_cargo_classes: bitmask({{ cargo.classes }});
+        non_refittable_cargo_classes: bitmask();
+        default_cargo_type: {{ cargo.label }};
+        cargo_capacity: {{ cargo.per_part }};  // per articulated part: {{ cargo.total }} in total
+        {%- else %}
         refittable_cargo_classes: bitmask();
         non_refittable_cargo_classes: bitmask();
         cargo_capacity: 0;
+        {%- endif %}
         cost_factor: {{ v.cost_factor }};
         running_cost_factor: {{ v.running_cost_factor }};
         running_cost_base: {{ running_cost_base }};
         sprite_id: SPRITE_ID_NEW_TRAIN;
         speed: {{ v.max_speed_kmh }} km/h;
-        power: {{ v.power_kw }} kW;
         weight: {{ v.weight_t }} ton;
+        track_type: {{ track_label }};
+        length: {{ parts[0] if articulated else v.ottd_length }};
+        misc_flags: bitmask(TRAIN_FLAG_2CC);
+        {%- if v.power_kw > 0 %}
+        power: {{ v.power_kw }} kW;
         {%- if te_coefficient %}
         tractive_effort_coefficient: {{ te_coefficient }};
         {%- endif %}
-        track_type: {{ track_label }};
         engine_class: {{ engine_class }};
         visual_effect_and_powered: visual_effect_and_powered({{ visual_effect }}, 2, DISABLE_WAGON_POWER);
-        length: {{ parts[0] if articulated else v.ottd_length }};
-        misc_flags: bitmask(TRAIN_FLAG_2CC);
         dual_headed: 0;
         ai_special_flag: AI_FLAG_PASSENGER;
+        {%- else %}
+        power: 0 kW;
+        {%- endif %}
         badges: [{{ badges | map("tojson") | join(", ") }}];
         {%- if l.variant_group %}
         variant_group: {{ l.variant_group }};

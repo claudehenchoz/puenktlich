@@ -1,0 +1,40 @@
+# SBB EW IV Bt (control car) — Einheitswagen IV. Seat count approximate (not in the cited source).
+id: ew4_bt
+grf_id: 103         # never change — saved games reference this
+name:
+  en: SBB Bt IC (control car)
+  de: SBB Bt IC (Steuerwagen)
+  fr: CFF Bt IC (voiture-pilote)
+  it: FFS Bt IC (carrozza pilota)
+operator: sbb
+kind: control_car
+railtype: standard
+intro_year: 1996
+vehicle_life_years: 40
+model_life_years: 30
+max_speed_kmh: 200
+power_kw: 0
+weight_t: 43
+length_m: 26.4
+capacity:
+  PASS: 48
+cost_factor: 18
+running_cost_factor: 8
+liveries:
+  - id: sbb
+    name: { en: SBB IC, de: SBB IC, fr: CFF IC, it: FFS IC }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: sbb/ew4_bt
+  kind: recipe
+  lights: true         # tail lamps on the last vehicle; control car turns its cab outward
+reference: [sbb-ew4-bt]
+description:
+  en: Control car with an Re 460 cab for push-pull IC trains. Shows its cab at whichever end of the train it runs.
+  de: Steuerwagen mit Re-460-Führerstand für IC-Pendelzüge. Zeigt den Führerstand an dem Zugende, an dem er läuft.
+  fr: Voiture-pilote avec cabine de Re 460 pour les navettes IC. Montre sa cabine à l'extrémité du train où elle circule.
+  it: Carrozza pilota con cabina della Re 460 per i treni navetta IC. Mostra la cabina all'estremità del treno in cui si trova.

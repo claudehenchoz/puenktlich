@@ -113,3 +113,8 @@ class Model:
             self.d[skin] = 0
         skin = self.surface() & np.broadcast_to(mask, self.d.shape)
         self.d[skin] = colour
+
+    def rotate_180(self) -> None:
+        """Turn the model around (swap front and rear ends, and left/right sides).
+        The canvas is symmetric, so the vehicle stays centred."""
+        self.grid.data = np.ascontiguousarray(self.d[::-1, ::-1, :])

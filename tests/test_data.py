@@ -21,3 +21,10 @@ def test_lengths_are_sane() -> None:
 def test_fixed_livery_requires_colours() -> None:
     with pytest.raises(ValidationError):
         Livery(id="x", name={"en": "x"}, company_colours=False)
+
+
+def test_wagons_have_capacity_and_no_power() -> None:
+    for v in vehicles().values():
+        if v.kind in ("coach", "control_car", "wagon"):
+            assert v.power_kw == 0, v.id
+            assert v.capacity, v.id

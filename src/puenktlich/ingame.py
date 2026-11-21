@@ -19,6 +19,7 @@ from __future__ import annotations
 import contextlib
 import json
 import os
+import re
 import shutil
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
@@ -39,6 +40,9 @@ ZOOM_LEVELS = {"4x": 0, "2x": 1, "1x": 2}  # OpenTTD ZoomLevel: 0 = 4x in, 2 = n
 LOOP = {"x0": 31, "x1": 34, "y0": 31, "y1": 34}
 RAISE_X = 34  # vertices x >= 34 one level up: tiles (33, y0) and (33, y1) are ramps
 STOP_DELAY = 4  # ticks after the head enters a stop tile
+# Optionally reverse the whole train when restarting in this month (0 = never). Note that
+# OpenTTD then swaps the vehicles end to end, so the locomotive still leads.
+REVERSE_AT_MONTH = 0
 STOP_TILES = [(32, 31), (33, 31), (34, 31), (34, 33), (33, 34), (31, 34)]
 
 CONFIG = """\
@@ -108,7 +112,7 @@ def _profile(zoom_name: str, grf: Path, targets: list[str], shots: int) -> Path:
     loop = ", ".join(f"{k} = {v}" for k, v in LOOP.items())
     (gs / "targets.nut").write_text(
         f"TARGETS <- {json.dumps(targets)};\nLOOP <- {{{loop}}};\nSTOP_TILES <- [{stops}];\n"
-        f"RAISE_X <- {RAISE_X};\nSTOP_DELAY <- {STOP_DELAY};\n"
+        f"RAISE_X <- {RAISE_X};\nSTOP_DELAY <- {STOP_DELAY};\nREVERSE_AT_MONTH <- {REVERSE_AT_MONTH};\n"
     )
     cfg = root / "config" / "openttd"
     cfg.mkdir(parents=True)
@@ -166,6 +170,7 @@ def _run(zoom_name: str, grf: Path, targets: list[str], shots: int, timeout: int
         if "puenktlich" in ln.lower() and ("error" in ln.lower() or "warning" in ln.lower())
     ]
     errors += [ln for ln in text.splitlines() if "[S]" in ln or "ERROR" in ln]
+    errors += [ln for ln in lines if re.search(r"\b(rail|depot|attach) fail\b", ln)]
     shots_dir = root / "data" / "openttd" / "screenshot"
     found = sorted(shots_dir.glob("*.png")) if shots_dir.exists() else []
     return Result(zoom_name, found, log, lines, errors)
