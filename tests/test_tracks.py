@@ -54,3 +54,52 @@ def test_track_grf_compiles(tmp_path) -> None:
 
     grf = build_tracks(tmp_path / "tracks.grf")
     assert grf.stat().st_size > 10_000
+
+
+def test_infra_groups_have_openttd_counts() -> None:
+    from puenktlich.tracks.infra import infra_sprites
+
+    counts = {k: len(v) for k, v in infra_sprites(METRE_GAUGE, 1).items()}
+    assert counts == {
+        "level_crossings": 10,
+        "bridge_surfaces": 6,
+        "tunnels": 4,
+        "tunnel_overlay": 4,
+        "depots": 6,
+        "gui": 16,
+    }
+
+
+def test_crossing_rails_match_track_rails() -> None:
+    """The crossing's rail sprites are the track overlay's rails (same gauge, same place)."""
+    import numpy as np
+
+    from puenktlich.tracks.infra import crossing_sprites
+
+    crossing = crossing_sprites(METRE_GAUGE, 4)[0]
+    rails = track_sprites(METRE_GAUGE, 4)["track_overlay"][0]
+    assert (crossing.xofs, crossing.yofs) == (rails.xofs, rails.yofs)
+    assert np.array_equal(np.array(crossing.image), np.array(rails.image))
+
+
+def test_rack_style_adds_a_rack_bar() -> None:
+    import numpy as np
+
+    from puenktlich.tracks.raster import METRE_GAUGE_RACK
+
+    plain = np.array(track_sprites(METRE_GAUGE, 4)["track_overlay"][0].image)
+    rack = np.array(track_sprites(METRE_GAUGE_RACK, 4)["track_overlay"][0].image)
+    assert (rack[..., 3] > 0).sum() > (plain[..., 3] > 0).sum()
+
+
+def test_depots_sit_on_their_tile() -> None:
+    """Each depot part is drawn at its own tile offset; re-adding that offset must put the
+    building inside the tile diamond's horizontal extent (-32..32 px at 1x)."""
+    from puenktlich.tracks.infra import depot_sprites
+    from puenktlich.tracks.raster import _project
+
+    origins = [(2, 2), (13, 2), (2, 2), (2, 13), (2, 13), (13, 2)]
+    for sprite, (dx, dy) in zip(depot_sprites(1), origins, strict=True):
+        ox, _ = _project(dx, dy, 0)
+        left, right = ox + sprite.xofs, ox + sprite.xofs + sprite.image.width
+        assert left >= -33 and right <= 33

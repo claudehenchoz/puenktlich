@@ -26,6 +26,8 @@ from pathlib import Path
 from puenktlich import paths
 
 SCALES = (1, 2, 4)
+# renderers run at lower priority so a build never freezes the desktop
+NICE = ["nice", "-n", "10"] if shutil.which("nice") else []
 SPRITE_SPACING = 8  # GoRender constant
 Y_JOGGLE = 4
 KINDS = ("normal", "turn_1", "turn_2", "up", "down")
@@ -188,6 +190,7 @@ def gorender(
         raise FileNotFoundError(f"{paths.GORENDER} missing — run tools/install.sh")
     out_dir.mkdir(parents=True, exist_ok=True)
     cmd = [
+        *NICE,
         str(paths.GORENDER),
         "-m",
         str(paths.MANIFESTS / f"{manifest}.json"),
@@ -210,7 +213,7 @@ def cargopositor(batch: Path, voxel_dir: Path, out_dir: Path) -> None:
         raise FileNotFoundError(f"{paths.CARGOPOSITOR} missing — run tools/install.sh")
     out_dir.mkdir(parents=True, exist_ok=True)
     subprocess.run(
-        [str(paths.CARGOPOSITOR), "-o", str(out_dir), "-v", str(voxel_dir), str(batch)],
+        [*NICE, str(paths.CARGOPOSITOR), "-o", str(out_dir), "-v", str(voxel_dir), str(batch)],
         check=True,
         stdout=subprocess.DEVNULL,
     )

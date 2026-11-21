@@ -143,6 +143,8 @@ def install(
 def ingame(
     ids: IdsArg = None,
     zoom: Annotated[list[str] | None, typer.Option(help="Zoom levels: 1x, 2x, 4x (repeatable)")] = None,
+    parallel: Annotated[bool, typer.Option(help="Run all zoom levels at once (heavy on laptops)")] = False,
+    scene: Annotated[str, typer.Option(help="loop | infra (crossing, bridge, tunnel, depots, rack)")] = "loop",
     shots: Annotated[int, typer.Option(help="Screenshots per zoom level (one per game month)")] = 6,
     all_liveries: Annotated[bool, typer.Option(help="Every livery of each vehicle, not just the first")] = False,
 ) -> None:
@@ -162,7 +164,9 @@ def ingame(
         targets = [v.name["en"] for v in vs]
     else:
         targets = [f"{v.name['en']} ({v.liveries[0].name['en']})" for v in vs]
-    results = run(grf, targets, zoom or ["1x", "2x", "4x"], shots=shots)
+    if scene == "infra":
+        zoom, shots = ["2x"], min(shots, 4)  # one run: overview + close-up shots
+    results = run(grf, targets, zoom or ["1x", "2x", "4x"], shots=shots, parallel=parallel, scene=scene)
     failed = False
     for r in results:
         typer.secho(f"== {r.zoom}", bold=True)
@@ -175,6 +179,14 @@ def ingame(
         failed |= bool(r.errors) or not r.screenshots
     if failed:
         raise typer.Exit(1)
+
+
+@app.command("tracks-preview")
+def tracks_preview_cmd(zoom: Annotated[int, typer.Option(help="1, 2 or 4")] = 4) -> None:
+    """Contact sheet of the metre-gauge track GRF -> build/previews/tracks.png."""
+    from puenktlich.tracks.preview import tracks_preview
+
+    typer.echo(tracks_preview(paths.BUILD_PREVIEWS / "tracks.png", zoom))
 
 
 @app.command()

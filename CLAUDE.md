@@ -37,7 +37,7 @@ Swiss trains & buses for OpenTTD. Vision: `docs/IDEA.md`. Architecture: `docs/AR
 - Coaches and control cars: build them with `voxel.parts.coach.build_coach(CoachSpec(...), lights)`. Give a `CabSpec` for a control car; push-pull orientation is automatic. Wagons have `power_kw: 0`, a `capacity` (split evenly over the 3 parts) and `railtype: standard`. Control cars get a nominal `power_kw` (1–10), so they can lead a train.
 - Multiple units: `cars:` instead of `model:` in the vehicle YAML. One recipe can build all cars via `model.params`. Car recipes paint lamps by role (`CoachSpec(mu_role="front"|"middle"|"rear")`). Sheet names are prefixed `<id>_c<k>_`.
 - Freight wagons: paint the load space with `voxel.cargo.CARGO_MASK` (255) and define `CARGO = CargoSpec(...)` in the recipe (see `models/sbb/eanos`). Model recolourable cargo in CC1 and keep the wagon body out of company colours. Set `refit_classes` and the default cargo in `capacity`.
-- Metre gauge: `railtype: metre_ac`/`metre_diesel` and `bogie(..., gauge="metre")`. The vehicles need `build/puenktlich_tracks.grf` (built by `pk build`, loaded first by `pk ingame`).
+- Metre gauge: `railtype: metre_ac`/`metre_diesel` (rack: `metre_rack_ac`/`metre_rack_diesel`) and `bogie(..., gauge="metre")`. Track GRF art: `pk tracks-preview`; in-game check of crossings/bridges/tunnels/depots/rack: `pk ingame <id> --scene infra`. The vehicles need `build/puenktlich_tracks.grf` (built by `pk build`, loaded first by `pk ingame`).
 - Keep models at z ≤ 68 so the 10° hill tilt has headroom (a test checks this).
 - A full render of a light-variant vehicle is ~1 min (4 variants × 3 renders). Unchanged vox files are skipped.
 
@@ -45,6 +45,7 @@ Swiss trains & buses for OpenTTD. Vision: `docs/IDEA.md`. Architecture: `docs/AR
 Use the `new-vehicle` skill (`.claude/skills/new-vehicle/SKILL.md`). In short: add a reference entry → write the YAML → write the recipe → `pk preview` loop → `pk build` → tests.
 
 ## Gotchas
+- Laptops: `pk ingame` runs one zoom level at a time (`--parallel` opts in), and renderers run under `nice`. Prefer `--zoom 4x` for quick checks; never start several heavy runs at once.
 - Don't name scratch scripts after stdlib modules (`re.py`, `types.py`…).
 - GoRender skips outputs newer than the input. Use `pk render --force` after changing the manifest or palette.
 - GoRender fills unused sheet area with opaque white / index 255. Only the manifest rectangles matter.

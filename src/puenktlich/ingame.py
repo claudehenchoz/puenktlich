@@ -30,6 +30,7 @@ from puenktlich import paths
 
 GS_DIR = paths.ROOT / "tools" / "ingame" / "pk_test"
 OUT = paths.BUILD / "ingame"
+NICE = ["nice", "-n", "10"] if shutil.which("nice") else []
 ZOOM_LEVELS = {"4x": 0, "2x": 1, "1x": 2}  # OpenTTD ZoomLevel: 0 = 4x in, 2 = normal
 
 # A 4x4-tile loop around the map centre (64x64 map): the initial camera looks at
@@ -100,7 +101,7 @@ class Result:
     errors: list[str]
 
 
-def _profile(zoom_name: str, grf: Path, targets: list[str], shots: int) -> Path:
+def _profile(zoom_name: str, grf: Path, targets: list[str], shots: int, scene: str = "loop") -> Path:
     root = OUT / zoom_name
     shutil.rmtree(root, ignore_errors=True)
     data = root / "data" / "openttd"
@@ -115,6 +116,7 @@ def _profile(zoom_name: str, grf: Path, targets: list[str], shots: int) -> Path:
     (gs / "targets.nut").write_text(
         f"TARGETS <- {json.dumps(targets)};\nLOOP <- {{{loop}}};\nSTOP_TILES <- [{stops}];\n"
         f"RAISE_X <- {RAISE_X};\nSTOP_DELAY <- {STOP_DELAY};\nREVERSE_AT_MONTH <- {REVERSE_AT_MONTH};\n"
+        f"SCENE <- {json.dumps(scene)};\n"
     )
     cfg = root / "config" / "openttd"
     cfg.mkdir(parents=True)
@@ -124,17 +126,18 @@ def _profile(zoom_name: str, grf: Path, targets: list[str], shots: int) -> Path:
     (scripts / "game_start.scr").write_text("schedule on-next-calendar-month scripts/m1.scr\n")
     for i in range(1, shots + 1):
         x, y = STOP_TILES[(i - 1) % len(STOP_TILES)]
+        # infra scene: alternate an overview (2x) and a close-up (4x) in one run
+        zl = ZOOM_LEVELS["2x" if i % 2 else "4x"] if scene == "infra" else ZOOM_LEVELS[zoom_name]
+        name = f"infra_{i}_{'2x' if i % 2 else '4x'}" if scene == "infra" else f"{zoom_name}_{i}_at_{x}_{y}"
         (scripts / f"m{i}.scr").write_text(
-            f"zoomto {ZOOM_LEVELS[zoom_name]}\n"
-            f"screenshot viewport no_con {zoom_name}_{i}_at_{x}_{y}\n"
-            f"schedule on-next-calendar-month scripts/m{i + 1}.scr\n"
+            f"zoomto {zl}\nscreenshot viewport no_con {name}\nschedule on-next-calendar-month scripts/m{i + 1}.scr\n"
         )
     (scripts / f"m{shots + 1}.scr").write_text("quit\n")
     return root
 
 
-def _run(zoom_name: str, grf: Path, targets: list[str], shots: int, timeout: int) -> Result:
-    root = _profile(zoom_name, grf, targets, shots)
+def _run(zoom_name: str, grf: Path, targets: list[str], shots: int, timeout: int, scene: str = "loop") -> Result:
+    root = _profile(zoom_name, grf, targets, shots, scene)
     env = dict(
         os.environ, SDL_VIDEODRIVER="offscreen", XDG_DATA_HOME=str(root / "data"), XDG_CONFIG_HOME=str(root / "config")
     )
@@ -142,6 +145,7 @@ def _run(zoom_name: str, grf: Path, targets: list[str], shots: int, timeout: int
     with log.open("w") as fh, contextlib.suppress(subprocess.TimeoutExpired):  # run() kills the child on timeout
         subprocess.run(
             [
+                *NICE,
                 "openttd",
                 "-x",
                 "-v",
@@ -172,14 +176,24 @@ def _run(zoom_name: str, grf: Path, targets: list[str], shots: int, timeout: int
         if "puenktlich" in ln.lower() and ("error" in ln.lower() or "warning" in ln.lower())
     ]
     errors += [ln for ln in text.splitlines() if "[S]" in ln or "ERROR" in ln]
-    errors += [ln for ln in lines if re.search(r"\b(rail|depot|attach) fail\b", ln)]
+    errors += [ln for ln in lines if re.search(r"\b(rail|depot|attach) fail\b|infra FAIL", ln)]
     shots_dir = root / "data" / "openttd" / "screenshot"
     found = sorted(shots_dir.glob("*.png")) if shots_dir.exists() else []
     return Result(zoom_name, found, log, lines, errors)
 
 
-def run(grf: Path, targets: list[str], zooms: list[str], shots: int = 6, timeout: int = 600) -> list[Result]:
+def run(
+    grf: Path,
+    targets: list[str],
+    zooms: list[str],
+    shots: int = 6,
+    timeout: int = 600,
+    parallel: bool = False,
+    scene: str = "loop",
+) -> list[Result]:
+    """One zoom level after another by default: several offscreen OpenTTDs plus renders can
+    freeze a 4-core laptop. `parallel=True` runs all zoom levels at once."""
     if shutil.which("openttd") is None:
         raise FileNotFoundError("openttd not found on PATH")
-    with ThreadPoolExecutor(len(zooms)) as pool:
-        return list(pool.map(lambda z: _run(z, grf, targets, shots, timeout), zooms))
+    with ThreadPoolExecutor(len(zooms) if parallel else 1) as pool:
+        return list(pool.map(lambda z: _run(z, grf, targets, shots, timeout, scene), zooms))

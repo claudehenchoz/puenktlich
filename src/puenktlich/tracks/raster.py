@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 from PIL import Image, ImageDraw
@@ -74,6 +74,9 @@ class TrackStyle:
     sleeper: tuple[int, int, int] = (64, 50, 38)
     rail_top: tuple[int, int, int] = (200, 200, 206)
     rail_side: tuple[int, int, int] = (44, 40, 40)
+    rack: bool = False  # central toothed rack bar (Abt/Strub)
+    rack_bar: tuple[int, int, int] = (36, 34, 34)
+    rack_teeth: tuple[int, int, int] = (150, 148, 150)
 
 
 # Standard OpenTTD rails sit ~1.53 units apart (≈ 26 voxels at our vehicle scale);
@@ -84,6 +87,8 @@ METRE_GAUGE = TrackStyle(
     ballast_half_width=1.45,
     sleeper_half_length=0.95,
 )
+METRE_GAUGE_RACK = replace(METRE_GAUGE, rack=True)
+STYLES = {"metre": METRE_GAUGE, "metre_rack": METRE_GAUGE_RACK}
 
 
 @dataclass
@@ -180,10 +185,31 @@ def underlay_layers(pieces: list[str], style: TrackStyle) -> Layer:
     return layers
 
 
+def _rack(a: Vec, b: Vec, style: TrackStyle) -> Layer:
+    """Central rack bar with light teeth every ~0.5 units."""
+    layers: Layer = [(_strip(a, b, 0, 0.22), style.rack_bar)]
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    L = math.hypot(dx, dy)
+    ux, uy = dx / L, dy / L
+    n = int(L / 0.55)
+    for i in range(n):
+        t = (i + 0.5) * L / n
+        c = (a[0] + ux * t, a[1] + uy * t)
+        layers.append(
+            (
+                _strip((c[0] - ux * 0.12, c[1] - uy * 0.12), (c[0] + ux * 0.12, c[1] + uy * 0.12), 0, 0.11, extend=0),
+                style.rack_teeth,
+            )
+        )
+    return layers
+
+
 def overlay_layers(pieces: list[str], style: TrackStyle) -> Layer:
     layers: Layer = []
     for p in pieces:
         a, b = PIECES[p]
+        if style.rack:
+            layers += _rack(a, b, style)
         for side in (-1, 1):
             off = side * style.half_gauge
             # dark rail body, light running surface on top (slightly towards the viewer)
@@ -192,13 +218,23 @@ def overlay_layers(pieces: list[str], style: TrackStyle) -> Layer:
     return layers
 
 
-def rasterise(layers: Layer, z: Callable[[float, float], float], zoom: int) -> Sprite:
-    """Clip, project and draw polygons; returns an RGBA sprite with game offsets."""
-    polys = []
+def rasterise(layers: Layer, z: Callable[[float, float], float], zoom: int, clip: bool = True) -> Sprite:
+    """Clip to the tile, lift by z(x, y), project and draw; RGBA sprite with game offsets."""
+    polys3d = []
     for poly, colour in layers:
-        clipped = _clip(poly)
+        clipped = _clip(poly) if clip else poly
         if len(clipped) >= 3:
-            polys.append(([_project(x, y, z(x, y)) for x, y in clipped], colour))
+            polys3d.append(([(x, y, z(x, y)) for x, y in clipped], colour))
+    return rasterise3d(polys3d, zoom)
+
+
+Poly3D = list[tuple[list[tuple[float, float, float]], tuple[int, int, int]]]
+
+
+def rasterise3d(polys3d: Poly3D, zoom: int) -> Sprite:
+    """Project 3D polygons (painter's order: first drawn first) relative to the local origin
+    (0, 0, 0), which is where the game places the sprite."""
+    polys = [([_project(x, y, z) for x, y, z in pts], colour) for pts, colour in polys3d]
     if not polys:
         return Sprite(Image.new("RGBA", (1, 1)), 0, 0)
     xs = [p[0] for pts, _ in polys for p in pts]

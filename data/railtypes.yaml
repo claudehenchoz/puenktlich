@@ -26,9 +26,14 @@
   label: NAAD
   fallbacks: [NAAE]
   description: Metre gauge, DC catenary (MOB, AB, …)
-# Rack railways use the scheme's special speed classes (extension, used by French Set Rails).
-# Verify against current track sets before the first rack vehicle ships.
+# Rack railways use the scheme's special speed class "R" (as in French Set Rails). The
+# companion GRF provides NRAN / NRAE (40 km/h); plain metre-gauge engines may use rack
+# sections too (adhesion), rack engines may run on plain metre gauge.
 - id: metre_rack_ac
   label: NRAA
-  fallbacks: [NRAE, NAAA, NAAE]
-  description: Metre gauge rack + adhesion, AC catenary (MGB, zb Brünig)
+  fallbacks: [NRAE, NAAE]
+  description: Metre gauge rack + adhesion, electrified (MGB, zb Brünig)
+- id: metre_rack_diesel
+  label: NRAN
+  fallbacks: [NAAN]
+  description: Metre gauge rack + adhesion, non-electric (steam/diesel rack lines)

@@ -14,7 +14,8 @@ from PIL import Image
 from puenktlich import paths
 from puenktlich.nml.generate import LANG_FILES, LANG_IDS, Strings, project_version
 from puenktlich.render import SCALES
-from puenktlich.tracks.raster import METRE_GAUGE, Sprite, quantise, track_sprites
+from puenktlich.tracks.infra import infra_sprites
+from puenktlich.tracks.raster import STYLES, Sprite, quantise, track_sprites
 from puenktlich.voxel.palette import rgb_palette
 
 GRFID = "PK\\43\\54"  # "PKCT" — never change after the first public release
@@ -37,21 +38,41 @@ def _sheet(sprites: list[Sprite]) -> tuple[Image.Image, list[tuple[int, int, int
     return sheet, rects
 
 
-def write_sheets(out: Path = OUT) -> dict[str, dict[int, tuple[str, str, list]]]:
-    """group -> zoom -> (32bpp path, 8bpp path or '', rects)."""
+GROUPS = (
+    "underlay",
+    "track_overlay",
+    "level_crossings",
+    "bridge_surfaces",
+    "tunnels",
+    "tunnel_overlay",
+    "depots",
+    "gui",
+)
+
+
+def write_sheets(styles: set[str], out: Path = OUT) -> dict[str, dict[str, dict[int, tuple[str, str, list]]]]:
+    """style -> group -> zoom -> (32bpp path, 8bpp path, rects) for every railtype sprite group."""
     out.mkdir(parents=True, exist_ok=True)
-    result: dict[str, dict[int, tuple[str, str, list]]] = {}
-    for zoom in SCALES:
-        for group, sprites in track_sprites(METRE_GAUGE, zoom).items():
-            sheet, rects = _sheet(sprites)
-            p32 = out / f"{group}_{zoom}x_32bpp.png"
-            sheet.save(p32)
-            p8 = ""
-            if zoom == 1:
-                p8p = out / f"{group}_{zoom}x_8bpp.png"
-                quantise(sheet, rgb_palette(), ALLOWED).save(p8p)
-                p8 = p8p.relative_to(paths.ROOT).as_posix()
-            result.setdefault(group, {})[zoom] = (p32.relative_to(paths.ROOT).as_posix(), p8, rects)
+    result: dict[str, dict[str, dict[int, tuple[str, str, list]]]] = {}
+    for style_name in sorted(styles):
+        style = STYLES[style_name]
+        for zoom in SCALES:
+            groups = track_sprites(style, zoom) | infra_sprites(style, zoom)
+            for group in GROUPS:
+                sheet, rects = _sheet(groups[group])
+                stem = f"{style_name}_{group}_{zoom}x"
+                p32 = out / f"{stem}_32bpp.png"
+                sheet.save(p32)
+                p8 = ""
+                if zoom == 1:
+                    p8p = out / f"{stem}_8bpp.png"
+                    quantise(sheet, rgb_palette(), ALLOWED).save(p8p)
+                    p8 = p8p.relative_to(paths.ROOT).as_posix()
+                result.setdefault(style_name, {}).setdefault(group, {})[zoom] = (
+                    p32.relative_to(paths.ROOT).as_posix(),
+                    p8,
+                    rects,
+                )
     return result
 
 
@@ -71,17 +92,19 @@ def _nml(sheets: dict, railtypes: list[dict], strings: Strings) -> str:
     ]
     labels = sorted({lab for rt in railtypes for lab in [rt["label"], *rt["compatible"], *rt["powered"]]})
     lines += ["railtypetable {", *[f"    {lab}," for lab in labels], "}", ""]
-    for group, zooms in sheets.items():
-        p32, p8, rects = zooms[1]
-        lines.append(f'spriteset(ss_ng_{group}, "{p8}") {{')
-        lines += [f"    [{x}, {y}, {w}, {h}, {xo}, {yo}]" for x, y, w, h, xo, yo in rects]
-        lines.append("}")
-        for zoom in SCALES:
-            p32, _, rects = zooms[zoom]
-            lines.append(f'alternative_sprites(ss_ng_{group}, {ZOOMS[zoom]}, BIT_DEPTH_32BPP, "{p32}") {{')
+    for style_name, groups in sheets.items():
+        for group, zooms in groups.items():
+            p32, p8, rects = zooms[1]
+            ss = f"ss_{style_name}_{group}"
+            lines.append(f'spriteset({ss}, "{p8}") {{')
             lines += [f"    [{x}, {y}, {w}, {h}, {xo}, {yo}]" for x, y, w, h, xo, yo in rects]
             lines.append("}")
-        lines.append("")
+            for zoom in SCALES:
+                p32, _, rects = zooms[zoom]
+                lines.append(f'alternative_sprites({ss}, {ZOOMS[zoom]}, BIT_DEPTH_32BPP, "{p32}") {{')
+                lines += [f"    [{x}, {y}, {w}, {h}, {xo}, {yo}]" for x, y, w, h, xo, yo in rects]
+                lines.append("}")
+            lines.append("")
     for i, rt in enumerate(railtypes):
         lab = rt["label"]
         s_name = strings.add(f"STR_RT_{lab}_NAME", rt["name"])
@@ -105,14 +128,15 @@ def _nml(sheets: dict, railtypes: list[dict], strings: Strings) -> str:
             f"        introduction_date: date({rt['intro_year']}, 1, 1);",
             f"        construction_cost: {rt['construction_cost']};",
             f"        maintenance_cost: {rt['maintenance_cost']};",
-            "        speed_limit: 0;",
+            f"        speed_limit: {rt.get('speed_limit_kmh', 0)} km/h;"
+            if rt.get("speed_limit_kmh")
+            else "        speed_limit: 0;",
             "        acceleration_model: ACC_MODEL_RAIL;",
             f"        map_colour: {rt['map_colour']};",
             f"        sort_order: {0x20 + i};",
             "    }",
             "    graphics {",
-            "        track_overlay: ss_ng_track_overlay;",
-            "        underlay: ss_ng_underlay;",
+            *[f"        {g}: ss_{rt['style']}_{g};" for g in GROUPS],
             "    }",
             "}",
             "",
@@ -126,7 +150,7 @@ def build_tracks(out_grf: Path | None = None) -> Path:
     static = yaml.safe_load((paths.LANG / "strings.yaml").read_text(encoding="utf-8"))
     for key in ("STR_TRACKS_GRF_NAME", "STR_TRACKS_GRF_DESC", "STR_GRF_URL"):
         strings.add(key, {k: t.replace("{VERSION}", project_version()) for k, t in static[key].items()})
-    sheets = write_sheets()
+    sheets = write_sheets({rt["style"] for rt in railtypes})
     nml_dir = paths.BUILD / "nml_tracks"
     nml_dir.mkdir(parents=True, exist_ok=True)
     nml = nml_dir / "puenktlich_tracks.nml"

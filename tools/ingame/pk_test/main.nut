@@ -4,6 +4,15 @@ class PKTest extends GSController {}
 
 function PKTest::Log(msg) { GSLog.Info("PKTEST " + msg); }
 
+// 2 = every engine can run on `cand` and has power there, 1 = can run, 0 = can't
+function PKTest::Fits(engines, cand) {
+  foreach (e in engines) {
+    if (!GSEngine.CanRunOnRail(e, cand)) return 0;
+    if (GSEngine.GetPower(e) > 0 && !GSEngine.HasPowerOnRail(e, cand)) return 1;
+  }
+  return 2;
+}
+
 function PKTest::Track(cur, a, b) {
   // side of `cur` facing neighbour n: 0=NE(dx-1) 1=SW(dx+1) 2=NW(dy-1) 3=SE(dy+1)
   local sides = [];
@@ -48,16 +57,13 @@ function PKTest::Start() {
   if (engines.len() == 0) { this.Log("ERROR no engines match TARGETS"); return; }
   // a track type every target can run on; prefer one that powers them all (catenary
   // for electric locos even when a non-electric control car comes first)
+  // Prefer the first target's own railtype (e.g. plain electrified metre gauge rather than
+  // the rack variant); otherwise the first railtype that carries and powers every target.
   local rt = -1;
-  foreach (cand, _ in GSRailTypeList()) {
-    local ok = true, powered = true;
-    foreach (e in engines) {
-      if (!GSEngine.CanRunOnRail(e, cand)) ok = false;
-      if (GSEngine.GetPower(e) > 0 && !GSEngine.HasPowerOnRail(e, cand)) powered = false;
-    }
-    if (ok && powered) { rt = cand; break; }
-    if (ok && rt == -1) rt = cand;
-  }
+  local own = GSEngine.GetRailType(engines[0]);
+  if (this.Fits(engines, own) == 2) rt = own;
+  if (rt == -1) foreach (cand, _ in GSRailTypeList()) if (this.Fits(engines, cand) == 2) { rt = cand; break; }
+  if (rt == -1) foreach (cand, _ in GSRailTypeList()) if (this.Fits(engines, cand) == 1) { rt = cand; break; }
   if (rt == -1) { this.Log("ERROR no railtype fits all targets"); return; }
   GSRail.SetCurrentRailType(rt);
   this.Log("railtype " + rt + " " + GSRail.GetName(rt));
@@ -92,6 +98,8 @@ function PKTest::Start() {
   local depot = GSMap.GetTileIndex(cx, y0 - 1);
   if (!GSRail.BuildRailDepot(depot, tside)) this.Log("depot fail " + GSError.GetLastErrorString());
   GSRail.BuildRailTrack(tside, GSRail.RAILTRACK_NW_NE);
+
+  if (SCENE == "infra") this.BuildInfra(rt);
 
   // one train made of every matching engine (all liveries side by side)
   local train = GSVehicle.BuildVehicle(depot, engines[0]);
@@ -135,4 +143,69 @@ function PKTest::Start() {
     }
     this.Sleep(1);
   }
+}
+
+
+// --- infrastructure scene (pk ingame --scene infra): everything within the fixed camera ----
+function PKTest::RackType() {
+  foreach (rt, _ in GSRailTypeList()) {
+    local name = GSRail.GetName(rt);
+    // GetName returns the short name, e.g. "Electrified rack"
+    if (name != null && name.find("rack") != null && name.find("lectrified") != null) return rt;
+  }
+  return -1;
+}
+
+function PKTest::Check(what, ok) {
+  this.Log((ok ? "infra ok " : "infra FAIL ") + what + (ok ? "" : " " + GSError.GetLastErrorString()));
+}
+
+function PKTest::RaiseBlock(x0, x1, y0, y1) {
+  for (local x = x0; x <= x1; x++) for (local y = y0; y <= y1; y++)
+    GSTile.RaiseTile(GSMap.GetTileIndex(x, y), GSTile.SLOPE_N);
+}
+
+function PKTest::BuildInfra(rt) {
+  // level crossing: a road across the loop's SE side (straight X track at (32, 34))
+  local roads = GSRoadTypeList(GSRoad.ROADTRAMTYPES_ROAD);
+  GSRoad.SetCurrentRoadType(roads.Begin());
+  this.Check("road crossing", GSRoad.BuildRoad(GSMap.GetTileIndex(32, 32), GSMap.GetTileIndex(32, 37)));
+
+  // rail bridge on flat land, west of the loop
+  local bridges = GSBridgeList_Length(4);
+  local bridge_type = bridges.Begin();
+  local b0 = GSMap.GetTileIndex(27, 33), b1 = GSMap.GetTileIndex(30, 33);
+  for (local x = 26; x <= 30; x++) GSTile.DemolishTile(GSMap.GetTileIndex(x, 33));
+  this.Check("bridge", GSBridge.BuildBridge(GSVehicle.VT_RAIL, bridge_type, b0, b1));
+  GSRail.BuildRailTrack(GSMap.GetTileIndex(26, 33), GSRail.RAILTRACK_NE_SW);
+
+  // tunnel through a small hill on the raised side (one more level at x 35..37, y 28..30)
+  this.RaiseBlock(35, 37, 28, 30);
+  local t0 = GSMap.GetTileIndex(34, 29);
+  local ok = GSTunnel.BuildTunnel(GSVehicle.VT_RAIL, t0);
+  this.Check("tunnel", ok);
+  if (ok) {
+    local t1 = GSTunnel.GetOtherTunnelEnd(t0);
+    this.Log("tunnel " + GSMap.GetTileX(t0) + "," + GSMap.GetTileY(t0) + " -> " + GSMap.GetTileX(t1) + "," + GSMap.GetTileY(t1));
+  }
+
+  // four depots, one per direction, north of the loop
+  local fronts = [[28, 27], [29, 29], [29, 28], [31, 28]];  // NE, SE, SW, NW neighbours
+  local tiles = [[28, 28], [29, 28], [30, 28], [31, 29]];
+  for (local i = 0; i < 4; i++) {
+    local tile = GSMap.GetTileIndex(tiles[i][0], tiles[i][1]);
+    GSTile.DemolishTile(tile);
+    this.Check("depot " + i, GSRail.BuildRailDepot(tile, GSMap.GetTileIndex(fronts[i][0], fronts[i][1])));
+  }
+
+  // rack sections on both ramps of the loop
+  local rack = this.RackType();
+  this.Check("rack type found", rack != -1);
+  if (rack != -1) {
+    foreach (t in [[33, 31], [33, 34]]) {
+      local tile = GSMap.GetTileIndex(t[0], t[1]);
+      this.Check("rack " + t[0] + "," + t[1], GSRail.ConvertRailType(tile, tile, rack));
+    }
+  }
+  GSRail.SetCurrentRailType(rt);
 }

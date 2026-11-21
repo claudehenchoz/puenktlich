@@ -1,10 +1,14 @@
-# Railtypes shipped in the companion GRF build/puenktlich_tracks.grf (metre gauge for RhB, MGB, …).
-# Labels follow the Standardised Railtype Scheme; vehicles pick them via data/railtypes.yaml.
+# Railtypes shipped in the companion GRF build/puenktlich_tracks.grf (metre gauge for RhB, MGB, zb …).
+# Labels follow the Standardised Railtype Scheme (rack: special speed class "R"); vehicles pick
+# them via data/railtypes.yaml. `compatible` = track types engines of this type can run on,
+# `powered` = track types on which they have power (OpenTTD semantics).
+# `style` selects the sprites in src/puenktlich/tracks/ (metre | metre_rack).
 - label: NAAN
+  style: metre
   name: { en: Metre gauge railway, de: Meterspurbahn, fr: Voie métrique, it: Ferrovia a scartamento metrico }
   short: { en: Metre gauge, de: Meterspur, fr: Voie métrique, it: Scartamento metrico }
-  compatible: [NAAN, NAAE]
-  powered: [NAAN, NAAE]
+  compatible: [NAAN, NAAE, NRAN, NRAE]
+  powered: [NAAN, NAAE, NRAN, NRAE]
   alternative: [NGRL]
   catenary: false
   intro_year: 1889
@@ -12,13 +16,40 @@
   maintenance_cost: 6
   map_colour: 0x2C
 - label: NAAE
+  style: metre
   name: { en: Electrified metre gauge railway, de: Elektrifizierte Meterspurbahn, fr: Voie métrique électrifiée, it: Ferrovia a scartamento metrico elettrificata }
   short: { en: Electrified metre gauge, de: Meterspur elektrisch, fr: Voie métrique électrifiée, it: Scartamento metrico elettrificato }
-  compatible: [NAAN, NAAE]
-  powered: [NAAE]
+  compatible: [NAAN, NAAE, NRAN, NRAE]
+  powered: [NAAE, NRAE]
   alternative: [NAAA]
   catenary: true
   intro_year: 1903
   construction_cost: 9
   maintenance_cost: 9
+  map_colour: 0x2E
+- label: NRAN
+  style: metre_rack
+  name: { en: Metre gauge rack railway, de: Meterspur-Zahnradbahn, fr: Voie métrique à crémaillère, it: Ferrovia a cremagliera a scartamento metrico }
+  short: { en: Metre gauge rack, de: Zahnstange, fr: Crémaillère, it: Cremagliera }
+  compatible: [NAAN, NAAE, NRAN, NRAE]
+  powered: [NAAN, NAAE, NRAN, NRAE]
+  alternative: []
+  catenary: false
+  speed_limit_kmh: 40
+  intro_year: 1889
+  construction_cost: 14
+  maintenance_cost: 12
+  map_colour: 0x2C
+- label: NRAE
+  style: metre_rack
+  name: { en: Electrified metre gauge rack railway, de: Elektrifizierte Meterspur-Zahnradbahn, fr: Voie métrique à crémaillère électrifiée, it: Ferrovia a cremagliera elettrificata }
+  short: { en: Electrified rack, de: Zahnstange elektrisch, fr: Crémaillère électrifiée, it: Cremagliera elettrificata }
+  compatible: [NAAN, NAAE, NRAN, NRAE]
+  powered: [NAAE, NRAE]
+  alternative: [NRAA]
+  catenary: true
+  speed_limit_kmh: 40
+  intro_year: 1903
+  construction_cost: 17
+  maintenance_cost: 15
   map_colour: 0x2E

@@ -27,3 +27,4 @@ Reference model for proportions: Timberwolf's `brel_class_90.vox` (18.7 m Bo'Bo'
 - Body ≈ 2.65–2.8 m wide: `half_width` 17–18 (instead of 19.5). Roofs are lower (Ge 4/4 III: z 46).
 - Wheels: `bogie(..., gauge="metre")`, faces at y 11..13 and 28..30 (`running_gear.GAUGES`). That is the standard spacing scaled by 1000/1435.
 - Rails in the companion track GRF: half-gauge = 0.765 × 1000/1435 ≈ 0.53 world units (`tracks/raster.py`). Standard OpenTTD rails sit ≈ 1.53 units apart.
+- Rack (NRAN/NRAE): a central bar 0.44 units wide with lighter teeth every ~0.55 units, on every piece, slope, bridge and tunnel sprite.
