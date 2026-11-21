@@ -30,4 +30,5 @@ jobs:
           name: puenktlich-${{ github.sha }}
           path: |
             build/puenktlich.grf
+            build/puenktlich_tracks.grf
             build/previews/*.png

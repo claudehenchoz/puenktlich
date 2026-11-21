@@ -16,7 +16,7 @@ import yaml
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from puenktlich import paths
-from puenktlich.models import variant_plan
+from puenktlich.models import car_plans
 from puenktlich.render import KINDS, SCALES, is_articulated, parts_for, sprite_layout
 from puenktlich.schema import Livery, Vehicle, operators, railtypes, vehicles
 from puenktlich.sprites import overlay_sheet_name, sheet_for
@@ -25,7 +25,7 @@ GRFID = "PK\\43\\48"  # "PKCH" — never change after the first public release
 MAX_LIVERIES = 8
 LANG_IDS = {"en": 0x01, "de": 0x02, "fr": 0x03, "it": 0x27}
 LANG_FILES = {"en": "english", "de": "german", "fr": "french", "it": "italian"}
-CARGO_CLASSES = {"PASS": "CC_PASSENGERS", "MAIL": "CC_MAIL"}
+CARGO_CLASSES = {"PASS": "CC_PASSENGERS", "MAIL": "CC_MAIL", "COAL": "CC_BULK", "GOOD": "CC_PIECE_GOODS"}
 ZOOMS = {1: "ZOOM_LEVEL_NORMAL", 2: "ZOOM_LEVEL_IN_2X", 4: "ZOOM_LEVEL_IN_4X"}
 
 ENGINE = {  # traction -> (engine_class, running_cost_base, visual effect)
@@ -104,11 +104,11 @@ def vehicle_nml(v: Vehicle, strings: Strings) -> str:
     if len(v.liveries) > MAX_LIVERIES:
         raise ValueError(f"{v.id}: at most {MAX_LIVERIES} liveries")
     sprite_dir = paths.BUILD_SPRITES / v.id
-    length = v.ottd_length
-    articulated = is_articulated(length)
+    specs = v.car_specs
+    articulated = all(is_articulated(c.ottd_length) for c in specs)
+    if len(specs) > 1 and not articulated:
+        raise ValueError(f"{v.id}: multiple-unit cars must be 3/8 or longer")
     kinds = list(KINDS) if articulated else ["normal"]
-    rects = {k: {s: sprite_layout(s, length, k) for s in SCALES} for k in kinds}
-    plan = variant_plan(v)
 
     def sheet_set(stem: str) -> dict:
         sheets = {
@@ -117,9 +117,49 @@ def vehicle_nml(v: Vehicle, strings: Strings) -> str:
         }
         return {"name": stem, "sheets": sheets}
 
-    # every distinct body, plus every distinct lamp overlay (drawn as a second layer)
-    sets = [sheet_set(b) for b in plan.bodies] + [sheet_set(overlay_sheet_name(o)) for o in plan.overlays]
-    light_map = {var: (body, overlay_sheet_name(ovl) if ovl else None) for var, (body, ovl) in plan.mapping.items()}
+    cars = []
+    parts: list[int] = []
+    for car, plan in car_plans(v).values():
+        light_map = {var: (body, overlay_sheet_name(ovl) if ovl else None) for var, (body, ovl) in plan.mapping.items()}
+        single_body = len(plan.bodies) == 1
+        has_overlays = any(ovl for _, ovl in plan.mapping.values())  # lamp overlays
+        cargo_looks = [{"look": look, "colour": colour} for look, colour in plan.cargo_looks.items()]
+        cargo_stages = {st: overlay_sheet_name(name) for st, name in plan.cargo.items()}
+        if has_overlays:
+            entry = f"sw_{car.key}_mid"
+        elif single_body:
+            entry = f"sw_{plan.default_body}_shape"
+        else:
+            entry = f"sw_{car.key}_lights_body"
+        cars.append(
+            {
+                "key": car.key,
+                "index": car.index,
+                "length": car.ottd_length,
+                "kinds": kinds,
+                "rects": {k: {s: sprite_layout(s, car.ottd_length, k) for s in SCALES} for k in kinds},
+                # every distinct body, plus every distinct lamp overlay (drawn as a second layer)
+                "sets": [sheet_set(b) for b in plan.bodies] + [sheet_set(overlay_sheet_name(o)) for o in plan.overlays],
+                "light_map": light_map,
+                "default_body": plan.default_body,
+                "single_body": single_body,
+                "has_overlays": has_overlays,
+                "shape_proc": _shape_proc(car.ottd_length),
+                "mid_pos": len(parts) + 1,
+                "entry": entry,
+                "cargo_looks": cargo_looks,
+                "cargo_stages": cargo_stages,
+                "cargo_labels": plan.cargo_labels,
+                "default_look": plan.default_look,
+            }
+        )
+        parts += list(parts_for(car.ottd_length))
+    n_parts = len(parts)
+    # 2 = this unit leads the train, 1 = it is last, 3 = both, 0 = in the middle
+    lights_expr = (
+        "(position_in_consist == position_in_articulated_veh) * 2 + "
+        f"(position_in_consist_from_end + position_in_articulated_veh == {n_parts - 1})"
+    )
 
     up = v.id.upper()
     desc_string = strings.add(f"STR_DESC_{up}", dict(v.description)) if v.description.get("en") else None
@@ -145,13 +185,12 @@ def vehicle_nml(v: Vehicle, strings: Strings) -> str:
         if len(v.capacity) != 1:
             raise ValueError(f"{v.id}: exactly one cargo type supported for now")
         label, total = next(iter(v.capacity.items()))
-        n_parts = len(parts_for(length))
         cargo = {
             "label": label,
             "total": total,
             # every articulated part is the same item, so capacity is per part
             "per_part": max(1, round(total / n_parts)),
-            "classes": CARGO_CLASSES[label],
+            "classes": ", ".join(v.refit_classes) if v.refit_classes else CARGO_CLASSES[label],
         }
     te = None
     if v.tractive_effort_kn:
@@ -159,16 +198,14 @@ def vehicle_nml(v: Vehicle, strings: Strings) -> str:
     op = operators()[v.operator]
     return _env.get_template("vehicle.nml.j2").render(
         v=v,
-        sets=sets,
-        light_map=light_map,
-        default_body=plan.default_body,
-        single_body=len(plan.bodies) == 1,
-        has_overlays=bool(plan.overlays),
-        kinds=kinds,
-        rects=rects,
+        cars=cars,
         articulated=articulated,
-        parts=parts_for(length),
-        shape_proc=_shape_proc(length),
+        parts=parts,
+        lights_expr=lights_expr,
+        has_stack=articulated and any(c["has_overlays"] or c["cargo_looks"] for c in cars),
+        cargo_looks=cars[0]["cargo_looks"] if len(cars) == 1 else [],
+        cargo_label_map=cars[0]["cargo_labels"],
+        default_look=cars[0]["default_look"],
         zooms=[(s, ZOOMS[s]) for s in SCALES],
         liveries=items,
         desc_string=desc_string,
@@ -197,7 +234,10 @@ def generate(out_dir: Path = paths.BUILD_NML, only: list[str] | None = None) -> 
         op = operators()[op_id]
         badges.append(Badge(op.badge, strings.add(f"STR_BADGE_{op.id.upper()}", {"en": op.name})))
     used_rts = sorted({v.railtype for v in vs})
-    cargos = sorted({label for v in vs for label in v.capacity})
+    cargos = sorted(
+        {label for v in vs for label in v.capacity}
+        | {label for v in vs for _, plan in car_plans(v).values() for label in plan.cargo_labels}
+    )
 
     major, minor, patch = (int(x) for x in version.split(".")[:3])
     parts = [
@@ -210,7 +250,7 @@ def generate(out_dir: Path = paths.BUILD_NML, only: list[str] | None = None) -> 
             badges=badges,
         ),
         _env.get_template("procedures.nml.j2").render(
-            shape_procs={_shape_proc(v.ottd_length) for v in vs if is_articulated(v.ottd_length)}
+            shape_procs={_shape_proc(c.ottd_length) for v in vs for c in v.car_specs if is_articulated(c.ottd_length)}
         ),
     ]
     for v in vs:

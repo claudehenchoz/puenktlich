@@ -6,15 +6,18 @@ from puenktlich.voxel import palette as P
 from puenktlich.voxel.model import CENTRE_Y, Model
 
 # Track geometry on the canvas (see docs/SCALE.md): OpenTTD rails are drawn
-# broader than real standard gauge, so wheels sit at y≈7..10 / 31..34.
+# broader than real standard gauge, so wheels sit at y≈7..9 / 32..34. Metre gauge is
+# 1000/1435 of that, matching the rails drawn by the companion track GRF (tracks/raster.py).
 WHEEL_Y_OUTER = 7
 WHEEL_THICKNESS = 3
+GAUGES = {"standard": 7, "metre": 11}  # y of the outer face of the left wheel
 
 
-def wheelset(model: Model, x: float, diameter: float = 11, colour: int = P.DARK_GREY) -> None:
+def wheelset(model: Model, x: float, diameter: float = 11, colour: int = P.DARK_GREY, gauge: str = "standard") -> None:
     r = diameter / 2
     zc = r - 0.5
-    for y0 in (WHEEL_Y_OUTER, model.d.shape[1] - WHEEL_Y_OUTER - WHEEL_THICKNESS):
+    wy = GAUGES[gauge]
+    for y0 in (wy, model.d.shape[1] - wy - WHEEL_THICKNESS):
         model.solid(model.cylinder_y(x, zc, r, y0, y0 + WHEEL_THICKNESS), colour)
         # rim highlight
         ring = model.cylinder_y(x, zc, r, y0, y0 + WHEEL_THICKNESS) & ~model.cylinder_y(
@@ -22,7 +25,7 @@ def wheelset(model: Model, x: float, diameter: float = 11, colour: int = P.DARK_
         )
         model.paint(ring, P.MID_GREY)
     # axle
-    model.solid(model.cylinder_y(x, zc, 1.2, WHEEL_Y_OUTER, model.d.shape[1] - WHEEL_Y_OUTER), P.BLACK)
+    model.solid(model.cylinder_y(x, zc, 1.2, wy, model.d.shape[1] - wy), P.BLACK)
 
 
 def bogie(
@@ -32,14 +35,16 @@ def bogie(
     wheel_diameter: float = 11,
     frame_colour: int = P.DARK_GREY,
     top: float = 14,
+    gauge: str = "standard",
 ) -> None:
     """Two-axle bogie: wheelsets, outer side frames with axle boxes, springs."""
     half = wheelbase / 2
     for ax in (centre - half, centre + half):
-        wheelset(model, ax, wheel_diameter)
+        wheelset(model, ax, wheel_diameter, gauge=gauge)
     r = wheel_diameter / 2
     # side frames outside the wheels
-    y_out0, y_out1 = 3, WHEEL_Y_OUTER
+    y_out1 = GAUGES[gauge]
+    y_out0 = y_out1 - 4
     frame = model.box(centre - half - r - 2, centre + half + r + 2, y_out0, y_out1, r - 1, top - 1)
     # lighten the frame: cut the window between the axles below the top member
     cut = model.box(centre - half + r + 1, centre + half - r - 1, y_out0, y_out1, r - 1, top - 5)

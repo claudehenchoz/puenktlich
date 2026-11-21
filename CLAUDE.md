@@ -35,6 +35,9 @@ Swiss trains & buses for OpenTTD. Vision: `docs/IDEA.md`. Architecture: `docs/AR
 - Recipes can take `build(lights: Lights)` and set `model.lights: true` in YAML. That gets them 4 variants (solo/head/tail/none) chosen in-game by position in the train. **Paint lamps only via `voxel.parts.lights` (`lamps()`, or `lamp_cluster()` with `lights.state(...)`)**, so the dark body (`Lights.dark`) stays lamp-free.
 - Sheet names: `<id>_body<k>` = bodies (lamps dark), `<id>_<variant>` = lit render (build intermediate), `<id>_<variant>_ovl` = lamp overlay (in the GRF). `models.variant_plan()` shows the mapping.
 - Coaches and control cars: build them with `voxel.parts.coach.build_coach(CoachSpec(...), lights)`. Give a `CabSpec` for a control car; push-pull orientation is automatic. Wagons have `power_kw: 0`, a `capacity` (split evenly over the 3 parts) and `railtype: standard`. Control cars get a nominal `power_kw` (1–10), so they can lead a train.
+- Multiple units: `cars:` instead of `model:` in the vehicle YAML. One recipe can build all cars via `model.params`. Car recipes paint lamps by role (`CoachSpec(mu_role="front"|"middle"|"rear")`). Sheet names are prefixed `<id>_c<k>_`.
+- Freight wagons: paint the load space with `voxel.cargo.CARGO_MASK` (255) and define `CARGO = CargoSpec(...)` in the recipe (see `models/sbb/eanos`). Model recolourable cargo in CC1 and keep the wagon body out of company colours. Set `refit_classes` and the default cargo in `capacity`.
+- Metre gauge: `railtype: metre_ac`/`metre_diesel` and `bogie(..., gauge="metre")`. The vehicles need `build/puenktlich_tracks.grf` (built by `pk build`, loaded first by `pk ingame`).
 - Keep models at z ≤ 68 so the 10° hill tilt has headroom (a test checks this).
 - A full render of a light-variant vehicle is ~1 min (4 variants × 3 renders). Unchanged vox files are skipped.
 

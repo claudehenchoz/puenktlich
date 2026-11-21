@@ -68,8 +68,9 @@ def test_model_fits_canvas_with_tilt_headroom() -> None:
     from puenktlich.schema import vehicles
 
     for v in vehicles().values():
-        (_, _), (_, _), (_, zmax) = build_grid(v).bounds()
-        assert zmax <= 68, f"{v.id}: z {zmax} leaves too little headroom for hill tilt"
+        for car in v.car_specs:
+            (_, _), (_, _), (_, zmax) = build_grid(car).bounds()
+            assert zmax <= 68, f"{car.key}: z {zmax} leaves too little headroom for hill tilt"
 
 
 def test_control_car_turns_cab_outward_when_last() -> None:
@@ -125,6 +126,69 @@ def test_dark_lights_paint_no_lit_lamps() -> None:
     from puenktlich.voxel.parts.lights import LAMP_RED, LAMP_WHITE
 
     for v in vehicles().values():
-        for var in variants(v):
-            d = build_grid(v, var, dark=True).data
-            assert not ((d == LAMP_RED) | (d == LAMP_WHITE)).any(), (v.id, var)
+        for car in v.car_specs:
+            for var in variants(car):
+                d = build_grid(car, var, dark=True).data
+                assert not ((d == LAMP_RED) | (d == LAMP_WHITE)).any(), (car.key, var)
+
+
+def test_multiple_unit_car_plans() -> None:
+    from puenktlich.models import car_plans
+    from puenktlich.schema import vehicles
+
+    plans = car_plans(vehicles()["npz"])
+    assert list(plans) == ["npz_c0", "npz_c1", "npz_c2"]
+    (_, front), (_, middle), (_, rear) = plans.values()
+    assert front.overlays and rear.overlays  # lamps only at the unit's ends
+    assert not middle.overlays
+    assert front.mapping["head"][1] is not None and front.mapping["tail"][1] is None
+    assert rear.mapping["tail"][1] is not None and rear.mapping["head"][1] is None
+
+
+def test_cargo_plan_from_cargopositor() -> None:
+    from puenktlich import paths
+
+    if not paths.CARGOPOSITOR.exists():
+        import pytest
+
+        pytest.skip("cargopositor not installed")
+    from puenktlich.models import variant_plan
+    from puenktlich.schema import vehicles
+
+    plan = variant_plan(vehicles()["eanos"])
+    assert len(plan.bodies) == 1 and set(plan.cargo) == {1, 2}
+    body = next(iter(plan.bodies.values())).data
+    assert not (body == 255).any()  # Cargopositor removed the mask
+    for name in plan.cargo.values():
+        loaded = plan.overlays[name][1].data
+        assert ((body != 0) & (loaded != body)).sum() == 0  # cargo only adds voxels
+        assert (loaded != 0).sum() > (body != 0).sum()
+    assert plan.cargo_labels["COAL"] == "coal" and plan.cargo_looks["coal"] == "GREY"
+
+
+def test_cargo_spec_validates() -> None:
+    import pytest
+
+    from puenktlich.voxel.cargo import CargoSpec, CargoState
+
+    with pytest.raises(ValueError):
+        CargoSpec(shapes={}, stages={1: CargoState("x"), 2: CargoState("x")}, looks={"a": None}, default_look="a")
+    with pytest.raises(ValueError):
+        CargoSpec(
+            shapes={"x": Model.new},
+            stages={1: CargoState("x"), 2: CargoState("x")},
+            looks={"a": "TEAL"},
+            default_look="a",
+        )
+
+
+def test_metre_gauge_wheels() -> None:
+    from puenktlich.models import build_grid
+    from puenktlich.schema import vehicles
+    from puenktlich.voxel.parts.running_gear import GAUGES
+
+    d = build_grid(vehicles()["ge44iii"]).data
+    wy = GAUGES["metre"]
+    wheels = d[:, :, 0:3]  # rail level: only wheel rims touch z 0..2
+    ys = sorted(set(int(y) for y in wheels.nonzero()[1]))
+    assert ys and min(ys) >= wy and max(ys) <= d.shape[1] - wy - 1

@@ -1,0 +1,16 @@
+# Rhaetian Railway (RhB) — seed list of traction and multiple units (metre gauge).
+operator: rhb
+source: "RhB fleet overview (to be cross-checked), seeded manually"
+retrieved: "2026-11-21"
+entries:
+  - { id: rhb-ge66i,    name: "Ge 6/6 I 'Krokodil'", category: locomotive, gauge: metre, built: "1921–1929" }
+  - { id: rhb-ge44i,    name: "Ge 4/4 I",          category: locomotive, gauge: metre, built: "1947–1953" }
+  - { id: rhb-ge66ii,   name: "Ge 6/6 II",         category: locomotive, gauge: metre, built: "1958–1965" }
+  - { id: rhb-ge44ii,   name: "Ge 4/4 II",         category: locomotive, gauge: metre, built: "1973–1985" }
+  - { id: rhb-ge44iii,  name: "Ge 4/4 III",        category: locomotive, gauge: metre, built: "1993–1999" }
+  - { id: rhb-gem44,    name: "Gem 4/4",           category: locomotive, gauge: metre, built: "1968" }
+  - { id: rhb-abe48,    name: "ABe 4/16 'Allegra'", category: emu, gauge: metre, built: "2010–2012" }
+  - { id: rhb-abe812,   name: "ABe 8/12 'Allegra'", category: emu, gauge: metre, built: "2009–2010" }
+  - { id: rhb-abe416,   name: "ABe 4/16 'Capricorn'", category: emu, gauge: metre, built: "2019–" }
+  - { id: rhb-be44,     name: "Be 4/4",            category: emu, gauge: metre, built: "1971" }
+  - { id: rhb-abe44iii, name: "ABe 4/4 III (Bernina)", category: emu, gauge: metre, built: "1988–1990" }

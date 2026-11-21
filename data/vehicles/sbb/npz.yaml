@@ -1,0 +1,46 @@
+# SBB RBDe 560 "NPZ" regional multiple unit in the Domino look: motor car + intermediate + control car,
+# sold as one 3-car articulated vehicle. Facts: de.wikipedia "SBB RBDe 4/4"; seats/weights of the
+# trailer cars approximate.
+id: npz
+grf_id: 104          # never change — saved games reference this
+name:
+  en: SBB RBDe 560 Domino
+  de: SBB RBDe 560 Domino
+  fr: CFF RBDe 560 Domino
+  it: FFS RBDe 560 Domino
+operator: sbb
+kind: emu
+railtype: standard_ac
+intro_year: 1984
+vehicle_life_years: 35
+model_life_years: 30
+max_speed_kmh: 140
+power_kw: 1650
+tractive_effort_kn: 182
+weight_t: 136          # motor car 70 t + two trailers (approx.); only the head part carries weight
+length_m: 74.5
+capacity:
+  PASS: 180            # approx. (56 + 2 × ~62 seats)
+cost_factor: 60
+running_cost_factor: 45
+liveries:
+  - id: domino
+    name: { en: Domino, de: Domino, fr: Domino, it: Domino }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+cars:
+  - model: { path: sbb/npz, lights: true, params: { car: motor } }
+    length_m: 25.0
+  - model: { path: sbb/npz, lights: true, params: { car: intermediate } }
+    length_m: 24.5
+  - model: { path: sbb/npz, lights: true, params: { car: control } }
+    length_m: 25.0
+reference: [sbb-npz]
+description:
+  en: Regional push-pull unit of the 1980s, refurbished as "Domino". Motor car, intermediate and control car in one.
+  de: Regional-Pendelzug der 1980er-Jahre, als «Domino» modernisiert. Triebwagen, Zwischen- und Steuerwagen in einem.
+  fr: Rame réversible régionale des années 1980, modernisée en « Domino ». Automotrice, voiture intermédiaire et voiture-pilote.
+  it: Treno navetta regionale degli anni 1980, rinnovato come «Domino». Automotrice, carrozza intermedia e carrozza pilota.

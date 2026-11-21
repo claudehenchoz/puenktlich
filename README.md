@@ -4,7 +4,7 @@ Swiss trains and buses for [OpenTTD](https://www.openttd.org): SBB, BLS, RhB, MG
 
 ![Re 460 preview](docs/img/re460.png)
 
-**Status:** milestone 1, with one vehicle (SBB Re 460) taken through the whole pipeline. See [docs/COMPLETENESS.md](docs/COMPLETENESS.md).
+**Status:** early. SBB Re 460, EW IV coaches with Bt control car, RBDe 560 Domino multiple unit, SBB Cargo Eanos and Sgns wagons with cargo loads, and the RhB Ge 4/4 III on metre gauge. Two GRFs: `puenktlich.grf` (vehicles) and `puenktlich_tracks.grf` (metre-gauge railtypes; load it before the vehicles). See [docs/COMPLETENESS.md](docs/COMPLETENESS.md).
 
 ## Build
 
@@ -12,7 +12,7 @@ Requirements: [uv](https://docs.astral.sh/uv/), Go ≥ 1.22, git. For testing yo
 
 ```sh
 make setup        # python deps + gorender/cargopositor into .tools/bin
-make build        # -> build/puenktlich.grf
+make build        # -> build/puenktlich.grf + build/puenktlich_tracks.grf (metre gauge)
 make install      # copy to ~/.local/share/openttd/newgrf
 make test lint
 ```

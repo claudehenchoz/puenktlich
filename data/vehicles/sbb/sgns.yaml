@@ -1,0 +1,40 @@
+# SBB Cargo Sgns — 60 ft container flat. Dimensions approximate (no Sgns data sheet in the cited sources).
+id: sgns
+grf_id: 106          # never change — saved games reference this
+name:
+  en: SBB Cargo Sgns (container flat)
+  de: SBB Cargo Sgns (Containertragwagen)
+  fr: CFF Cargo Sgns (wagon porte-conteneurs)
+  it: FFS Cargo Sgns (carro portacontainer)
+operator: sbb
+kind: wagon
+railtype: standard
+intro_year: 1990
+vehicle_life_years: 40
+model_life_years: 35
+max_speed_kmh: 120
+power_kw: 0
+weight_t: 20
+length_m: 19.7
+capacity:
+  GOOD: 30
+refit_classes: [CC_PIECE_GOODS, CC_EXPRESS]
+cost_factor: 14
+running_cost_factor: 6
+liveries:
+  - id: sbb_cargo
+    name: { en: SBB Cargo, de: SBB Cargo, fr: CFF Cargo, it: FFS Cargo }
+    cc1: GREY
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: sbb/sgns
+  kind: recipe
+reference: [sbb-sgns]
+description:
+  en: 60-foot container flat carrying three 20-foot containers.
+  de: 60-Fuss-Containertragwagen für drei 20-Fuss-Container.
+  fr: Wagon porte-conteneurs de 60 pieds pour trois conteneurs de 20 pieds.
+  it: Carro portacontainer da 60 piedi per tre container da 20 piedi.

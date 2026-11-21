@@ -87,7 +87,7 @@ general = off
 PKTest =
 
 [newgrf]
-{grf} =
+{grfs}
 """
 
 
@@ -105,7 +105,9 @@ def _profile(zoom_name: str, grf: Path, targets: list[str], shots: int) -> Path:
     shutil.rmtree(root, ignore_errors=True)
     data = root / "data" / "openttd"
     (data / "newgrf").mkdir(parents=True)
-    shutil.copy2(grf, data / "newgrf" / grf.name)
+    grfs = [g for g in (paths.BUILD / "puenktlich_tracks.grf", grf) if g.exists()]  # tracks first
+    for g in grfs:
+        shutil.copy2(g, data / "newgrf" / g.name)
     gs = data / "game" / "pk_test"
     shutil.copytree(GS_DIR, gs)
     stops = ", ".join(f"[{x}, {y}]" for x, y in STOP_TILES)
@@ -116,7 +118,7 @@ def _profile(zoom_name: str, grf: Path, targets: list[str], shots: int) -> Path:
     )
     cfg = root / "config" / "openttd"
     cfg.mkdir(parents=True)
-    (cfg / "openttd.cfg").write_text(CONFIG.format(grf=grf.name))
+    (cfg / "openttd.cfg").write_text(CONFIG.format(grfs="\n".join(f"{g.name} =" for g in grfs)))
     scripts = data / "scripts"
     scripts.mkdir()
     (scripts / "game_start.scr").write_text("schedule on-next-calendar-month scripts/m1.scr\n")

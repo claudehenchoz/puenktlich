@@ -81,6 +81,29 @@ class ModelRef(Strict):
         False,
         description="Recipe takes build(lights=...); render solo/head/tail/none lamp variants (voxel/variants.py)",
     )
+    params: dict[str, str | int | float | bool] = Field(
+        default_factory=dict, description="Keyword arguments passed to the recipe's build(), e.g. {car: motor}"
+    )
+
+
+class Car(Strict):
+    """One car of a multiple unit (sold and coupled as a single articulated vehicle)."""
+
+    model: ModelRef
+    length_m: float = Field(gt=0)
+
+    @property
+    def ottd_length(self) -> int:
+        return max(1, min(8, round(self.length_m / METRES_PER_UNIT)))
+
+
+class CarSpec(BaseModel):
+    """Resolved car: a single-model vehicle is one car keyed by the vehicle id."""
+
+    key: str
+    index: int
+    model: ModelRef
+    ottd_length: int
 
 
 class Vehicle(Strict):
@@ -99,12 +122,16 @@ class Vehicle(Strict):
     tractive_effort_kn: float | None = None
     weight_t: float = Field(gt=0)
     length_m: float = Field(gt=0)
-    capacity: dict[str, int] = Field(default_factory=dict, description="cargo label -> amount")
+    capacity: dict[str, int] = Field(default_factory=dict, description="cargo label -> amount (the default cargo)")
+    refit_classes: list[str] = Field(
+        default_factory=list, description="Refittable cargo classes, e.g. [CC_BULK]; default: from the cargo label"
+    )
     reliability_decay: int = 20
     cost_factor: int = Field(25, ge=0, le=255)
     running_cost_factor: int = Field(25, ge=0, le=255)
     liveries: list[Livery] = Field(min_length=1)
-    model: ModelRef
+    model: ModelRef | None = Field(None, description="Single-model vehicle (or use `cars`)")
+    cars: list[Car] = Field(default_factory=list, description="Multiple unit: cars from front to rear")
     reference: list[str] = Field(default_factory=list, description="IDs in data/reference/*.yaml")
     description: dict[Lang, str] = Field(default_factory=dict)
 
@@ -115,10 +142,28 @@ class Vehicle(Strict):
             raise ValueError("name.en is required (fallback language)")
         return v
 
+    @model_validator(mode="after")
+    def _model_or_cars(self) -> Vehicle:
+        if (self.model is None) == (not self.cars):
+            raise ValueError(f"{self.id}: give exactly one of `model` or `cars`")
+        return self
+
     @property
     def ottd_length(self) -> int:
-        """Length in 1/8 units, clamped to 1..8."""
+        """Length in 1/8 units (per car for multiple units), clamped to 1..8."""
+        if self.cars:
+            return max(c.ottd_length for c in self.cars)
         return max(1, min(8, round(self.length_m / METRES_PER_UNIT)))
+
+    @property
+    def car_specs(self) -> list[CarSpec]:
+        if not self.cars:
+            assert self.model is not None
+            return [CarSpec(key=self.id, index=0, model=self.model, ottd_length=self.ottd_length)]
+        return [
+            CarSpec(key=f"{self.id}_c{i}", index=i, model=c.model, ottd_length=c.ottd_length)
+            for i, c in enumerate(self.cars)
+        ]
 
 
 class ReferenceEntry(Strict):
@@ -196,10 +241,11 @@ def validate_all() -> list[str]:
         for r in v.reference:
             if r not in ref_ids:
                 problems.append(f"{v.id}: reference {r} not found in data/reference/")
-        mdir = paths.MODELS / v.model.path
-        need = mdir / ("recipe.py" if v.model.kind == "recipe" else "model.vox")
-        if not need.exists():
-            problems.append(f"{v.id}: missing model {need.relative_to(paths.ROOT)}")
+        for car in v.car_specs:
+            mdir = paths.MODELS / car.model.path
+            need = mdir / ("recipe.py" if car.model.kind == "recipe" else "model.vox")
+            if not need.exists():
+                problems.append(f"{v.id}: missing model {need.relative_to(paths.ROOT)}")
         ids = [livery.id for livery in v.liveries]
         if len(set(ids)) != len(ids):
             problems.append(f"{v.id}: duplicate livery ids")

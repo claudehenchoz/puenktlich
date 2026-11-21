@@ -50,3 +50,6 @@ entries:
   - { id: sbb-apm61,    name: "Apm/Bpm 61 (EC)",   category: coach, built: "1990s" }
   - { id: sbb-ew4-bt,   name: "EW IV Bt control car", category: control_car, built: "1987–1997" }
   - { id: sbb-ic2000-bt, name: "IC2000 Bt control car", category: control_car, built: "1997–2004" }
+  # --- Freight wagons (SBB Cargo; series, not individual numbers) ---
+  - { id: sbb-eanos,    name: "Eanos open wagon",  category: wagon, built: "1970s–" }
+  - { id: sbb-sgns,     name: "Sgns container flat", category: wagon, built: "1990s–" }

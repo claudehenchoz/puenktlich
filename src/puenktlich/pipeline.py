@@ -29,7 +29,7 @@ def sprite_dir(vehicle: Vehicle) -> Path:
 def render_vehicle(vehicle: Vehicle, force: bool = False) -> tuple[Path, list[str], list[Path]]:
     """Render all sheets for one vehicle. Returns (sprite dir, lint problems, overrides applied)."""
     vox_root = paths.BUILD_VOX / vehicle.id
-    plan, base = write_models(vehicle, vox_root / "base")
+    plans, base = write_models(vehicle, vox_root / "base")
 
     # hill models: every variant tilted ±10° (Cargopositor rotate_y -> <name>_up/_down.vox)
     hill_dir = vox_root / "hill"
@@ -46,7 +46,8 @@ def render_vehicle(vehicle: Vehicle, force: bool = False) -> tuple[Path, list[st
     gorender(base, out, manifest="train", force=force)
     gorender(hills, out, manifest="train_hill", force=force)
     # lamp overlays: lit render minus its dark body render
-    for ovl, (body, _) in plan.overlays.items():
-        make_overlay(out, ovl, body)
+    for plan in plans.values():
+        for ovl, (body, _) in plan.overlays.items():
+            make_overlay(out, ovl, body)
     applied = apply_overrides(vehicle.id, vehicle.id, out)
     return out, lint_vehicle(vehicle), applied

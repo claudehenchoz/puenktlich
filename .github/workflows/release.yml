@@ -30,7 +30,7 @@ jobs:
         run: |
           name="puenktlich-${GITHUB_REF_NAME#v}"
           mkdir "$name"
-          cp build/puenktlich.grf LICENSE README.md "$name/"
+          cp build/puenktlich.grf build/puenktlich_tracks.grf LICENSE README.md "$name/"
           tar -cf "$name.tar" "$name"
       - uses: softprops/action-gh-release@v2
         with:

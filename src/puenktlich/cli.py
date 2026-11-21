@@ -84,9 +84,13 @@ def build(ids: IdsArg = None, skip_render: Annotated[bool, typer.Option("--skip-
     lint(sprites=False)
     if not skip_render:
         render(ids)
+    from puenktlich.tracks.build import build_tracks
+
     nml = generate(only=ids or None)
     grf = compile_grf(nml)
     typer.secho(f"built {grf.relative_to(paths.ROOT)} ({grf.stat().st_size // 1024} KiB)", fg="green")
+    tracks = build_tracks()
+    typer.secho(f"built {tracks.relative_to(paths.ROOT)} ({tracks.stat().st_size // 1024} KiB)", fg="green")
 
 
 @app.command()
@@ -124,14 +128,15 @@ def install(
         str, typer.Argument(help="OpenTTD data dir, e.g. ~/.local/share/openttd")
     ] = "~/.local/share/openttd",
 ) -> None:
-    """Copy build/puenktlich.grf into OpenTTD's newgrf folder for testing."""
+    """Copy build/puenktlich.grf and build/puenktlich_tracks.grf into OpenTTD's newgrf folder."""
     from pathlib import Path
 
-    src = paths.BUILD / f"{paths.GRF_NAME}.grf"
     dst_dir = Path(openttd_dir).expanduser() / "newgrf"
     dst_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(src, dst_dir / src.name)
-    typer.echo(f"installed {dst_dir / src.name}")
+    for src in (paths.BUILD / f"{paths.GRF_NAME}.grf", paths.BUILD / "puenktlich_tracks.grf"):
+        if src.exists():
+            shutil.copy2(src, dst_dir / src.name)
+            typer.echo(f"installed {dst_dir / src.name}")
 
 
 @app.command()

@@ -15,24 +15,38 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import inspect
-from dataclasses import dataclass
+import json
+import tempfile
+from dataclasses import dataclass, field
 from pathlib import Path
 
+import numpy as np
+
 from puenktlich import paths
-from puenktlich.schema import Vehicle
+from puenktlich.schema import CarSpec, Vehicle
 from puenktlich.voxel.model import Model
 from puenktlich.voxel.palette import rgb_palette
 from puenktlich.voxel.variants import DEFAULT_VARIANT, LIGHT_VARIANTS
 from puenktlich.voxel.vox import VoxelGrid, read_vox, write_vox
 
 
-def model_dir(vehicle: Vehicle) -> Path:
-    return paths.MODELS / vehicle.model.path
+def _car(target: Vehicle | CarSpec) -> CarSpec:
+    """Single-car vehicles may be passed directly; multiple units need a CarSpec."""
+    if isinstance(target, CarSpec):
+        return target
+    specs = target.car_specs
+    if len(specs) != 1:
+        raise ValueError(f"{target.id} has {len(specs)} cars; pass a CarSpec")
+    return specs[0]
 
 
-def variants(vehicle: Vehicle) -> list[str]:
+def model_dir(target: Vehicle | CarSpec) -> Path:
+    return paths.MODELS / _car(target).model.path
+
+
+def variants(target: Vehicle | CarSpec) -> list[str]:
     """Light variants selectable in-game (always starts with the default)."""
-    return list(LIGHT_VARIANTS) if vehicle.model.lights else [DEFAULT_VARIANT]
+    return list(LIGHT_VARIANTS) if _car(target).model.lights else [DEFAULT_VARIANT]
 
 
 def load_recipe(path: Path):
@@ -44,17 +58,17 @@ def load_recipe(path: Path):
     return mod
 
 
-def build_grid(vehicle: Vehicle, variant: str = DEFAULT_VARIANT, dark: bool = False) -> VoxelGrid:
-    d = model_dir(vehicle)
-    if vehicle.model.kind == "vox":
+def build_grid(target: Vehicle | CarSpec, variant: str = DEFAULT_VARIANT, dark: bool = False) -> VoxelGrid:
+    car = _car(target)
+    d = model_dir(car)
+    if car.model.kind == "vox":
         return read_vox(d / "model.vox")
     build = load_recipe(d / "recipe.py").build
-    takes_lights = "lights" in inspect.signature(build).parameters
-    if takes_lights:
+    kwargs: dict = dict(car.model.params)
+    if "lights" in inspect.signature(build).parameters:
         lights = LIGHT_VARIANTS[variant]
-        result = build(lights=lights.darkened() if dark else lights)
-    else:
-        result = build()
+        kwargs["lights"] = lights.darkened() if dark else lights
+    result = build(**kwargs)
     return result.grid if isinstance(result, Model) else result
 
 
@@ -67,6 +81,11 @@ class VariantPlan:
     bodies: dict[str, VoxelGrid]  # body name -> dark grid
     overlays: dict[str, tuple[str, VoxelGrid]]  # overlay name -> (its body, lit grid)
     mapping: dict[str, tuple[str, str | None]]  # variant -> (body name, overlay name or None)
+    # freight (voxel/cargo.py): stage -> overlay name, look -> TTD colour, label -> look
+    cargo: dict[int, str] = field(default_factory=dict)
+    cargo_looks: dict[str, str | None] = field(default_factory=dict)
+    cargo_labels: dict[str, str] = field(default_factory=dict)
+    default_look: str = ""
 
     @property
     def default_body(self) -> str:
@@ -76,7 +95,58 @@ class VariantPlan:
 _PLANS: dict[str, VariantPlan] = {}
 
 
-def _plan(vehicle_id: str, vehicle: Vehicle) -> VariantPlan:
+def _cargo_plan(car: CarSpec, recipe) -> VariantPlan:
+    """Freight wagon: Cargopositor turns the masked wagon into an empty body plus one model
+    per cargo look and load stage; each loaded model becomes an overlay of the empty body."""
+    from puenktlich.render import cargopositor
+
+    spec = recipe.CARGO
+    kwargs = dict(car.model.params)
+    masked = recipe.build(**kwargs)
+    masked = masked.grid if isinstance(masked, Model) else masked
+    with tempfile.TemporaryDirectory(prefix=f"pk_cargo_{car.key}_") as tmp:
+        src, out = Path(tmp) / "in", Path(tmp) / "out"
+        write_vox(masked, src / f"{car.key}.vox", rgb_palette())
+        for name, make in spec.shapes.items():
+            shape = make()
+            write_vox(shape.grid if isinstance(shape, Model) else shape, src / f"{name}.vox", rgb_palette())
+        batch = Path(tmp) / "batch.json"
+        batch.write_text(json.dumps({"files": [f"{car.key}.vox"], "operations": spec.batch_operations()}))
+        cargopositor(batch, src, out)
+
+        def load(stem: str) -> VoxelGrid:
+            """Cargopositor trims trailing empty space (origin kept): pad back to the canvas
+            so every state renders in exactly the same frame as the body."""
+            g = read_vox(out / f"{stem}.vox")
+            canvas = np.zeros(masked.data.shape, dtype=np.uint8)
+            sx, sy, sz = (min(a, b) for a, b in zip(g.size, canvas.shape, strict=True))
+            canvas[:sx, :sy, :sz] = g.data[:sx, :sy, :sz]
+            return VoxelGrid(canvas)
+
+        body_name = f"{car.key}_body0"
+        bodies = {body_name: load(f"{car.key}_empty")}
+        overlays: dict[str, tuple[str, VoxelGrid]] = {}
+        cargo: dict[int, str] = {}
+        for stage in spec.stages:
+            name = f"{car.key}_{spec.stage_name(stage)}"
+            overlays[name] = (body_name, load(name))
+            cargo[stage] = name
+    return VariantPlan(
+        bodies=bodies,
+        overlays=overlays,
+        mapping={DEFAULT_VARIANT: (body_name, None)},
+        cargo=cargo,
+        cargo_looks=dict(spec.looks),
+        cargo_labels=dict(spec.labels),
+        default_look=spec.default_look,
+    )
+
+
+def _plan(vehicle_id: str, vehicle: CarSpec) -> VariantPlan:
+    if vehicle.model.kind == "recipe":
+        recipe = load_recipe(model_dir(vehicle) / "recipe.py")
+        if hasattr(recipe, "CARGO"):
+            return _cargo_plan(vehicle, recipe)
     bodies: dict[str, VoxelGrid] = {}
     body_by_digest: dict[str, str] = {}
     overlays: dict[str, tuple[str, VoxelGrid]] = {}
@@ -101,18 +171,27 @@ def _plan(vehicle_id: str, vehicle: Vehicle) -> VariantPlan:
     return VariantPlan(bodies, overlays, mapping)
 
 
-def variant_plan(vehicle: Vehicle) -> VariantPlan:
-    """Cached per process (recipes are rebuilt by each new `pk` run)."""
-    if vehicle.id not in _PLANS:
-        _PLANS[vehicle.id] = _plan(vehicle.id, vehicle)
-    return _PLANS[vehicle.id]
+def variant_plan(target: Vehicle | CarSpec) -> VariantPlan:
+    """Plan for one car (names prefixed with the car key). Cached per process."""
+    car = _car(target)
+    if car.key not in _PLANS:
+        _PLANS[car.key] = _plan(car.key, car)
+    return _PLANS[car.key]
 
 
-def write_models(vehicle: Vehicle, out_dir: Path | None = None) -> tuple[VariantPlan, list[Path]]:
-    """Write body and lit-overlay models to `build/vox/<id>/base/` (stale files removed)."""
+def car_plans(vehicle: Vehicle) -> dict[str, tuple[CarSpec, VariantPlan]]:
+    """car key -> (car, plan) for every car of the vehicle, front to rear."""
+    return {c.key: (c, variant_plan(c)) for c in vehicle.car_specs}
+
+
+def write_models(vehicle: Vehicle, out_dir: Path | None = None) -> tuple[dict[str, VariantPlan], list[Path]]:
+    """Write body and lit-overlay models of every car to `build/vox/<id>/base/`
+    (stale files removed). Returns ({car key: plan}, files)."""
     out_dir = out_dir or paths.BUILD_VOX / vehicle.id / "base"
-    plan = variant_plan(vehicle)
-    grids = dict(plan.bodies) | {name: lit for name, (_, lit) in plan.overlays.items()}
+    plans = {key: plan for key, (_, plan) in car_plans(vehicle).items()}
+    grids: dict[str, VoxelGrid] = {}
+    for plan in plans.values():
+        grids |= dict(plan.bodies) | {name: lit for name, (_, lit) in plan.overlays.items()}
     files = []
     for name, grid in grids.items():
         p = out_dir / f"{name}.vox"
@@ -121,4 +200,4 @@ def write_models(vehicle: Vehicle, out_dir: Path | None = None) -> tuple[Variant
     for stale in out_dir.glob("*.vox"):
         if stale not in files:
             stale.unlink()
-    return plan, files
+    return plans, files

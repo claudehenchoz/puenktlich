@@ -1,0 +1,37 @@
+# SBB Cargo Eanos — open bulk wagon. de.wikipedia "Eaos" (SBB Cargo data sheet). Loads by Cargopositor.
+id: eanos
+grf_id: 105          # never change — saved games reference this
+name:
+  en: SBB Cargo Eanos (open wagon)
+  de: SBB Cargo Eanos (offener Wagen)
+  fr: CFF Cargo Eanos (wagon tombereau)
+  it: FFS Cargo Eanos (carro aperto)
+operator: sbb
+kind: wagon
+railtype: standard
+intro_year: 1975
+vehicle_life_years: 45
+model_life_years: 40
+max_speed_kmh: 100     # 120 empty, 100 loaded
+power_kw: 0
+weight_t: 21.5
+length_m: 14.04
+capacity:
+  COAL: 58
+refit_classes: [CC_BULK]
+cost_factor: 12
+running_cost_factor: 6
+liveries:
+  # one livery only: the body is fixed reddish brown so the recoloured cargo can't bleed into it
+  - id: sbb_cargo
+    name: { en: SBB Cargo, de: SBB Cargo, fr: CFF Cargo, it: FFS Cargo }
+    company_colours: true
+model:
+  path: sbb/eanos
+  kind: recipe
+reference: [sbb-eanos]
+description:
+  en: Four-axle open wagon for coal, ore, stone and scrap. The load is shown per cargo.
+  de: Vierachsiger offener Wagen für Kohle, Erz, Steine und Schrott. Die Ladung wird je nach Gut dargestellt.
+  fr: Wagon tombereau à quatre essieux pour charbon, minerai, pierres et ferraille. Le chargement est affiché selon la marchandise.
+  it: Carro aperto a quattro assi per carbone, minerale, pietre e rottami. Il carico è mostrato secondo la merce.

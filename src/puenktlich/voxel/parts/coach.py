@@ -22,7 +22,9 @@ Colour plan (docs/STYLE.md):
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Literal
 
 from puenktlich.voxel import palette as P
 from puenktlich.voxel.model import CENTRE_Y, Model
@@ -68,6 +70,16 @@ class CoachSpec:
     bogie_centres_m: float = 9.5  # each side of the middle
     wheel_diameter: float = 9
     wheelbase: float = 25
+    # multiple-unit car role: which end carries the unit's lamps.
+    #   None    stand-alone coach / control car (default behaviour above)
+    #   "front" first car: lamps at its front only (cab front if it has a cab)
+    #   "middle" no lamps
+    #   "rear"  last car: built cab-first, then always turned round; cab lamps = unit's rear lamps
+    mu_role: Literal["front", "middle", "rear"] | None = None
+    window_band: bool = False  # continuous dark band along the window row (NPZ/Domino, ICN…)
+    cab_colour: int | None = None  # paint the cab nose (e.g. CC1 for a red front)
+    roof_line: bool = True  # red line at the roof edge (EW IV IC livery)
+    extras: Callable[[Model, Shell], None] | None = None  # car-specific details (pantograph…)
 
 
 def _door(mdl: Model, shell: Shell, front: bool, span: tuple[float, float], top: float) -> None:
@@ -80,10 +92,21 @@ def _door(mdl: Model, shell: Shell, front: bool, span: tuple[float, float], top:
 
 
 def build_coach(spec: CoachSpec, lights: Lights) -> Model:
-    # control car at the end of the train: build cab-first with red lamps, then turn round
-    turn_round = spec.cab is not None and lights.front == "off" and lights.rear == "red"
-    if turn_round:
-        lights = Lights(front="red", rear="off", dark=lights.dark)  # type: ignore[arg-type]
+    if spec.mu_role == "rear":
+        # last car of a multiple unit: cab built at the front, carrying the unit's rear lamps
+        turn_round = True
+        lights = Lights(front=lights.rear, rear="off", dark=lights.dark)  # type: ignore[arg-type]
+    elif spec.mu_role == "front":
+        turn_round = False
+        lights = Lights(front=lights.front, rear="off", dark=lights.dark)
+    elif spec.mu_role == "middle":
+        turn_round = False
+        lights = Lights(front="off", rear="off", dark=lights.dark)
+    else:
+        # stand-alone control car at the end of the train: build cab-first with red lamps, turn round
+        turn_round = spec.cab is not None and lights.front == "off" and lights.rear == "red"
+        if turn_round:
+            lights = Lights(front="red", rear="off", dark=lights.dark)  # type: ignore[arg-type]
 
     mdl = Model.new()
     sx = mdl.d.shape[0]
@@ -97,7 +120,8 @@ def build_coach(spec: CoachSpec, lights: Lights) -> Model:
     mdl.solid(shell.mask(mdl), BODY)
     roof = (cs.roof - 4 <= Z) & (abs(Y - CENTRE_Y) <= 15)
     mdl.paint(roof, ROOF)
-    mdl.paint(side_band(mdl, x_rear, x_front + 1, cs.roof - 6, cs.roof - 5), LINE)  # red line at the roof edge
+    if spec.roof_line:
+        mdl.paint(side_band(mdl, x_rear, x_front + 1, cs.roof - 6, cs.roof - 5), LINE)  # red line at the roof edge
     if spec.first_class:
         mdl.paint(side_band(mdl, x_rear + 40, x_front - 40, cs.roof - 8, cs.roof - 7), FIRST_CLASS_YELLOW)
 
@@ -109,6 +133,8 @@ def build_coach(spec: CoachSpec, lights: Lights) -> Model:
 
     # --- doors + vestibule window bands -------------------------------------
     w0, w1 = spec.window_z
+    if spec.window_band:
+        mdl.paint(side_band(mdl, x_rear, x_front + 1, w0 - 2, w1 + 2), DARK)
     for front in (True, False):
         door_span = spec.cab.door_from_end if (front and spec.cab) else spec.door_from_end
         band_x0, band_x1 = end_span(shell, front, 2 if not (front and spec.cab) else 22, door_span[0])
@@ -126,6 +152,9 @@ def build_coach(spec: CoachSpec, lights: Lights) -> Model:
 
     # --- cab (control cars) ---------------------------------------------------
     if spec.cab:
+        if spec.cab_colour is not None:
+            nose = end_band(mdl, shell, cs.floor, cs.roof + 1, cs.half_width, front=True, depth=22)
+            mdl.paint(nose, spec.cab_colour, only=(P.CC2[0], P.CC2[1]))
         z0, z1 = spec.cab.windscreen_z
         mdl.paint(
             end_band(mdl, shell, z0 - 2, z1 + 2, spec.cab.windscreen_half_width + 2, front=True, depth=26), P.BLACK
@@ -147,6 +176,9 @@ def build_coach(spec: CoachSpec, lights: Lights) -> Model:
     else:
         lamp_cluster(mdl, shell, True, "off", low_z=(18, 22), top_z=None, spacing=13, lamp_half_width=1.5)
     lamp_cluster(mdl, shell, False, lights.state("rear"), low_z=(18, 22), top_z=None, spacing=13, lamp_half_width=1.5)
+
+    if spec.extras is not None:
+        spec.extras(mdl, shell)
 
     # --- running gear ----------------------------------------------------------
     off = spec.bogie_centres_m * 10

@@ -20,7 +20,7 @@
   description: Metre gauge (RhB, MGB, zb, MOB…), non-electrified
 - id: metre_ac
   label: NAAA
-  fallbacks: [NAAE]
+  fallbacks: [NAAE, NAAN]
   description: Metre gauge, AC catenary (RhB / MGB 11 kV 16.7 Hz)
 - id: metre_dc
   label: NAAD

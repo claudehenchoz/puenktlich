@@ -32,8 +32,12 @@ def test_full_build(tmp_path) -> None:
     assert "TRAIN_FLAG_SPRITE_STACK" in text
     assert "sw_re460_mid" in text and "sw_re460_lights_overlay" in text
     assert "ss_re460_head_normal" not in text
+    # multiple unit: one stacking switch per car; freight: per-cargo looks recolour the cargo layer
+    assert "sw_npz_c0_mid" in text and "sw_npz_c2_mid" in text and "sw_npz_c1_mid" not in text
+    assert "COAL: sw_eanos_parts_coal" in text and "palette_1cc(COLOUR_GREY)" in text
+    assert "sw_sgns_load" in text
     grf = compile_grf(nml, tmp_path / "test.grf")
-    assert 1000 < grf.stat().st_size < 4 * 1024 * 1024, "GRF size regression (overlays not used?)"
+    assert 1000 < grf.stat().st_size < 8 * 1024 * 1024, "GRF size regression (overlays not used?)"
 
 
 def test_body_plus_overlay_equals_lit_render() -> None:

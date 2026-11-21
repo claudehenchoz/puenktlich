@@ -16,14 +16,36 @@ _PREVIEW_CC2 = list(range(8, 16))
 _BACKGROUND = (88, 112, 72, 255)  # roughly OpenTTD grass
 
 
-def _remap_table() -> np.ndarray:
+# Approximate start of each TTD company colour's 8-step ramp (preview only; the game uses
+# its own recolour tables).
+COLOUR_RAMPS = {
+    "DARK_BLUE": 198,
+    "PALE_GREEN": 96,
+    "PINK": 42,
+    "YELLOW": 62,
+    "RED": 179,
+    "LIGHT_BLUE": 154,
+    "GREEN": 80,
+    "DARK_GREEN": 88,
+    "BLUE": 146,
+    "CREAM": 112,
+    "MAUVE": 128,
+    "PURPLE": 136,
+    "ORANGE": 185,
+    "BROWN": 104,
+    "GREY": 4,
+    "WHITE": 8,
+}
+
+
+def _remap_table(cc1: str | None = None) -> np.ndarray:
     t = np.arange(256, dtype=np.uint8)
-    t[CC1[0] : CC1[1] + 1] = _PREVIEW_CC1
+    t[CC1[0] : CC1[1] + 1] = list(range(COLOUR_RAMPS[cc1], COLOUR_RAMPS[cc1] + 8)) if cc1 else _PREVIEW_CC1
     t[CC2[0] : CC2[1] + 1] = _PREVIEW_CC2
     return t
 
 
-def composite_cc(rgba: Image.Image, mask: Image.Image | None) -> Image.Image:
+def composite_cc(rgba: Image.Image, mask: Image.Image | None, cc1: str | None = None) -> Image.Image:
     """Approximate OpenTTD's 32bpp+mask blitter: masked pixels take the remapped
     palette colour scaled by the 32bpp pixel's brightness (128 = unchanged)."""
     out = np.array(rgba.convert("RGBA")).astype(np.int32)
@@ -31,7 +53,7 @@ def composite_cc(rgba: Image.Image, mask: Image.Image | None) -> Image.Image:
         return rgba
     m = np.array(mask)
     pal = np.array(rgb_palette(), dtype=np.int32)
-    remap = _remap_table()
+    remap = _remap_table(cc1)
     sel = m != 0
     if sel.any():
         bright = out[..., :3].max(axis=2)[sel]
@@ -92,6 +114,7 @@ def _views(
     only: tuple[int, ...] | None = None,
     mask_vis: bool = False,
     overlay: str | None = None,
+    overlay_cc1: str | None = None,
 ) -> Image.Image:
     """The 8 (or 4 for hills) direction views of one sheet, cropped and laid out in a row."""
     p32 = sheet_for(sprite_dir, name, kind, scale, "32bpp")
@@ -109,7 +132,7 @@ def _views(
             o32 = sheet_for(sprite_dir, overlay_sheet_name(overlay), kind, scale, "32bpp")
             om = sheet_for(sprite_dir, overlay_sheet_name(overlay), kind, scale, "mask")
             img = img.copy()
-            img.alpha_composite(composite_cc(Image.open(o32), Image.open(om)))
+            img.alpha_composite(composite_cc(Image.open(o32), Image.open(om), overlay_cc1))
     crops = []
     for i, r in enumerate(sprite_layout(scale, length, kind)):
         if r.w <= 1 or (only is not None and i not in only):
@@ -127,32 +150,56 @@ def _views(
 def contact_sheet(vehicle, sprite_dir: Path, out: Path) -> Path:
     """Review sheet: normal views at 1x/2x/4x, curve (±15°) and hill views, every light
     variant and the company-colour mask, upscaled nearest-neighbour to 4x."""
-    from puenktlich.models import variant_plan  # local: avoid import cycle
+    from puenktlich.models import car_plans  # local: avoid import cycle
 
-    length = vehicle.ottd_length
-    plan = variant_plan(vehicle)
-    first = next(iter(plan.mapping))
-    main, main_ovl = plan.mapping[first]
     rows: list[tuple[str, Image.Image]] = []
 
     def up(img: Image.Image, f: int) -> Image.Image:
         return img.resize((img.width * f, img.height * f), Image.Resampling.NEAREST)
 
-    for scale in SCALES:
-        label = f"{scale}x normal, CC red/white (shown x{4 // scale})"
-        rows.append((label, up(_views(sprite_dir, main, "normal", scale, length, overlay=main_ovl), 4 // scale)))
-    for kind, label in (
-        ("turn_1", "turn_1 (+15°, curves)"),
-        ("turn_2", "turn_2 (-15°, curves)"),
-        ("up", "up (hill)"),
-        ("down", "down (hill)"),
-    ):
-        rows.append((f"4x {label}", _views(sprite_dir, main, kind, 4, length, overlay=main_ovl)))
-    if len(plan.mapping) > 1:
-        for var, (body, ovl) in plan.mapping.items():
-            label = f"4x lights: {var} = {body} + {ovl or 'no overlay'} (left: NE view = rear end, right: SW = front)"
-            rows.append((label, _views(sprite_dir, body, "normal", 4, length, only=(5, 1), overlay=ovl)))
-    rows.append(("4x mask (magenta = CC1, cyan = CC2)", _views(sprite_dir, main, "normal", 4, length, mask_vis=True)))
+    plans = list(car_plans(vehicle).values())
+    for car, plan in plans:
+        length = car.ottd_length
+        tag = f"car {car.index}: " if len(plans) > 1 else ""
+        main, main_ovl = plan.mapping[next(iter(plan.mapping))]
+        if car.index == 0:
+            for scale in SCALES:
+                label = f"{tag}{scale}x normal, CC red/white (shown x{4 // scale})"
+                rows.append(
+                    (label, up(_views(sprite_dir, main, "normal", scale, length, overlay=main_ovl), 4 // scale))
+                )
+            for kind, label in (
+                ("turn_1", "turn_1 (+15°, curves)"),
+                ("turn_2", "turn_2 (-15°, curves)"),
+                ("up", "up (hill)"),
+                ("down", "down (hill)"),
+            ):
+                rows.append((f"{tag}4x {label}", _views(sprite_dir, main, kind, 4, length, overlay=main_ovl)))
+        else:
+            rows.append((f"{tag}4x normal", _views(sprite_dir, main, "normal", 4, length, overlay=main_ovl)))
+        if len(plan.mapping) > 1:
+            for var, (body, ovl) in plan.mapping.items():
+                label = (
+                    f"{tag}4x lights: {var} = {body} + {ovl or 'no overlay'} (left: NE = rear end, right: SW = front)"
+                )
+                rows.append((label, _views(sprite_dir, body, "normal", 4, length, only=(5, 1), overlay=ovl)))
+        if plan.cargo:
+            for look, colour in plan.cargo_looks.items():
+                for stage, ovl in plan.cargo.items():
+                    label = f"{tag}4x cargo: {look} ({colour or 'own colours'}), stage {stage} = {main} + {ovl}"
+                    rows.append(
+                        (
+                            label,
+                            _views(
+                                sprite_dir, main, "normal", 4, length, only=(1, 2, 5), overlay=ovl, overlay_cc1=colour
+                            ),
+                        )
+                    )
+    car, plan = plans[0]
+    main = plan.mapping[next(iter(plan.mapping))][0]
+    rows.append(
+        ("4x mask (magenta = CC1, cyan = CC2)", _views(sprite_dir, main, "normal", 4, car.ottd_length, mask_vis=True))
+    )
 
     label_h, pad = 14, 6
     width = max(r.width for _, r in rows) + 2 * pad
@@ -199,13 +246,13 @@ def lint_sheets(sprite_dir: Path, name: str, length: int, allow_empty: bool = Fa
 
 
 def lint_vehicle(vehicle) -> list[str]:
-    from puenktlich.models import variant_plan
+    from puenktlich.models import car_plans
     from puenktlich.paths import BUILD_SPRITES
 
-    plan = variant_plan(vehicle)
     out: list[str] = []
-    for body in plan.bodies:
-        out += lint_sheets(BUILD_SPRITES / vehicle.id, body, vehicle.ottd_length)
-    for ovl in plan.overlays:
-        out += lint_sheets(BUILD_SPRITES / vehicle.id, overlay_sheet_name(ovl), vehicle.ottd_length, allow_empty=True)
+    for car, plan in car_plans(vehicle).values():
+        for body in plan.bodies:
+            out += lint_sheets(BUILD_SPRITES / vehicle.id, body, car.ottd_length)
+        for ovl in plan.overlays:
+            out += lint_sheets(BUILD_SPRITES / vehicle.id, overlay_sheet_name(ovl), car.ottd_length, allow_empty=True)
     return out

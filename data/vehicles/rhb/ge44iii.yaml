@@ -1,0 +1,40 @@
+# RhB Ge 4/4 III — metre gauge. de.wikipedia "RhB Ge 4/4 III". Needs the companion GRF
+# puenktlich_tracks.grf (or another track set providing NAAE/NAAN).
+id: ge44iii
+grf_id: 200          # never change — saved games reference this
+name:
+  en: RhB Ge 4/4 III
+  de: RhB Ge 4/4 III
+  fr: RhB Ge 4/4 III
+  it: FR Ge 4/4 III
+operator: rhb
+kind: locomotive
+railtype: metre_ac
+intro_year: 1993
+vehicle_life_years: 40
+model_life_years: 30
+max_speed_kmh: 100
+power_kw: 2400
+tractive_effort_kn: 170
+weight_t: 62
+length_m: 16.0
+cost_factor: 38
+running_cost_factor: 28
+liveries:
+  - id: rhb
+    name: { en: RhB red, de: RhB-Rot, fr: Rouge RhB, it: Rosso FR }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: rhb/ge44iii
+  kind: recipe
+  lights: true
+reference: [rhb-ge44iii]
+description:
+  en: Metre-gauge universal locomotive of the Rhaetian Railway, famous for its advertising liveries.
+  de: Meterspur-Universallok der Rhätischen Bahn, bekannt für ihre Werbelackierungen.
+  fr: Locomotive universelle à voie métrique des Chemins de fer rhétiques, célèbre pour ses livrées publicitaires.
+  it: Locomotiva universale a scartamento metrico della Ferrovia retica, famosa per le livree pubblicitarie.

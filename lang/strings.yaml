@@ -15,3 +15,10 @@ STR_BADGE_CLASS_OPERATOR:
   de: "Betreiber"
   fr: "Exploitant"
   it: "Gestore"
+STR_TRACKS_GRF_NAME:
+  en: "Pünktlich Tracks {VERSION}"
+STR_TRACKS_GRF_DESC:
+  en: "Metre-gauge railtypes for Pünktlich (RhB, MGB, …): plain and electrified.{}Licence: GPL v2."
+  de: "Meterspur-Gleistypen für Pünktlich (RhB, MGB, …): ohne und mit Fahrleitung.{}Lizenz: GPL v2."
+  fr: "Types de voie métrique pour Pünktlich (RhB, MGB, …) : simple et électrifiée.{}Licence : GPL v2."
+  it: "Tipi di binario a scartamento metrico per Pünktlich (RhB, MGB, …): semplice ed elettrificato.{}Licenza: GPL v2."
