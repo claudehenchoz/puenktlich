@@ -9,7 +9,7 @@ STR_GRF_DESC:
   fr: "Trains et bus suisses — CFF, BLS, RhB, CarPostal et plus.{}Licence : GPL v2."
   it: "Treni e autobus svizzeri — FFS, BLS, RhB, AutoPostale e altro.{}Licenza: GPL v2."
 STR_GRF_URL:
-  en: "https://github.com/OWNER/puenktlich"
+  en: "https://github.com/claudehenchoz/puenktlich"
 STR_BADGE_CLASS_OPERATOR:
   en: "Operator"
   de: "Betreiber"
