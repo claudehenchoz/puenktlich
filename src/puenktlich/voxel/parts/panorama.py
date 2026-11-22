@@ -19,10 +19,19 @@ import numpy as np
 
 from puenktlich.voxel import palette as P
 from puenktlich.voxel.model import Model
-from puenktlich.voxel.parts.body import CrossSection, EndShape, Shell, face_mask, side_band
-from puenktlich.voxel.parts.dosto import side_skin
+from puenktlich.voxel.parts.body import (
+    CrossSection,
+    EndShape,
+    Shell,
+    door_outline,
+    face_mask,
+    gangway,
+    side_band,
+    side_skin,
+)
 from puenktlich.voxel.parts.lights import lamp_cluster
-from puenktlich.voxel.parts.running_gear import bogie, buffers, skirt
+from puenktlich.voxel.parts.roof import roof_ribs
+from puenktlich.voxel.parts.running_gear import COACH_UNDERFRAME, bogie, buffers, underframe
 from puenktlich.voxel.variants import Lights
 
 # heights (z, ≈12.5 voxels per metre on metre gauge), REFERENCE.md "Measurements"
@@ -46,14 +55,14 @@ SECTION = CrossSection(
 )
 END = EndShape(rake=0, corner_radius=2)
 
-RED = P.ramp(P.CC1, 0.6)
-RED_DARK = P.ramp(P.CC1, 0.3)
+RED = P.BODY_CC1
+RED_DARK = P.SEAM_CC1
 PALE = P.ramp(P.ICY_BLUE, 1.0)  # 214: GoRender lighting brightens it to the real pale blue
-STRIPE_WHITE = P.ramp(P.GREY, 0.93)  # not P.WHITE: that is a lamp colour
-GOLD = P.ramp((32, 39), 0.5)  # golden browns
+STRIPE_WHITE = P.OFF_WHITE
+GOLD = P.ramp(P.GOLDEN_BROWN, 0.5)
 FRAME_BLACK = P.BLACK
-GANGWAY = P.ramp(P.GREY, 0.2)
-UNDER = P.ramp(P.GREY, 0.25)
+GANGWAY = P.DARK
+UNDER = P.DARK
 
 SLANT = 0.043  # m of end-boundary shift per voxel of height (red ends lean towards the end)
 
@@ -98,6 +107,10 @@ def build_panorama_car(spec: PanoramaSpec, lights: Lights) -> Model:
     mdl.paint(upper & (u >= 1.4 - SLANT * h) & (u < 2.1 - SLANT * h), STRIPE_WHITE)
     mdl.paint(upper & (v >= 0.9 - SLANT * h) & (v < 1.5 - SLANT * h), STRIPE_WHITE)
 
+    # --- narrow flat roof between the glazed bevels: grey, with panel seams ------------
+    mdl.paint((ROOF - 1 <= Z) & (x_rear + 2 < X) & (x_front - 2 > X), P.ROOF)
+    roof_ribs(mdl, x_rear + 4, x_front - 4, ROOF - 1, half_width=9)
+
     # --- windows: one black-framed block, panes in the side and in the bevel ----------
     if bar:  # panorama bar (REFERENCE.md, g02): two bays, then service door and kitchen
         block, bays = (5.5, 10.6), 2
@@ -114,8 +127,7 @@ def build_panorama_car(spec: PanoramaSpec, lights: Lights) -> Model:
         for a, b in ((13.1, 14.3), (14.9, 15.9)):  # kitchen windows
             mdl.paint(side_band(mdl, at(b) - 1, at(a) + 1, 26, 35), FRAME_BLACK)
             mdl.inset(side_band(mdl, at(b), at(a), 27, 34), P.GLASS)
-        sd = side_band(mdl, at(12.0), at(11.3), FLOOR + 2, 36)  # service door
-        mdl.inset(sd & ~side_band(mdl, at(12.0) + 1, at(11.3) - 1, FLOOR + 3, 35), RED_DARK)
+        door_outline(mdl, at(12.0), at(11.3), FLOOR + 2, 36, RED_DARK)  # service door
         letters = side_skin(mdl) & (X.astype(int) % 3 != 0)  # "GLACIER" over "EXPRESS"
         mdl.paint(letters & side_band(mdl, at(15.0), at(12.2), 20, 25), STRIPE_WHITE)
         mdl.paint(letters & side_band(mdl, at(15.0), at(12.9), 15, 19), STRIPE_WHITE)
@@ -128,25 +140,26 @@ def build_panorama_car(spec: PanoramaSpec, lights: Lights) -> Model:
 
     # --- entrance door at the door end (both sides; the bar car has none) ----------------
     if not bar:
-        leaf = side_band(mdl, at(1.25), at(0.35), FLOOR + 1, 37)
-        mdl.inset(leaf & ~side_band(mdl, at(1.25) + 1, at(0.35) - 1, FLOOR + 2, 36), RED_DARK)
+        door_outline(mdl, at(1.25), at(0.35), FLOOR + 1, 37, RED_DARK)
         mdl.inset(side_band(mdl, at(1.1), at(0.5), 24, 33), P.GLASS)
 
     # --- ends: dark gangways, central buffer, tail lamps -------------------------------
     for front in (True, False):
         xe = x_front if front else x_rear
-        xa, xb = (xe + 1, xe + 4) if front else (xe - 3, xe)
         if not (spec.kind == "excellence" and not front):  # the bar end has no gangway
-            mdl.solid(mdl.centred_box(xa, xb, 8, FLOOR + 1, ROOF - 8), GANGWAY)
+            gangway(mdl, xe, front, 8, FLOOR + 1, ROOF - 8, GANGWAY)
         end = face_mask(mdl, front, depth=1) & (Z >= FLOOR + 1) & (Z < ROOF - 8) & (abs(Y - mdl.cy) <= 9)
         mdl.paint(end & ~np.broadcast_to((x_front < X) | (x_rear > X), mdl.d.shape), GANGWAY)
-        buffers(mdl, xe, front=front, z=FLOOR, length=4, spacing=0)
-    for front, state in ((True, lights.state("front")), (False, lights.state("rear"))):  # tail lamps
+        buffers(mdl, xe, front=front, length=4, gauge="metre", beam=False)
+    # tail lamps: a coach never leads, so its front lamps stay off and only the rear ones turn red
+    for front, state in ((True, "off"), (False, lights.state("rear"))):
         lamp_cluster(mdl, shell, front, state, low_z=(12, 15), top_z=None, spacing=13, lamp_half_width=1.5)
 
     # --- running gear (pivots 12.83 m apart, air-sprung bogies) -------------------------
     mid = shell.mid
     for c in (mid - 64, mid + 64):
-        bogie(mdl, c, wheelbase=18, wheel_diameter=7, top=FLOOR, gauge="metre")
-    skirt(mdl, mid - 46, mid + 46, 5, FLOOR, 14, colour=UNDER)
+        bogie(mdl, c, wheelbase=18, wheel_diameter=7, top=FLOOR, gauge="metre", style="coach")
+    # low-slung body: only shallow equipment cases fit under the floor
+    layout = tuple((a, b, kind, 4 if kind == "box" else 5) for a, b, kind, _ in COACH_UNDERFRAME)
+    underframe(mdl, mid - 46, mid + 46, FLOOR, 14, layout, colour=UNDER)
     return mdl

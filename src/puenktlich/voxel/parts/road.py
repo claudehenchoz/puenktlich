@@ -19,15 +19,15 @@ from puenktlich.voxel import palette as P
 from puenktlich.voxel.model import Model
 from puenktlich.voxel.parts.body import CrossSection, EndShape, Shell, end_band, side_band
 
-BODY = P.ramp(P.CC1, 0.6)
-STRIPE = P.ramp(P.CC2, 0.55)
-SKIRT = P.DARK_GREY
-ROOF = P.ramp(P.GREY, 0.7)
+BODY = P.BODY_CC1
+STRIPE = P.STRIPE_CC2
+SKIRT = P.UNDERFRAME
+ROOF = P.ROOF_LIGHT
 FRAME = P.BLACK
 TYRE = P.BLACK
 HUB = P.MID_GREY
 LAMP_WHITE = P.WHITE
-LAMP_RED = 184
+LAMP_RED = P.LAMP_RED
 # right-hand side when looking forward (+x) is high y on the canvas (seen in the 90° view)
 DOOR_SIDE = 1
 
@@ -89,7 +89,7 @@ def windscreen(model: Model, body: BusBody) -> None:
     model.inset(end_band(model, shell, 12, cs.roof - 7, cs.half_width - 3, front=True, depth=6), P.GLASS)
     # destination display (amber text on black)
     disp = end_band(model, shell, cs.roof - 5, cs.roof - 3, 9, front=True, depth=6)
-    model.paint(disp, 66)
+    model.paint(disp, P.YELLOW)
     # driver's side window directly behind the windscreen
     model.inset(side_band(model, shell.x_front - 12, shell.x_front - 4, 17, cs.roof - 6), P.GLASS)
 

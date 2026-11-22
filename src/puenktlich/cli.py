@@ -40,67 +40,120 @@ def vox(ids: IdsArg = None) -> None:
     from puenktlich.models import write_models
 
     for v in _select(ids):
-        for p in write_models(v):
-            typer.echo(f"{v.id}: {p.relative_to(paths.ROOT)}")
+        _, files = write_models(v)
+        for p in files:
+            typer.echo(f"{v.id}: {paths.rel(p)}")
+
+
+JobsOpt = Annotated[
+    int | None, typer.Option("--jobs", "-j", help="Vehicles rendered at once (default: half the cores, or PK_JOBS)")
+]
 
 
 @app.command()
 def render(
-    ids: IdsArg = None, force: Annotated[bool, typer.Option(help="Re-render even if up to date")] = False
+    ids: IdsArg = None,
+    force: Annotated[bool, typer.Option(help="Re-render even if up to date")] = False,
+    jobs: JobsOpt = None,
+    draft: Annotated[
+        bool, typer.Option(help="4x only with GoRender's fast sampler, into build/sprites_draft/")
+    ] = False,
 ) -> None:
     """Variants -> hill tilt (Cargopositor) -> GoRender 1x/2x/4x (24 views + hills) -> overrides -> lint."""
-    from puenktlich.pipeline import LAST_RENDER_STATS, render_vehicle
+    import os
+    import time
+
+    from puenktlich.pipeline import render_vehicles
 
     failed = False
-    for v in _select(ids):
-        out, problems, applied = render_vehicle(v, force=force)
-        n = LAST_RENDER_STATS.get(v.id, 0)
-        typer.echo(f"{v.id}: {n} sheet(s) rendered" if n else f"{v.id}: up to date")
-        for o in applied:
-            typer.echo(f"  override: {o.relative_to(paths.ROOT)}")
-        for pr in problems:
+    start = time.perf_counter()
+    totals: dict[str, float] = {}
+    for r in render_vehicles(_select(ids), force=force, draft=draft, jobs=jobs):
+        n = r.sheets_rendered
+        typer.echo(f"{r.vehicle_id}: {n} sheet(s) rendered" if n else f"{r.vehicle_id}: up to date")
+        for o in r.overrides:
+            typer.echo(f"  override: {paths.rel(o)}")
+        for pr in r.problems:
             typer.secho(f"  {pr}", fg="red")
-        failed |= bool(problems)
+        failed |= bool(r.problems)
+        for stage, secs in r.timings.items():
+            totals[stage] = totals.get(stage, 0.0) + secs
+    if os.environ.get("PK_TIMING"):
+        stages = ", ".join(f"{k} {v:.1f}" for k, v in totals.items())
+        typer.echo(f"timing: {time.perf_counter() - start:.1f} s wall; summed over vehicles: {stages}")
     if failed:
         raise typer.Exit(1)
 
 
 @app.command()
-def preview(ids: IdsArg = None, render_first: Annotated[bool, typer.Option("--render/--no-render")] = True) -> None:
+def preview(
+    ids: IdsArg = None,
+    render_first: Annotated[bool, typer.Option("--render/--no-render")] = True,
+    draft: Annotated[
+        bool, typer.Option(help="Quick look while modelling: 4x only, fast sampler, <id>_draft.png (not for release)")
+    ] = False,
+    jobs: JobsOpt = None,
+) -> None:
     """Render and write a review contact sheet to build/previews/<id>.png."""
+    from puenktlich.pipeline import DRAFT_SCALES, sprite_dir
+    from puenktlich.render import SCALES
     from puenktlich.sprites import contact_sheet
 
     if render_first:
-        render(ids)
+        render(ids, force=False, jobs=jobs, draft=draft)
     for v in _select(ids):
-        out = contact_sheet(v, paths.BUILD_SPRITES / v.id, paths.BUILD_PREVIEWS / f"{v.id}.png")
+        name = f"{v.id}_draft.png" if draft else f"{v.id}.png"
+        scales = DRAFT_SCALES if draft else SCALES
+        out = contact_sheet(v, sprite_dir(v, draft), paths.BUILD_PREVIEWS / name, scales=scales)
         typer.echo(f"{v.id}: {out}")
 
 
 @app.command()
-def build(ids: IdsArg = None, skip_render: Annotated[bool, typer.Option("--skip-render")] = False) -> None:
-    """Full build: lint data, render changed models, generate NML, compile build/puenktlich.grf."""
-    from puenktlich.nml.generate import compile_grf, generate
+def build(
+    ids: IdsArg = None,
+    skip_render: Annotated[bool, typer.Option("--skip-render")] = False,
+    jobs: JobsOpt = None,
+) -> None:
+    """Full build: lint data, render changed models, generate NML, compile build/puenktlich.grf.
 
-    lint(sprites=False)
+    With vehicle ids it builds only those into build/puenktlich_partial.grf (for a quick
+    `pk ingame <ids>`); build/puenktlich.grf always holds every vehicle."""
+    from puenktlich.nml.generate import compile_grf, generate, partial_grf
+
+    lint(sprites=False, models=True)
     if not skip_render:
-        render(ids)
+        render(ids, force=False, jobs=jobs, draft=False)
     from puenktlich.tracks.build import build_tracks
 
-    nml = generate(only=ids or None)
-    grf = compile_grf(nml)
-    typer.secho(f"built {grf.relative_to(paths.ROOT)} ({grf.stat().st_size // 1024} KiB)", fg="green")
+    if ids:
+        nml = generate(paths.BUILD / "nml_partial", only=ids)
+        grf = compile_grf(nml, partial_grf(), vehicle_ids=ids)
+    else:
+        from puenktlich.models import prune_caches
+
+        grf = compile_grf(generate())
+        freed = prune_caches()
+        if freed:
+            typer.echo(f"pruned {freed // 2**20} MiB of unused cache entries")
+    typer.secho(f"built {paths.rel(grf)} ({grf.stat().st_size // 1024} KiB)", fg="green")
     tracks = build_tracks()
-    typer.secho(f"built {tracks.relative_to(paths.ROOT)} ({tracks.stat().st_size // 1024} KiB)", fg="green")
+    typer.secho(f"built {paths.rel(tracks)} ({tracks.stat().st_size // 1024} KiB)", fg="green")
 
 
 @app.command()
-def lint(sprites: Annotated[bool, typer.Option(help="Also lint rendered sprite sheets")] = True) -> None:
-    """Validate data files and (optionally) rendered sprites."""
+def lint(
+    sprites: Annotated[bool, typer.Option(help="Also lint rendered sprite sheets")] = True,
+    models: Annotated[bool, typer.Option(help="Also check the voxel models (puenktlich/checks.py)")] = True,
+) -> None:
+    """Validate data files, the voxel models and (optionally) rendered sprites."""
     from puenktlich.schema import validate_all, vehicles
     from puenktlich.sprites import lint_vehicle
 
     problems = validate_all()
+    if models and not problems:
+        from puenktlich.checks import check_all
+
+        problems += check_all()
     if sprites:
         for v in vehicles().values():
             problems += lint_vehicle(v)
@@ -109,6 +162,42 @@ def lint(sprites: Annotated[bool, typer.Option(help="Also lint rendered sprite s
     if problems:
         raise typer.Exit(1)
     typer.secho("lint ok", fg="green")
+
+
+@app.command()
+def lock() -> None:
+    """Record new vehicles and liveries in data/ids.lock (the ids saved games depend on)."""
+    from puenktlich.lock import LOCK, update
+
+    try:
+        added = update()
+    except ValueError as e:
+        typer.secho(str(e), fg="red")
+        raise typer.Exit(1) from e
+    for a in added:
+        typer.echo(f"locked {a}")
+    typer.secho(f"{paths.rel(LOCK)}: {len(added)} new entr{'y' if len(added) == 1 else 'ies'}", fg="green")
+
+
+@app.command()
+def new(
+    operator: Annotated[str, typer.Argument(help="Operator id from data/operators.yaml, e.g. sbb")],
+    vehicle_id: Annotated[str, typer.Argument(help="New vehicle id, e.g. re420 (lower case, permanent)")],
+    kind: Annotated[str, typer.Option(help="locomotive | coach | control_car | emu | wagon | bus")] = "locomotive",
+    name: Annotated[str | None, typer.Option(help='Display name, e.g. "SBB Re 420"')] = None,
+) -> None:
+    """Start a new vehicle: YAML with the next free grf_id, a recipe stub that already builds, and
+    a REFERENCE.md. Then fill in the TODOs (see .claude/skills/new-vehicle/SKILL.md)."""
+    from puenktlich.scaffold import new_vehicle
+
+    try:
+        files = new_vehicle(operator, vehicle_id, kind, name or vehicle_id)
+    except ValueError as e:
+        raise typer.BadParameter(str(e)) from e
+    for f in files:
+        typer.echo(f"created {paths.rel(f)}")
+    typer.echo(f"next: uv run pk elevation {vehicle_id}   (seconds)  ->  uv run pk preview {vehicle_id} --draft")
+    typer.echo("when the ids are final: uv run pk lock")
 
 
 @app.command()
@@ -186,14 +275,16 @@ def ingame(
 
     Builds a test loop with a ramp via a Game Script, runs one train of the selected
     vehicles in the given order (first livery each unless --all-liveries), turns it round
-    after shot 3 (push-pull check) and writes screenshots to build/ingame/<zoom>/.
-    Takes ~1 min per shot."""
+    after shot 3 (push-pull check) and writes screenshots to build/ingame/<zoom>/ (several
+    zoom levels share one run in build/ingame/all/). Takes ~1 min per shot and zoom level."""
     from puenktlich.ingame import find_baseset, run
+    from puenktlich.nml.generate import grf_for
 
-    grf = paths.BUILD / f"{paths.GRF_NAME}.grf"
-    if not grf.exists():
-        raise typer.BadParameter("build/puenktlich.grf missing — run `pk build` first")
     vs = _select(ids)
+    grf = grf_for([v.id for v in vs])
+    if grf is None:
+        raise typer.BadParameter("build/puenktlich.grf missing — run `pk build` first")
+    typer.echo(f"using {paths.rel(grf)}")
     if all_liveries:
         targets = [v.name["en"] for v in vs]
     else:

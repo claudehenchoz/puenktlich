@@ -14,7 +14,7 @@ Not in the source: car-by-car window counts, baggage-door position (approximated
 
 from puenktlich.voxel import palette as P
 from puenktlich.voxel.model import Model
-from puenktlich.voxel.parts.body import CrossSection, EndShape, Shell, end_span, side_band
+from puenktlich.voxel.parts.body import CrossSection, EndShape, Shell, door_outline, end_span, side_band
 from puenktlich.voxel.parts.coach import DOOR, DOOR_SEAM, CabSpec, CoachSpec, build_coach
 from puenktlich.voxel.parts.roof import main_switch, pantograph, roof_box
 from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
@@ -34,7 +34,7 @@ def _motor_extras(mdl: Model, shell: Shell) -> None:
     x0, x1 = end_span(shell, True, 46, 64)  # baggage compartment door
     leaf = side_band(mdl, x0, x1, shell.section.floor + 1, 42)
     mdl.paint(leaf, DOOR)
-    mdl.inset(leaf & ~side_band(mdl, x0 + 1, x1 - 1, shell.section.floor + 2, 41), DOOR_SEAM)
+    door_outline(mdl, x0, x1, shell.section.floor + 1, 42, DOOR_SEAM)
     mdl.inset(side_band(mdl, (x0 + x1) / 2 - 0.5, (x0 + x1) / 2 + 0.5, shell.section.floor + 2, 41), DOOR_SEAM)
 
 
@@ -45,16 +45,18 @@ def _spec(car: str) -> CoachSpec:
             windows=7,
             cab=CAB,
             mu_role="front",
-            cab_colour=P.ramp(P.CC1, 0.6),
+            cab_colour=P.BODY_CC1,
             door_from_end=(24, 36),
             extras=_motor_extras,
+            motor_bogies=True,
+            roof_vents=0,  # pantograph and roof gear instead
             wheelbase=26,
             **common,
         )
     if car == "intermediate":
         return CoachSpec(windows=10, mu_role="middle", **common)
     if car == "control":
-        return CoachSpec(windows=9, cab=CAB, mu_role="rear", cab_colour=P.ramp(P.CC1, 0.6), **common)
+        return CoachSpec(windows=9, cab=CAB, mu_role="rear", cab_colour=P.BODY_CC1, **common)
     raise ValueError(f"unknown NPZ car {car!r}")
 
 

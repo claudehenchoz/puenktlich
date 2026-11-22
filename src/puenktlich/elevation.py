@@ -16,7 +16,7 @@ from PIL import Image, ImageDraw
 from puenktlich import paths
 from puenktlich.models import build_grid
 from puenktlich.schema import Vehicle
-from puenktlich.sprites import COLOUR_RAMPS
+from puenktlich.sprites import colour_indices
 from puenktlich.voxel.palette import CC1, CC2, rgb_palette
 
 SCALE = 4  # pixels per voxel
@@ -28,8 +28,8 @@ def _colour_table(vehicle: Vehicle) -> np.ndarray:
     cc1 = liv.cc1 or "RED"
     cc2 = liv.cc2 or "WHITE"
     remap = np.arange(256)
-    remap[CC1[0] : CC1[1] + 1] = np.arange(COLOUR_RAMPS[cc1], COLOUR_RAMPS[cc1] + 8)
-    remap[CC2[0] : CC2[1] + 1] = np.arange(COLOUR_RAMPS[cc2], COLOUR_RAMPS[cc2] + 8)
+    remap[CC1[0] : CC1[1] + 1] = colour_indices(cc1)
+    remap[CC2[0] : CC2[1] + 1] = colour_indices(cc2)
     return np.array(rgb_palette(), dtype=np.float64)[remap]
 
 

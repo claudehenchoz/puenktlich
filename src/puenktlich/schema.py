@@ -40,6 +40,27 @@ METRES_PER_UNIT = 3.2  # 8/8 = 25.6 m — docs/SCALE.md
 # (126 voxels -> 36 px), i.e. 1.4 m at 10 vox/m: 8/8 = 11.2 m
 ROAD_METRES_PER_UNIT = 1.4
 ROAD_KINDS = ("bus", "tram")
+MAX_LIVERIES = 8  # item id = grf_id * MAX_LIVERIES + livery index
+MAX_GRF_ID = 0xFFFF // MAX_LIVERIES  # 8191: the last livery's item id must fit 16 bits
+# cargo label -> cargo class it is refitted by default (others need `refit_classes`)
+CARGO_CLASSES = {"PASS": "CC_PASSENGERS", "MAIL": "CC_MAIL", "COAL": "CC_BULK", "GOOD": "CC_PIECE_GOODS"}
+CargoClass = Literal[
+    "CC_PASSENGERS",
+    "CC_MAIL",
+    "CC_EXPRESS",
+    "CC_ARMOURED",
+    "CC_BULK",
+    "CC_PIECE_GOODS",
+    "CC_LIQUID",
+    "CC_REFRIGERATED",
+    "CC_HAZARDOUS",
+    "CC_COVERED",
+    "CC_OVERSIZED",
+    "CC_POWDERIZED",
+    "CC_NON_POURABLE",
+    "CC_NEO_BULK",
+    "CC_SPECIAL",
+]
 
 
 def units(length_m: float, road: bool = False) -> int:
@@ -56,6 +77,7 @@ class Operator(Strict):
     name: str
     full_name: dict[Lang, str]
     badge: str = Field(description="Badge label, e.g. 'operator/sbb'")
+    grf_id_block: int = Field(ge=0, le=MAX_GRF_ID - 99, multiple_of=100, description="First of 100 grf_ids")
     founded: int | None = None
 
 
@@ -118,7 +140,9 @@ class CarSpec(BaseModel):
 
 class Vehicle(Strict):
     id: str = Field(pattern=r"^[a-z0-9_]+$", description="Globally unique, stable forever")
-    grf_id: int = Field(ge=0, lt=0xFFFF, description="NewGRF item ID — never reuse or change")
+    grf_id: int = Field(
+        ge=0, le=MAX_GRF_ID, description="Block of 8 NewGRF item ids (grf_id * 8 + livery) — never reuse or change"
+    )
     name: dict[Lang, str]
     operator: str
     kind: Literal["locomotive", "emu", "dmu", "coach", "control_car", "wagon", "bus", "tram"]
@@ -134,13 +158,13 @@ class Vehicle(Strict):
     weight_t: float = Field(gt=0)
     length_m: float = Field(gt=0)
     capacity: dict[str, int] = Field(default_factory=dict, description="cargo label -> amount (the default cargo)")
-    refit_classes: list[str] = Field(
+    refit_classes: list[CargoClass] = Field(
         default_factory=list, description="Refittable cargo classes, e.g. [CC_BULK]; default: from the cargo label"
     )
     reliability_decay: int = 20
     cost_factor: int = Field(25, ge=0, le=255)
     running_cost_factor: int = Field(25, ge=0, le=255)
-    liveries: list[Livery] = Field(min_length=1)
+    liveries: list[Livery] = Field(min_length=1, max_length=MAX_LIVERIES, description="Append-only (item ids)")
     model: ModelRef | None = Field(None, description="Single-model vehicle (or use `cars`)")
     cars: list[Car] = Field(default_factory=list, description="Multiple unit: cars from front to rear")
     reference: list[str] = Field(default_factory=list, description="IDs in data/reference/*.yaml")
@@ -162,6 +186,26 @@ class Vehicle(Strict):
                 raise ValueError(f"{self.id}: road vehicles have a `roadtype`, not a `railtype`")
         elif self.railtype is None or self.roadtype is not None:
             raise ValueError(f"{self.id}: rail vehicles need a `railtype` (and no `roadtype`)")
+        return self
+
+    @model_validator(mode="after")
+    def _consistent(self) -> Vehicle:
+        if self.retire_year is not None and self.retire_year <= self.intro_year:
+            raise ValueError(f"{self.id}: retire_year {self.retire_year} is not after intro_year {self.intro_year}")
+        if len(self.capacity) > 1:
+            raise ValueError(f"{self.id}: one cargo type in `capacity` (the default cargo); refits via refit_classes")
+        for label in self.capacity:
+            if label not in CARGO_CLASSES and not self.refit_classes:
+                raise ValueError(f"{self.id}: cargo {label} needs `refit_classes` (known: {', '.join(CARGO_CLASSES)})")
+        if self.kind in ("coach", "wagon"):
+            if self.power_kw != 0:
+                raise ValueError(f"{self.id}: a {self.kind} has power_kw 0")
+            if not self.capacity:
+                raise ValueError(f"{self.id}: a {self.kind} needs a `capacity`")
+        if self.kind == "control_car" and not (0 < self.power_kw <= 10 and self.capacity):
+            raise ValueError(
+                f"{self.id}: a control car has a capacity and a nominal power_kw of 1..10 (to lead a train)"
+            )
         return self
 
     @property
@@ -214,6 +258,35 @@ class ReferenceList(Strict):
     entries: list[ReferenceEntry]
 
 
+class Track(Strict):
+    """A railtype of the companion track GRF (data/tracks.yaml)."""
+
+    label: str = Field(min_length=4, max_length=4)
+    style: Literal["metre", "metre_rack"] = Field(description="Sprites in src/puenktlich/tracks/")
+    name: dict[Lang, str]
+    short: dict[Lang, str]
+    compatible: list[str] = Field(description="Track labels engines of this type can run on")
+    powered: list[str] = Field(description="Track labels on which they have power")
+    alternative: list[str] = Field(default_factory=list)
+    catenary: bool
+    intro_year: int = Field(ge=1800, le=2100)
+    construction_cost: int = Field(ge=0, le=255)
+    maintenance_cost: int = Field(ge=0, le=255)
+    map_colour: int = Field(ge=0, le=255)
+    speed_limit_kmh: int | None = Field(None, gt=0)
+
+    @model_validator(mode="after")
+    def _labels(self) -> Track:
+        for lab in (*self.compatible, *self.powered, *self.alternative):
+            if len(lab) != 4:
+                raise ValueError(f"{self.label}: railtype label {lab!r} must have 4 characters")
+        if not set(self.powered) <= set(self.compatible):
+            raise ValueError(f"{self.label}: `powered` must be a subset of `compatible`")
+        if "en" not in self.name or "en" not in self.short:
+            raise ValueError(f"{self.label}: name.en and short.en are required")
+        return self
+
+
 # --- loaders -------------------------------------------------------------------
 
 
@@ -247,6 +320,14 @@ def vehicles() -> dict[str, Vehicle]:
 
 
 @cache
+def tracks() -> dict[str, Track]:
+    out = {t["label"]: Track(**t) for t in _yaml(paths.DATA / "tracks.yaml")}
+    if len(out) != len(_yaml(paths.DATA / "tracks.yaml")):
+        raise ValueError("data/tracks.yaml: duplicate label")
+    return out
+
+
+@cache
 def references() -> dict[str, ReferenceList]:
     return {p.stem: ReferenceList(**_yaml(p)) for p in sorted(paths.REFERENCE.glob("*.yaml"))}
 
@@ -255,15 +336,22 @@ def validate_all() -> list[str]:
     """Cross-file checks that pydantic can't do per file. Returns problems."""
     problems: list[str] = []
     ops, rts, vs = operators(), railtypes(), vehicles()
+    tracks()  # validates data/tracks.yaml
     all_refs = [e.id for r in references().values() for e in r.entries]
     ref_ids = set(all_refs)
     for rid in sorted(ref_ids):
         if all_refs.count(rid) > 1:
             problems.append(f"reference id {rid} listed {all_refs.count(rid)} times")
+    blocks = [o.grf_id_block for o in ops.values()]
+    if len(set(blocks)) != len(blocks):
+        problems.append("data/operators.yaml: two operators share a grf_id_block")
     seen_grf: dict[int, str] = {}
     for v in vs.values():
         if v.operator not in ops:
             problems.append(f"{v.id}: unknown operator {v.operator}")
+        elif not 0 <= v.grf_id - ops[v.operator].grf_id_block < 100:
+            block = ops[v.operator].grf_id_block
+            problems.append(f"{v.id}: grf_id {v.grf_id} is outside {v.operator}'s block {block}..{block + 99}")
         if not v.is_road and v.railtype not in rts:
             problems.append(f"{v.id}: unknown railtype {v.railtype}")
         if v.grf_id in seen_grf:
@@ -280,4 +368,6 @@ def validate_all() -> list[str]:
         ids = [livery.id for livery in v.liveries]
         if len(set(ids)) != len(ids):
             problems.append(f"{v.id}: duplicate livery ids")
-    return problems
+    from puenktlich.lock import problems as lock_problems
+
+    return problems + lock_problems(vs)

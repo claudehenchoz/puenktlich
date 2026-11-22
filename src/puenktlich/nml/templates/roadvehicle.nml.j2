@@ -55,7 +55,7 @@ item(FEAT_ROADVEHS, {{ l.ident }}, {{ l.item_id }}) {
         name: string({{ l.name_string }});
         climates_available: ALL_CLIMATES;
         introduction_date: date({{ v.intro_year }}, 1, 1);
-        model_life: {{ v.model_life_years }};
+        model_life: {{ model_life }};
         vehicle_life: {{ v.vehicle_life_years }};
         reliability_decay: {{ v.reliability_decay }};
         {%- if cargo %}
@@ -80,6 +80,8 @@ item(FEAT_ROADVEHS, {{ l.ident }}, {{ l.item_id }}) {
         badges: [{{ badges | map("tojson") | join(", ") }}];
         {%- if l.variant_group %}
         variant_group: {{ l.variant_group }};
+        // a livery, not a new model: no news of its own, tested and aged with the first livery
+        extra_flags: bitmask(VEHICLE_FLAG_DISABLE_NEW_VEHICLE_MESSAGE, VEHICLE_FLAG_SYNC_VARIANT_EXCLUSIVE_PREVIEW, VEHICLE_FLAG_SYNC_VARIANT_RELIABILITY);
         {%- endif %}
     }
     graphics {

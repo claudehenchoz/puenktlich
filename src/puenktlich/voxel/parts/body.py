@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+from puenktlich.voxel import palette as P
 from puenktlich.voxel.model import CENTRE_Y, Model
 
 
@@ -170,3 +171,56 @@ def end_span(shell: Shell, front: bool, a: float, b: float) -> tuple[float, floa
     if front:
         return shell.x_front - b, shell.x_front - a
     return shell.x_rear + a, shell.x_rear + b
+
+
+def side_skin(model: Model) -> np.ndarray:
+    """Filled voxels with an empty neighbour outwards in y (the visible body sides)."""
+    occ = model.d != 0
+    out = np.zeros_like(occ)
+    cy = int(model.cy)
+    out[:, : cy + 1] = occ[:, : cy + 1] & ~np.pad(occ, ((0, 0), (1, 0), (0, 0)))[:, : cy + 1]
+    out[:, cy + 1 :] = occ[:, cy + 1 :] & ~np.pad(occ, ((0, 0), (0, 1), (0, 0)))[:, cy + 2 :]
+    return out
+
+
+def door_outline(
+    model: Model, x0: float, x1: float, z0: float, z1: float, colour: int, sill: float = 1, lintel: float = 1
+) -> None:
+    """Recessed seam around a door leaf x0..x1, z0..z1 on both sides (one voxel wide at the
+    jambs; `sill` / `lintel` = seam height at the bottom / top, 0 for none)."""
+    model.inset(side_band(model, x0, x1, z0, z1) & ~side_band(model, x0 + 1, x1 - 1, z0 + sill, z1 - lintel), colour)
+
+
+def louvres(
+    model: Model,
+    x0: float,
+    x1: float,
+    z0: float,
+    z1: float,
+    *,
+    horizontal: bool = False,
+    pitch: int = 3,
+    back: int = P.DARK_GREY,
+    slat: int = P.MID_GREY,
+) -> None:
+    """Recessed ventilation grille on both sides: dark panel with lighter slats every `pitch`
+    voxels (vertical slats by default; horizontal=True for slats along the body)."""
+    X, _, Z = model.coords()
+    panel = side_band(model, x0, x1, z0, z1)
+    model.inset(panel, back)
+    model.paint(panel & (((Z if horizontal else X).astype(int) % pitch) == 0), slat)
+
+
+def rounded_window(model: Model, x0: float, x1: float, z0: float, z1: float, frame: int = P.BLACK) -> None:
+    """Rounded-rectangle window on both sides: frame with clipped corners, glass inset."""
+    X, _, Z = model.coords()
+    outer = side_band(model, x0, x1, z0, z1)
+    corner = ((x0 + 1 > X) | (x1 - 1 <= X)) & ((z0 + 1 > Z) | (z1 - 1 <= Z))
+    model.paint(outer & ~corner, frame)
+    model.inset(side_band(model, x0 + 1, x1 - 1, z0 + 1, z1 - 1), P.GLASS)
+
+
+def gangway(model: Model, x_end: float, front: bool, half_width: float, z0: float, z1: float, colour: int) -> None:
+    """Dark gangway bellows standing 3 voxels proud of an end face."""
+    xa, xb = (x_end + 1, x_end + 4) if front else (x_end - 3, x_end)
+    model.solid(model.centred_box(xa, xb, half_width, z0, z1), colour)

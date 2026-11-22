@@ -112,6 +112,28 @@ switch (FEAT_TRAINS, SELF, sw_{{ v.id }}_length, position_in_articulated_veh) {
 }
 {%- endif %}
 {%- endif %}
+{%- if purchase %}
+
+// buy menu: the unit's end cars (and a middle car), not just the first car
+spriteset(ss_{{ purchase.name }}, "{{ purchase.sheets[1]['8bpp'] }}") {
+    {{ purchase.rects[1].nml() }}
+}
+{%- for scale, zoom in zooms %}
+alternative_sprites(ss_{{ purchase.name }}, {{ zoom }}, BIT_DEPTH_32BPP, "{{ purchase.sheets[scale]['32bpp'] }}", "{{ purchase.sheets[scale]['mask'] }}") {
+    {{ purchase.rects[scale].nml() }}
+}
+{%- endfor %}
+{%- endif %}
+{%- if cargo and cargo.uneven %}
+
+// exact capacity per part ({{ cargo.total }} in total does not divide evenly by {{ cargo.parts | length }} parts)
+switch (FEAT_TRAINS, SELF, sw_{{ v.id }}_capacity, position_in_articulated_veh) {
+{%- for n in cargo.parts[:-1] %}
+    {{ loop.index0 }}: return {{ n }};
+{%- endfor %}
+    return {{ cargo.parts[-1] }};
+}
+{%- endif %}
 {% for l in liveries %}
 {%- if articulated %}
 switch (FEAT_TRAINS, SELF, sw_{{ l.ident }}_articulated, extra_callback_info1) {
@@ -125,7 +147,7 @@ item(FEAT_TRAINS, {{ l.ident }}, {{ l.item_id }}) {
         name: string({{ l.name_string }});
         climates_available: ALL_CLIMATES;
         introduction_date: date({{ v.intro_year }}, 1, 1);
-        model_life: {{ v.model_life_years }};
+        model_life: {{ model_life }};
         vehicle_life: {{ v.vehicle_life_years }};
         reliability_decay: {{ v.reliability_decay }};
         {%- if cargo %}
@@ -146,7 +168,7 @@ item(FEAT_TRAINS, {{ l.ident }}, {{ l.item_id }}) {
         weight: {{ v.weight_t }} ton;
         track_type: {{ track_label }};
         length: {{ parts[0] if articulated else v.ottd_length }};
-        misc_flags: bitmask(TRAIN_FLAG_2CC{{ ", TRAIN_FLAG_SPRITE_STACK" if has_stack else "" }});
+        misc_flags: bitmask(TRAIN_FLAG_2CC{{ ", TRAIN_FLAG_SPRITE_STACK" if has_stack else "" }}{{ ", TRAIN_FLAG_MU" if v.kind in ("emu", "dmu") else "" }});
         {%- if v.power_kw > 0 %}
         power: {{ v.power_kw }} kW;
         {%- if te_coefficient %}
@@ -168,6 +190,8 @@ item(FEAT_TRAINS, {{ l.ident }}, {{ l.item_id }}) {
         badges: [{{ badges | map("tojson") | join(", ") }}];
         {%- if l.variant_group %}
         variant_group: {{ l.variant_group }};
+        // a livery, not a new model: no news of its own, tested and aged with the first livery
+        extra_flags: bitmask(VEHICLE_FLAG_DISABLE_NEW_VEHICLE_MESSAGE, VEHICLE_FLAG_SYNC_VARIANT_EXCLUSIVE_PREVIEW, VEHICLE_FLAG_SYNC_VARIANT_RELIABILITY);
         {%- endif %}
     }
     graphics {
@@ -180,13 +204,16 @@ item(FEAT_TRAINS, {{ l.ident }}, {{ l.item_id }}) {
         {%- else %}
         default: sw_{{ v.id }}_parts;
         {%- endif %}
-        purchase: ss_{{ cars[0].default_body }}_normal;
+        purchase: {{ "ss_" ~ purchase.name if purchase else "ss_" ~ cars[0].default_body ~ "_normal" }};
         articulated_part: sw_{{ l.ident }}_articulated;
         {%- if parts | unique | list | length > 1 %}
         length: sw_{{ v.id }}_length;
         {%- endif %}
         {%- else %}
         default: ss_{{ cars[0].default_body }}_normal;
+        {%- endif %}
+        {%- if cargo and cargo.uneven %}
+        cargo_capacity: sw_{{ v.id }}_capacity;
         {%- endif %}
         {%- if not l.livery.company_colours %}
         colour_mapping: return palette_2cc(COLOUR_{{ l.livery.cc1 }}, COLOUR_{{ l.livery.cc2 }});

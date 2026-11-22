@@ -1,4 +1,6 @@
 # Operators -> purchase-menu badges ("operator/<id>"). Add operators as their vehicles arrive.
+# grf_id_block: first of the 100 vehicle grf_ids reserved for the operator (`pk new` picks the
+# next free one). Blocks never move: saved games depend on the ids (data/ids.lock).
 - id: sbb
   name: SBB
   full_name:
@@ -7,11 +9,13 @@
     fr: Chemins de fer fédéraux suisses
     it: Ferrovie federali svizzere
   badge: operator/sbb
+  grf_id_block: 100
   founded: 1902
 - id: bls
   name: BLS
   full_name: { en: BLS, de: BLS AG, fr: BLS SA, it: BLS SA }
   badge: operator/bls
+  grf_id_block: 500
   founded: 1906
 - id: sob
   name: SOB
@@ -21,6 +25,7 @@
     fr: Chemin de fer du Sud-Est
     it: Ferrovia del Sud-Est
   badge: operator/sob
+  grf_id_block: 600
   founded: 2001
 - id: rhb
   name: RhB
@@ -31,14 +36,17 @@
     it: Ferrovia retica
     rm: Viafier retica
   badge: operator/rhb
+  grf_id_block: 200
   founded: 1889
 - id: mgb
   name: MGB
   full_name: { en: Matterhorn Gotthard Bahn, de: Matterhorn Gotthard Bahn, fr: Matterhorn Gotthard Bahn, it: Matterhorn Gotthard Bahn }
   badge: operator/mgb
+  grf_id_block: 300
   founded: 2003
 - id: postauto
   name: PostAuto
   full_name: { en: PostBus, de: PostAuto, fr: CarPostal, it: AutoPostale }
   badge: operator/postauto
+  grf_id_block: 400
   founded: 1906

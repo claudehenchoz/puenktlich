@@ -30,7 +30,7 @@ def spec(cls: str) -> CoachSpec:
         pillar=2.5,
         length_m=18.5,
         gauge="metre",
-        body_colour=P.ramp(P.CC1, 0.6),
+        body_colour=P.BODY_CC1,
         roof_line=False,
         bogie_centres_m=6.3,
         wheel_diameter=8,

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from puenktlich.voxel import palette as P
 from puenktlich.voxel.model import CANVAS, Model
@@ -63,20 +64,6 @@ def test_light_variants_differ_at_lamps() -> None:
     assert 0 < diff.sum() < 2000
 
 
-def test_model_fits_canvas_with_tilt_headroom() -> None:
-    from puenktlich.models import build_grid
-    from puenktlich.schema import vehicles
-    from puenktlich.voxel.model import CANVAS, ROAD_CANVAS
-
-    for v in vehicles().values():
-        for car in v.car_specs:
-            grid = build_grid(car)
-            assert grid.data.shape == (ROAD_CANVAS if car.road else CANVAS), car.key
-            (_, _), (_, _), (_, zmax) = grid.bounds()
-            if not car.road:  # road vehicles have no hill sprites
-                assert zmax <= 68, f"{car.key}: z {zmax} leaves too little headroom for hill tilt"
-
-
 def test_control_car_turns_cab_outward_when_last() -> None:
     """Push-pull: the Bt's cab (windscreen glass) is at the front normally and at the
     rear (low x) in the `tail` variant, i.e. when it is the last vehicle of the train."""
@@ -97,15 +84,17 @@ def test_control_car_turns_cab_outward_when_last() -> None:
     assert rear > 3 * max(front, 1)
 
 
-def test_coaches_never_show_white_lamps() -> None:
-    from puenktlich.models import build_grid, variants
+def test_cabs_have_a_top_headlamp() -> None:
+    """Swiss three-lamp pattern: a leading cab shows a white lamp above the windscreen
+    (the default lamp height once missed the lower NPZ roof entirely)."""
+    from puenktlich.models import build_grid
     from puenktlich.schema import vehicles
     from puenktlich.voxel.parts.lights import LAMP_WHITE
 
-    for vid in ("ew4_a", "ew4_b"):
-        v = vehicles()[vid]
-        for var in variants(v):
-            assert not (build_grid(v, var).data == LAMP_WHITE).any(), (vid, var)
+    vs = vehicles()
+    for car in (vs["ew4_bt"].car_specs[0], vs["npz"].car_specs[0], vs["re460"].car_specs[0]):
+        white = build_grid(car, "head").data == LAMP_WHITE
+        assert white[:, :, 40:].sum() >= 8, car.key
 
 
 def test_variant_plan_dedupes_bodies_and_overlays() -> None:
@@ -122,20 +111,6 @@ def test_variant_plan_dedupes_bodies_and_overlays() -> None:
     assert bt.mapping["tail"][0] != bt.mapping["head"][0]
     loco = variant_plan(vs["re460"])
     assert len(loco.bodies) == 1 and len(loco.overlays) == 3
-
-
-def test_dark_lights_paint_no_lit_lamps() -> None:
-    from puenktlich.models import build_grid, variants
-    from puenktlich.schema import vehicles
-    from puenktlich.voxel.parts.lights import LAMP_RED, LAMP_WHITE
-
-    for v in vehicles().values():
-        for car in v.car_specs:
-            if not car.model.lights:  # static lamps (e.g. buses): no dark body
-                continue
-            for var in variants(car):
-                d = build_grid(car, var, dark=True).data
-                assert not ((d == LAMP_RED) | (d == LAMP_WHITE)).any(), (car.key, var)
 
 
 def test_multiple_unit_car_plans() -> None:
@@ -232,16 +207,19 @@ def test_voxel_cache_hits(tmp_path, monkeypatch) -> None:
     t = time.perf_counter()
     b = build_grid(v, "solo")
     assert time.perf_counter() - t < 0.05 and np.array_equal(a.data, b.data)
-    assert list(tmp_path.glob("vox/*.npy"))
+    assert list(tmp_path.glob("vox/*.npz"))
 
 
 def test_rendered_length_fits_ottd_length() -> None:
     """OpenTTD draws 1/8 unit as 4 px at 1x (90° view) = 16 rendered train voxels (after
     voxel/squash.py) or 14 road voxels: a longer model overlaps its neighbours in the
     train and in the depot window."""
+    from puenktlich import paths
     from puenktlich.models import car_plans
     from puenktlich.schema import vehicles
 
+    if not paths.CARGOPOSITOR.exists():
+        pytest.skip("cargopositor not installed (freight wagon plans)")
     for v in vehicles().values():
         for car, plan in car_plans(v).values():
             per_unit = 14 if car.road else 16

@@ -1,6 +1,8 @@
 # Railtypes used by Pünktlich, mapped onto the Standardised Railtype Scheme
 # (https://newgrf-specs.tt-wiki.net/wiki/Standardized_Railtype_Scheme).
-# We never define tracks ourselves; vehicles pick the first label a loaded track set provides.
+# Vehicles pick the first label a loaded track set provides. Standard gauge comes from the base
+# set or any track set; the metre-gauge labels are provided by our companion track GRF
+# (data/tracks.yaml).
 # Label format: [gauge][speed class][axle load][energy]. Train sets use speed class A.
 - id: standard
   label: SAAN
@@ -27,8 +29,9 @@
   fallbacks: [NAAE]
   description: Metre gauge, DC catenary (MOB, AB, …)
 # Rack railways use the scheme's special speed class "R" (as in French Set Rails). The
-# companion GRF provides NRAN / NRAE (40 km/h); plain metre-gauge engines may use rack
-# sections too (adhesion), rack engines may run on plain metre gauge.
+# companion GRF provides NRAN / NRAE (40 km/h). Rack engines run everywhere on metre gauge;
+# adhesion engines have no power on rack track, so a train needs a rack engine to enter it
+# (data/tracks.yaml).
 - id: metre_rack_ac
   label: NRAA
   fallbacks: [NRAE, NAAE]

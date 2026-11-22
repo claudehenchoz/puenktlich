@@ -138,21 +138,22 @@ function PKTest::Start() {
   GSVehicle.StartStopVehicle(train);
   this.Log("train started, length " + GSVehicle.GetNumWagons(train));
 
-  // Month m: stop on STOP_TILES[m-1] as soon as the train reaches it; the console script
-  // screenshots on the 1st of month m+1, and the train restarts from day 2. (OpenTTD can't
-  // shorten months: the calendar advances at most once per tick, and fast-forward is only
-  // reachable through the GUI, so one game month ≈ 67 s real time is the floor per shot.)
+  // Stop n: halt on STOP_TILES[n] as soon as the train reaches it. The console scripts take one
+  // screenshot on the 1st of each of the next HOLD_MONTHS months (one per zoom level), and the
+  // train restarts from day 2 of the last of them. (OpenTTD can't shorten months: the calendar
+  // advances at most once per tick, and fast-forward is only reachable through the GUI, so one
+  // game month ≈ 67 s real time is the floor per screenshot.)
   this.RunStops(train, cargo);
 }
 
-// Stop the vehicle on STOP_TILES each month for the console screenshot scripts.
+// Stop the vehicle on STOP_TILES for the console screenshot scripts.
 function PKTest::RunStops(train, cargo) {
-  local stopped = false, countdown = -1, reversed = false, stop_month = -1;
+  local stopped = false, countdown = -1, reversed = false, stop_month = -1, stops = 0;
   while (true) {
     local date = GSDate.GetCurrentDate();
     local day = GSDate.GetDayOfMonth(date);
-    local month = GSDate.GetMonth(date);
-    local idx = (month - 1) % STOP_TILES.len();
+    local month = GSDate.GetYear(date) * 12 + GSDate.GetMonth(date);  // absolute month
+    local idx = stops % STOP_TILES.len();
     local target = GSMap.GetTileIndex(STOP_TILES[idx][0], STOP_TILES[idx][1]);
     // When the head (front articulated part) enters the target tile, run a few more
     // ticks so the sprite-carrying middle part is on the tile too, then stop.
@@ -165,8 +166,10 @@ function PKTest::RunStops(train, cargo) {
                (cargo >= 0 ? " load " + GSVehicle.GetCargoLoad(train, cargo) + "/" + GSVehicle.GetCapacity(train, cargo) : ""));
     }
     if (countdown >= 0) countdown--;
-    if (stopped && month != stop_month && day >= 2) {
-      GSVehicle.StartStopVehicle(train); stopped = false;
+    if (stopped && month >= stop_month + HOLD_MONTHS && day >= 2) {
+      GSVehicle.StartStopVehicle(train); stopped = false; stops++;
+      // keep the "one stop per month" rhythm: the next stop may happen in this month
+      stop_month = month - 1;
       // push-pull check: turn the whole train round once, so the far end leads.
       // OpenTTD only acts on a reverse order while the train is moving.
       if (REVERSE_AT_MONTH > 0 && GSDate.GetMonth(date) == REVERSE_AT_MONTH && !reversed) {
