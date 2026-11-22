@@ -31,6 +31,12 @@ fv_dosto_ic200:
 giruno:
   grf_id: 109
   liveries: [sbb, company]
+rabe511:
+  grf_id: 110
+  liveries: [zvv, regio, company]
+rabe511_re:
+  grf_id: 111
+  liveries: [regio, zvv, company]
 ge44iii:
   grf_id: 200
   liveries: [rhb, company]

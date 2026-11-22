@@ -126,6 +126,21 @@ def find_baseset(name: str) -> Path:
     raise FileNotFoundError(f"no base set matching {name!r} in {root}")
 
 
+def _sq(value: object) -> str:
+    """A Squirrel literal for strings and lists of strings (JSON syntax, non-ASCII kept)."""
+    return json.dumps(value, ensure_ascii=False)
+
+
+def default_baseset() -> Path | None:
+    """OpenGFX from OpenTTD's content downloads, if present. The isolated profile only sees
+    the system base sets otherwise, and a system install may ship none that work (only the
+    original TTD sets, which need the TTD data files)."""
+    try:
+        return find_baseset("opengfx")
+    except FileNotFoundError:
+        return None
+
+
 def _profile(
     name: str,
     zooms: list[str],
@@ -153,10 +168,13 @@ def _profile(
     stops = ", ".join(f"[{x}, {y}]" for x, y in STOP_TILES)
     loop = ", ".join(f"{k} = {v}" for k, v in LOOP.items())
     hold = 1 if scene == "infra" else len(zooms)  # months the train waits at each stop
+    # Squirrel string literals know no \u escapes, so names such as "Zürich" are written as
+    # UTF-8; the BOM makes OpenTTD read the file as UTF-8 (without one it assumes Latin-1)
     (gs / "targets.nut").write_text(
-        f"TARGETS <- {json.dumps(targets)};\nLOOP <- {{{loop}}};\nSTOP_TILES <- [{stops}];\n"
+        f"TARGETS <- {_sq(targets)};\nLOOP <- {{{loop}}};\nSTOP_TILES <- [{stops}];\n"
         f"RAISE_X <- {RAISE_X};\nSTOP_DELAY <- {STOP_DELAY};\nREVERSE_AT_MONTH <- {REVERSE_AT_MONTH};\n"
-        f"SCENE <- {json.dumps(scene)};\nEXTRAS <- {json.dumps(extras or [])};\nHOLD_MONTHS <- {hold};\n"
+        f"SCENE <- {_sq(scene)};\nEXTRAS <- {_sq(extras or [])};\nHOLD_MONTHS <- {hold};\n",
+        encoding="utf-8-sig",
     )
     cfg = root / "config" / "openttd"
     cfg.mkdir(parents=True)

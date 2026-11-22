@@ -104,6 +104,59 @@ def end_car(**kw) -> DostoSpec:
     return replace(base, **kw)
 
 
+def deck_floor(door_x: list[tuple[float, float]]):
+    """floor_at for a double-deck car: lower deck (LOW_FLOOR) between the outermost doors
+    (inclusive), a 3-voxel ramp up to the intermediate level (HIGH_FLOOR) over the bogies."""
+    low0, low1 = min(x for x, _ in door_x), max(x for _, x in door_x)
+
+    def floor_at(X: np.ndarray) -> np.ndarray:
+        d = np.maximum(low0 - X, X - low1)
+        return np.clip(LOW_FLOOR + (HIGH_FLOOR - LOW_FLOOR) * d / 3, LOW_FLOOR, HIGH_FLOOR)
+
+    return floor_at
+
+
+def deck_windows(
+    mdl: Model,
+    spec: DostoSpec,
+    at,
+    door_x: list[tuple[float, float]],
+    lower_z: tuple[float, float],
+    upper_z: tuple[float, float],
+    mezz_z: tuple[float, float],
+) -> None:
+    """Window rows of a double-deck car: `spec.lower_windows` spread evenly between the doors,
+    upper-deck windows every `upper_pitch` m from `upper_from` to the rear end, and the
+    `mezz_windows` of the intermediate levels. `at` maps metres from the front end to x."""
+    gap0, gap1 = door_x[-1][1] + 5, door_x[0][0] - 5
+    lw = spec.lower_width * 10
+    n = spec.lower_windows
+    pitch = (gap1 - gap0) / n
+    for i in range(n):
+        a = gap0 + i * pitch + (pitch - lw) / 2
+        rounded_window(mdl, a, a + lw, *lower_z)
+    uw = spec.upper_width * 10
+    k = 0
+    while True:
+        a_u = spec.upper_from + k * spec.upper_pitch
+        if a_u + spec.upper_width > spec.length_m - 0.7:
+            break
+        rounded_window(mdl, at(a_u + spec.upper_width), at(a_u + spec.upper_width) + uw, *upper_z)
+        k += 1
+    for a, b in spec.mezz_windows:
+        rounded_window(mdl, at(b), at(a), *mezz_z)
+
+
+def gangway_ends(mdl: Model, cab: bool) -> None:
+    """Dark end face with the bellows frame at each gangway end (the rear only on cab cars)."""
+    _, Y, Z = mdl.coords()
+    dy = abs(Y - mdl.cy)
+    for front in (False, True) if not cab else (False,):
+        skin = face_mask(mdl, front, depth=2) & (Z >= HIGH_FLOOR)
+        mdl.paint(skin & (dy <= 8) & (Z < ROOF - 4), BLACK)  # bellows
+        mdl.paint(skin & (dy <= 6) & (Z >= HIGH_FLOOR + 2) & (Z < ROOF - 6), DARK)
+
+
 def build_dosto_car(spec: DostoSpec, lights: Lights) -> Model:
     turn_round = spec.mu_role == "rear" and spec.cab
     lights = mu_lights(spec.mu_role, lights)
@@ -118,12 +171,10 @@ def build_dosto_car(spec: DostoSpec, lights: Lights) -> Model:
         return x_front - u * 10
 
     door_x = [(at(b), at(a)) for a, b in spec.doors]
-    low0, low1 = min(x for x, _ in door_x), max(x for _, x in door_x)
+    deck = deck_floor(door_x)
 
     def floor_at(X: np.ndarray) -> np.ndarray:
-        # lower deck between the doors (inclusive), 3-voxel ramp up to the intermediate level
-        d = np.maximum(low0 - X, X - low1)
-        floor = np.clip(LOW_FLOOR + (HIGH_FLOOR - LOW_FLOOR) * d / 3, LOW_FLOOR, HIGH_FLOOR)
+        floor = deck(X)
         if spec.cab:  # aerodynamic skirt under the nose, down to ~0.5 m, ending before the bogie
             uu = (x_front - X) / 10
             floor = np.where(uu < 2.6, np.clip(6 + (uu - 1.8) * 8, 6, HIGH_FLOOR), floor)
@@ -206,25 +257,7 @@ def build_dosto_car(spec: DostoSpec, lights: Lights) -> Model:
             mdl.paint(side_band(mdl, x0, x1, z1, z1 + 2), FIRST_YELLOW)
 
     # --- windows ---------------------------------------------------------------
-    # lower deck: evenly between the doors
-    gap0, gap1 = door_x[-1][1] + 5, door_x[0][0] - 5
-    lw = spec.lower_width * 10
-    n = spec.lower_windows
-    pitch = (gap1 - gap0) / n
-    for i in range(n):
-        a = gap0 + i * pitch + (pitch - lw) / 2
-        rounded_window(mdl, a, a + lw, *LOWER_WIN)
-    # upper deck: from upper_from to the rear end
-    uw = spec.upper_width * 10
-    k = 0
-    while True:
-        a_u = spec.upper_from + k * spec.upper_pitch
-        if a_u + spec.upper_width > spec.length_m - 0.7:
-            break
-        rounded_window(mdl, at(a_u + spec.upper_width), at(a_u + spec.upper_width) + uw, *UPPER_WIN)
-        k += 1
-    for a, b in spec.mezz_windows:
-        rounded_window(mdl, at(b), at(a), *MEZZ_WIN)
+    deck_windows(mdl, spec, at, door_x, LOWER_WIN, UPPER_WIN, MEZZ_WIN)
 
     # SBB logo: red box with the white cross, upper side next to the first door
     lx = door_x[0][0] - 16
@@ -233,11 +266,7 @@ def build_dosto_car(spec: DostoSpec, lights: Lights) -> Model:
     mdl.paint(side_band(mdl, lx - 28, lx - 2, 34, 36), DARK)  # "SBB CFF FFS"
 
     # --- ends --------------------------------------------------------------------
-    # gangway end(s): dark end face with the bellows frame
-    for front in (False, True) if not spec.cab else (False,):
-        skin = face_mask(mdl, front, depth=2) & (Z >= HIGH_FLOOR)
-        mdl.paint(skin & (dy <= 8) & (Z < ROOF - 4), BLACK)  # bellows
-        mdl.paint(skin & (dy <= 6) & (Z >= HIGH_FLOOR + 2) & (Z < ROOF - 6), DARK)
+    gangway_ends(mdl, spec.cab)
     if spec.cab:
         lamp_cluster(
             mdl,

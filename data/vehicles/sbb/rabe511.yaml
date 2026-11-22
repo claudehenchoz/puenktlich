@@ -1,0 +1,55 @@
+# SBB RABe 511 "Regio-Dosto" (Stadler KISS), 6-car S-Bahn Zürich unit 511 001–069. See models/sbb/rabe511/REFERENCE.md.
+# Liveries: S-Bahn Zürich (dark blue skirt) and RegioExpress / InterRegio (anthracite skirt).
+id: rabe511
+grf_id: 110          # never change — saved games reference this (`pk lock`)
+name:
+  en: SBB RABe 511 Regio-Dosto
+  de: SBB RABe 511 Regio-Dosto
+  fr: CFF RABe 511 Regio-Dosto
+  it: FFS RABe 511 Regio-Dosto
+operator: sbb
+kind: emu
+railtype: standard_ac       # data/railtypes.yaml
+intro_year: 2011
+vehicle_life_years: 35
+model_life_years: 30
+max_speed_kmh: 160
+power_kw: 6000
+tractive_effort_kn: 400
+weight_t: 297
+length_m: 150.0
+capacity:
+  PASS: 535
+cost_factor: 160
+running_cost_factor: 95
+liveries:               # append-only: item id = grf_id * 8 + position
+  - id: zvv
+    name: { en: S-Bahn Zürich, de: S-Bahn Zürich, fr: S-Bahn Zurich, it: S-Bahn Zurigo }
+    cc1: RED
+    cc2: DARK_BLUE
+  - id: regio
+    name: { en: RegioExpress / InterRegio, de: RegioExpress / InterRegio, fr: RegioExpress / InterRegio, it: RegioExpress / InterRegio }
+    cc1: RED
+    cc2: GREY
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+cars:   # front to rear: Bt · B (pantograph) · AB · B · B (pantograph) · Bt
+  - model: { path: sbb/rabe511, lights: true, params: { car: cab, role: front } }
+    length_m: 25.0
+  - model: { path: sbb/rabe511, lights: true, params: { car: panto, role: middle } }
+    length_m: 25.0
+  - model: { path: sbb/rabe511, lights: true, params: { car: first, role: middle } }
+    length_m: 25.0
+  - model: { path: sbb/rabe511, lights: true, params: { car: second, role: middle } }
+    length_m: 25.0
+  - model: { path: sbb/rabe511, lights: true, params: { car: panto_rear, role: middle } }
+    length_m: 25.0
+  - model: { path: sbb/rabe511, lights: true, params: { car: cab, role: rear } }
+    length_m: 25.0
+reference: [sbb-rabe511]
+description:
+  en: Regional double-decker (Stadler KISS) of the Zürich S-Bahn, six cars.
+  de: Regionalverkehrs-Doppelstockzug (Stadler KISS) der S-Bahn Zürich, sechsteilig.
+  fr: Train duplex régional (Stadler KISS) du RER zurichois, six voitures.
+  it: Treno regionale a due piani (Stadler KISS) della S-Bahn di Zurigo, sei carrozze.

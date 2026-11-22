@@ -19,6 +19,7 @@ Flat surfaces get one shade from this table (`palette.py`); GoRender does the sh
 | `P.SEAM_CC1` | CC1 0.25 | Door seams and panel lines on CC1 surfaces, inset |
 | `P.BODY_CC2` | CC2 0.75 | Large secondary-colour surfaces (white coach sides) |
 | `P.STRIPE_CC2` | CC2 0.85 | Stripes, bands, logo panels |
+| `P.DARK_CC2` | CC2 0.4 | Dark secondary-colour bands (skirts of regional units, RABe 511) |
 | `P.ROOF` | grey 0.45 | Silver-grey roofs: locomotives, coaches |
 | `P.ROOF_DARK` | grey 0.3 | Anthracite roofs of modern multiple units |
 | `P.ROOF_LIGHT` | grey 0.7 | Bus roofs |

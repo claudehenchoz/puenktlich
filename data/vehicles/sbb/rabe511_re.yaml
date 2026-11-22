@@ -1,0 +1,52 @@
+# SBB RABe 511 1xx (Stadler KISS), 4-car unit 511 101–124 built for RegioExpress services
+# (Genève–Lausanne–Vevey/Romont, St. Gallen–Chur), converted to "IR-Dosto" 2020–2024.
+# See models/sbb/rabe511/REFERENCE.md.
+id: rabe511_re
+grf_id: 111          # never change — saved games reference this (`pk lock`)
+name:
+  en: SBB RABe 511 Regio-Dosto (4 cars)
+  de: SBB RABe 511 Regio-Dosto (4-teilig)
+  fr: CFF RABe 511 Regio-Dosto (4 voitures)
+  it: FFS RABe 511 Regio-Dosto (4 carrozze)
+operator: sbb
+kind: emu
+railtype: standard_ac
+intro_year: 2012
+vehicle_life_years: 35
+model_life_years: 30
+max_speed_kmh: 160
+power_kw: 6000
+tractive_effort_kn: 400
+weight_t: 212
+length_m: 100.4
+capacity:
+  PASS: 337
+cost_factor: 120
+running_cost_factor: 70
+liveries:               # append-only: item id = grf_id * 8 + position
+  - id: regio
+    name: { en: RegioExpress / InterRegio, de: RegioExpress / InterRegio, fr: RegioExpress / InterRegio, it: RegioExpress / InterRegio }
+    cc1: RED
+    cc2: GREY
+  - id: zvv
+    name: { en: S-Bahn Zürich, de: S-Bahn Zürich, fr: S-Bahn Zurich, it: S-Bahn Zurigo }
+    cc1: RED
+    cc2: DARK_BLUE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+cars:   # front to rear: Bt · AB (pantograph) · B (pantograph) · Bt
+  - model: { path: sbb/rabe511, lights: true, params: { car: cab, role: front } }
+    length_m: 25.0
+  - model: { path: sbb/rabe511, lights: true, params: { car: panto_first, role: middle } }
+    length_m: 25.0
+  - model: { path: sbb/rabe511, lights: true, params: { car: panto_rear, role: middle } }
+    length_m: 25.0
+  - model: { path: sbb/rabe511, lights: true, params: { car: cab, role: rear } }
+    length_m: 25.0
+reference: [sbb-rabe511]
+description:
+  en: Regional double-decker (Stadler KISS), the four-car RegioExpress version.
+  de: Regionalverkehrs-Doppelstockzug (Stadler KISS), die vierteilige RegioExpress-Version.
+  fr: Train duplex régional (Stadler KISS), version RegioExpress à quatre voitures.
+  it: Treno regionale a due piani (Stadler KISS), versione RegioExpress a quattro carrozze.

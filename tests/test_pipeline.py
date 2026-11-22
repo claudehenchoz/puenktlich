@@ -111,6 +111,22 @@ def test_ingame_shot_plan_shares_one_run_between_zooms() -> None:
     assert run_timeout(8 + 1) > 9 * 67
 
 
+def test_ingame_targets_keep_non_ascii_names(tmp_path, monkeypatch) -> None:
+    """Squirrel has no \\u escapes and OpenTTD reads script files without a BOM as Latin-1:
+    a livery such as "S-Bahn Zürich" must reach the game script as UTF-8 with a BOM, or no
+    engine matches and the screenshots show an empty map."""
+    from puenktlich import ingame
+
+    monkeypatch.setattr(ingame, "OUT", tmp_path)
+    grf = tmp_path / "x.grf"
+    grf.write_bytes(b"")
+    root = ingame._profile("t", ["4x"], grf, ["SBB RABe 511 Regio-Dosto (S-Bahn Zürich)"], shots=1)
+    raw = (root / "data" / "openttd" / "game" / "pk_test" / "targets.nut").read_bytes()
+    assert raw.startswith(b"\xef\xbb\xbf")  # BOM: OpenTTD reads files without one as Latin-1
+    text = raw.decode("utf-8-sig")
+    assert '"SBB RABe 511 Regio-Dosto (S-Bahn Zürich)"' in text and "\\u" not in text
+
+
 def test_default_jobs_fit_into_free_memory(monkeypatch) -> None:
     """Each GoRender needs ~3 GB: parallel jobs must not exceed the memory that is free."""
     from puenktlich import pipeline

@@ -61,7 +61,18 @@ function PKTest::Start() {
       }
     }
   }
-  if (engines.len() == 0) { this.Log("ERROR no engines match TARGETS"); return; }
+  if (engines.len() == 0) {
+    this.Log("ERROR no engines match TARGETS");
+    // show the names that share the target's start, to spot spelling/encoding mismatches
+    foreach (t in TARGETS) {
+      local stem = t.slice(0, t.find(" (") == null ? t.len() : t.find(" ("));
+      foreach (e, _ in GSEngineList(GSVehicle.VT_RAIL)) {
+        local name = GSEngine.GetName(e);
+        if (name != null && name.find(stem) != null) this.Log("  near: " + name + " (" + name.len() + " bytes; target " + t.len() + ")");
+      }
+    }
+    return;
+  }
   // a track type every target can run on; prefer one that powers them all (catenary
   // for electric locos even when a non-electric control car comes first)
   // Prefer the first target's own railtype (e.g. plain electrified metre gauge rather than

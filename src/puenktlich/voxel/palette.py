@@ -60,6 +60,7 @@ BODY_CC1 = ramp(CC1, 0.6)  # livery colour on flat body surfaces (doors on white
 SEAM_CC1 = ramp(CC1, 0.25)  # door seams and panel lines on CC1 surfaces (always inset)
 BODY_CC2 = ramp(CC2, 0.75)  # large secondary-colour surfaces (white coach sides)
 STRIPE_CC2 = ramp(CC2, 0.85)  # stripes, bands and logo panels: a step brighter, to read at 1x
+DARK_CC2 = ramp(CC2, 0.4)  # dark secondary-colour bands: skirts of regional units (RABe 511)
 ROOF = ramp(GREY, 0.45)  # silver-grey roofs: locomotives, coaches
 ROOF_DARK = ramp(GREY, 0.3)  # anthracite roofs of modern multiple units (FV-Dosto, Giruno)
 ROOF_LIGHT = ramp(GREY, 0.7)  # light roofs of buses

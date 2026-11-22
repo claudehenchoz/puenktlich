@@ -245,6 +245,33 @@ def test_double_deck_floor_profile() -> None:
     assert np.flatnonzero(d[mid, 20, :])[-1] == ROOF
 
 
+def test_kiss_pantograph_well_and_regional_skirt() -> None:
+    """RABe 511 (KISS): the pantograph car's roof drops into a well at its front end (the
+    pantograph stands in it), `turned` moves it to the rear, and the skirt band below z 17 is
+    the dark CC2 shade, so the S-Bahn Zürich (blue) and RegioExpress (grey) schemes are only
+    a cc2 change."""
+    from puenktlich.voxel import palette as P
+    from puenktlich.voxel.parts.dosto import ROOF
+    from puenktlich.voxel.parts.kiss import SKIRT_TOP, WELL_ROOF, KissSpec, build_kiss_car
+    from puenktlich.voxel.variants import LIGHT_VARIANTS
+
+    def roof_top(d: np.ndarray, x: int) -> int:  # on the centre line
+        return int(np.flatnonzero(d[x, 20, :])[-1])
+
+    d = build_kiss_car(KissSpec(pantograph=True), LIGHT_VARIANTS["none"]).grid.data
+    sx = d.shape[0]
+    front, rear = sx // 2 + 117, sx // 2 - 117  # 0.6 m from each end of the 25 m car
+    assert roof_top(d, front) == WELL_ROOF
+    assert roof_top(d, rear) == ROOF
+    assert d[sx // 2 + 101, 20, WELL_ROOF + 1 :].any()  # pantograph in the well, 2.4 m from the front
+
+    t = build_kiss_car(KissSpec(pantograph=True, turned=True), LIGHT_VARIANTS["none"]).grid.data
+    assert roof_top(t, rear) == WELL_ROOF and roof_top(t, front) > WELL_ROOF
+
+    skirt = d[sx // 2, 2, :SKIRT_TOP]
+    assert (skirt[skirt != 0] == P.DARK_CC2).all()
+
+
 def test_face_mask_only_touches_the_front_skin() -> None:
     from puenktlich.voxel.parts.body import face_mask
 
