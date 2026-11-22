@@ -1,0 +1,41 @@
+# Glacier Express Bp (2nd class) — Stadler panorama coach (RhB/MGB). See models/mgb/glacier/REFERENCE.md.
+id: glacier_bp
+grf_id: 302         # never change — saved games reference this
+name:
+  en: Glacier Express Bp (2nd class)
+  de: Glacier Express Bp (2. Klasse)
+  fr: Glacier Express Bp (2e classe)
+  it: Glacier Express Bp (2a classe)
+operator: mgb
+kind: coach
+railtype: metre_diesel
+intro_year: 2006
+vehicle_life_years: 40
+model_life_years: 30
+max_speed_kmh: 100
+power_kw: 0
+weight_t: 23
+length_m: 18.5
+capacity:
+  PASS: 48
+cost_factor: 20
+running_cost_factor: 8
+liveries:
+  - id: glacier
+    name: { en: Glacier Express, de: Glacier Express, fr: Glacier Express, it: Glacier Express }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: mgb/glacier
+  kind: recipe
+  lights: true         # tail lamps on the last vehicle
+  params: { kind: second }
+reference: [mgb-glacier]
+description:
+  en: "Second-class panorama coach of the Glacier Express."
+  de: "Panoramawagen 2. Klasse des Glacier Express."
+  fr: "Voiture panoramique de 2e classe du Glacier Express."
+  it: "Carrozza panoramica di 2a classe del Glacier Express."

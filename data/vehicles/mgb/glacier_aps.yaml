@@ -1,0 +1,41 @@
+# Glacier Express Aps (Excellence Class) — Stadler panorama coach (RhB/MGB). See models/mgb/glacier/REFERENCE.md.
+id: glacier_aps
+grf_id: 304         # never change — saved games reference this
+name:
+  en: Glacier Express Aps (Excellence Class)
+  de: Glacier Express Aps (Excellence Class)
+  fr: Glacier Express Aps (Excellence Class)
+  it: Glacier Express Aps (Excellence Class)
+operator: mgb
+kind: coach
+railtype: metre_diesel
+intro_year: 2019
+vehicle_life_years: 40
+model_life_years: 30
+max_speed_kmh: 100
+power_kw: 0
+weight_t: 23
+length_m: 18.5
+capacity:
+  PASS: 20
+cost_factor: 24
+running_cost_factor: 8
+liveries:
+  - id: glacier
+    name: { en: Glacier Express, de: Glacier Express, fr: Glacier Express, it: Glacier Express }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: mgb/glacier
+  kind: recipe
+  lights: true         # tail lamps on the last vehicle
+  params: { kind: excellence }
+reference: [mgb-glacier]
+description:
+  en: "Excellence Class car of the Glacier Express: 20 seats at tables and a bar, at one end of the train."
+  de: "Excellence-Class-Wagen des Glacier Express: 20 Plätze an Tischen und eine Bar, am Zugende."
+  fr: "Voiture Excellence Class du Glacier Express: 20 places en tables et un bar, en bout de train."
+  it: "Carrozza Excellence Class del Glacier Express: 20 posti ai tavoli e un bar, in coda al treno."

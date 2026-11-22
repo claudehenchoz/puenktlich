@@ -1,0 +1,41 @@
+# Glacier Express Ap (1st class) — Stadler panorama coach (RhB/MGB). See models/mgb/glacier/REFERENCE.md.
+id: glacier_ap
+grf_id: 301         # never change — saved games reference this
+name:
+  en: Glacier Express Ap (1st class)
+  de: Glacier Express Ap (1. Klasse)
+  fr: Glacier Express Ap (1re classe)
+  it: Glacier Express Ap (1a classe)
+operator: mgb
+kind: coach
+railtype: metre_diesel
+intro_year: 2006
+vehicle_life_years: 40
+model_life_years: 30
+max_speed_kmh: 100
+power_kw: 0
+weight_t: 23
+length_m: 18.5
+capacity:
+  PASS: 36
+cost_factor: 24
+running_cost_factor: 8
+liveries:
+  - id: glacier
+    name: { en: Glacier Express, de: Glacier Express, fr: Glacier Express, it: Glacier Express }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: mgb/glacier
+  kind: recipe
+  lights: true         # tail lamps on the last vehicle
+  params: { kind: first }
+reference: [mgb-glacier]
+description:
+  en: "First-class panorama coach of the Glacier Express, windows reaching far into the roof."
+  de: "Panoramawagen 1. Klasse des Glacier Express, Fenster bis weit ins Dach."
+  fr: "Voiture panoramique de 1re classe du Glacier Express, vitrages jusque dans le toit."
+  it: "Carrozza panoramica di 1a classe del Glacier Express, finestrini fin nel tetto."

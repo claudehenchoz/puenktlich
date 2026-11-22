@@ -1,0 +1,41 @@
+# Glacier Express WRp (panorama bar) — Stadler panorama coach (RhB/MGB). See models/mgb/glacier/REFERENCE.md.
+id: glacier_wrp
+grf_id: 303         # never change — saved games reference this
+name:
+  en: Glacier Express WRp (panorama bar)
+  de: Glacier Express WRp (Panorama-Bar)
+  fr: Glacier Express WRp (bar panoramique)
+  it: Glacier Express WRp (bar panoramico)
+operator: mgb
+kind: coach
+railtype: metre_diesel
+intro_year: 2009
+vehicle_life_years: 40
+model_life_years: 30
+max_speed_kmh: 100
+power_kw: 0
+weight_t: 25
+length_m: 18.5
+capacity:
+  PASS: 10
+cost_factor: 24
+running_cost_factor: 8
+liveries:
+  - id: glacier
+    name: { en: Glacier Express, de: Glacier Express, fr: Glacier Express, it: Glacier Express }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: mgb/glacier
+  kind: recipe
+  lights: true         # tail lamps on the last vehicle
+  params: { kind: bar }
+reference: [mgb-glacier]
+description:
+  en: "Kitchen and panorama-bar car of the Glacier Express; meals are served at the seats."
+  de: "Küchen- und Panorama-Barwagen des Glacier Express; das Essen wird am Platz serviert."
+  fr: "Voiture cuisine et bar panoramique du Glacier Express; les repas sont servis à la place."
+  it: "Carrozza cucina e bar panoramico del Glacier Express; i pasti sono serviti al posto."

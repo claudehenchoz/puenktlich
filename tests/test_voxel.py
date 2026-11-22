@@ -302,3 +302,17 @@ def test_no_unrenderable_black() -> None:
 
     assert P.BLACK != P.UNRENDERABLE_BLACK
     assert all(P.ramp(P.GREY, t / 20) != P.UNRENDERABLE_BLACK for t in range(21))
+
+
+def test_chamfered_section() -> None:
+    """Panorama coaches: full width up to `chamfer_from`, then a straight bevel inwards."""
+    from puenktlich.voxel.parts.panorama import SECTION
+
+    _, Y, Z = Model.new().coords()
+    inside = np.broadcast_to(SECTION.mask(Y, Z), (1, *np.broadcast(Y, Z).shape[1:]))[0]
+    width = inside.sum(axis=0)  # voxels across, per z
+    cf = int(SECTION.chamfer_from)
+    assert width[cf] == width[SECTION.floor + 8]
+    roof_w = width[int(SECTION.roof) - 1]
+    assert roof_w < width[cf] - 2 * SECTION.chamfer_inset + 6
+    assert np.all(np.diff(width[cf : int(SECTION.roof)]) <= 0)

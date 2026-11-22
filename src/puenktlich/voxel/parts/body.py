@@ -25,6 +25,10 @@ class CrossSection:
     roof_radius: float = 7  # radius of the roof/side rounding
     tumblehome: float = 1.0  # inward lean of the side below `tumble_from` (voxels)
     tumble_from: float = 24  # z above which the side is vertical
+    # chamfered upper body (panorama coaches): from `chamfer_from` the side slopes inwards by
+    # `chamfer_inset` voxels at the roof, a straight bevel instead of the round roof corner
+    chamfer_from: float | None = None
+    chamfer_inset: float = 0
 
     def mask(
         self,
@@ -43,6 +47,9 @@ class CrossSection:
         below = self.tumble_from > Z
         frac = np.clip((self.tumble_from - Z) / np.maximum(1.0, self.tumble_from - floor), 0, 1)
         hw = np.where(below, hw - self.tumblehome * frac, hw)
+        if self.chamfer_from is not None:
+            t = np.clip((Z - self.chamfer_from) / np.maximum(1.0, roof - self.chamfer_from), 0, 1)
+            hw = hw - self.chamfer_inset * t
         inside = (dy <= hw) & (floor <= Z) & (roof >= Z)
         # roof rounding at the corners
         r = self.roof_radius
