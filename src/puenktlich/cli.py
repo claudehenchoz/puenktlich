@@ -40,7 +40,8 @@ def vox(ids: IdsArg = None) -> None:
     from puenktlich.models import write_models
 
     for v in _select(ids):
-        for p in write_models(v):
+        _, files = write_models(v)
+        for p in files:
             typer.echo(f"{v.id}: {p.relative_to(paths.ROOT)}")
 
 
@@ -109,6 +110,21 @@ def lint(sprites: Annotated[bool, typer.Option(help="Also lint rendered sprite s
     if problems:
         raise typer.Exit(1)
     typer.secho("lint ok", fg="green")
+
+
+@app.command()
+def lock() -> None:
+    """Record new vehicles and liveries in data/ids.lock (the ids saved games depend on)."""
+    from puenktlich.lock import LOCK, update
+
+    try:
+        added = update()
+    except ValueError as e:
+        typer.secho(str(e), fg="red")
+        raise typer.Exit(1) from e
+    for a in added:
+        typer.echo(f"locked {a}")
+    typer.secho(f"{LOCK.relative_to(paths.ROOT)}: {len(added)} new entr{'y' if len(added) == 1 else 'ies'}", fg="green")
 
 
 @app.command()

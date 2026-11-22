@@ -68,3 +68,20 @@ def test_rack_track_needs_a_rack_engine() -> None:
             assert {"NAAN", "NAAE"} & set(t["powered"]), lab
         else:
             assert not rack & set(t["powered"]), f"{lab} is powered on rack track"
+
+
+def test_saved_game_ids_are_locked() -> None:
+    """data/ids.lock pins grf_ids and livery order (item id = grf_id * 8 + livery index)."""
+    from puenktlich import lock
+
+    assert lock.problems() == []
+    vs = dict(vehicles())
+    re460 = vs["re460"]
+    moved = re460.model_copy(update={"grf_id": re460.grf_id + 900})
+    assert any("grf_id changed" in p for p in lock.problems(vs | {"re460": moved}))
+    swapped = re460.model_copy(update={"liveries": list(reversed(re460.liveries))})
+    assert any("append-only" in p for p in lock.problems(vs | {"re460": swapped}))
+    removed = {k: v for k, v in vs.items() if k != "re460"}
+    assert any("no longer in data/vehicles" in p for p in lock.problems(removed))
+    reused = re460.model_copy(update={"id": "other"})
+    assert any("can't be reused" in p for p in lock.problems(removed | {"other": reused}, lock.load()))

@@ -280,4 +280,6 @@ def validate_all() -> list[str]:
         ids = [livery.id for livery in v.liveries]
         if len(set(ids)) != len(ids):
             problems.append(f"{v.id}: duplicate livery ids")
-    return problems
+    from puenktlich.lock import problems as lock_problems
+
+    return problems + lock_problems(vs)

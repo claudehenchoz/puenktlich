@@ -1,0 +1,63 @@
+# Saved-game ids: vehicle id -> grf_id and liveries in item-id order.
+# Written by `pk lock` (append-only). Never edit or remove entries: games saved with
+# an earlier release would get the wrong vehicles.
+re460:
+  grf_id: 100
+  liveries: [sbb, company]
+ew4_a:
+  grf_id: 101
+  liveries: [sbb, company]
+ew4_b:
+  grf_id: 102
+  liveries: [sbb, company]
+ew4_bt:
+  grf_id: 103
+  liveries: [sbb, company]
+npz:
+  grf_id: 104
+  liveries: [domino, company]
+eanos:
+  grf_id: 105
+  liveries: [sbb_cargo]
+sgns:
+  grf_id: 106
+  liveries: [sbb_cargo, company]
+fv_dosto_ir100:
+  grf_id: 107
+  liveries: [sbb, company]
+fv_dosto_ic200:
+  grf_id: 108
+  liveries: [sbb, company]
+giruno:
+  grf_id: 109
+  liveries: [sbb, company]
+ge44iii:
+  grf_id: 200
+  liveries: [rhb, company]
+ew4_rhb_a:
+  grf_id: 201
+  liveries: [rhb, company]
+ew4_rhb_b:
+  grf_id: 202
+  liveries: [rhb, company]
+hge44ii:
+  grf_id: 300
+  liveries: [mgb, company]
+glacier_ap:
+  grf_id: 301
+  liveries: [glacier, company]
+glacier_bp:
+  grf_id: 302
+  liveries: [glacier, company]
+glacier_wrp:
+  grf_id: 303
+  liveries: [glacier, company]
+glacier_aps:
+  grf_id: 304
+  liveries: [glacier, company]
+citaro:
+  grf_id: 400
+  liveries: [postauto, company]
+citaro_g:
+  grf_id: 401
+  liveries: [postauto, company]
