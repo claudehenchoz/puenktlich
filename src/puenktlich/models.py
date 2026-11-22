@@ -25,6 +25,7 @@ import numpy as np
 
 from puenktlich import paths
 from puenktlich.schema import CarSpec, Vehicle
+from puenktlich.voxel import palette as P
 from puenktlich.voxel.model import Model
 from puenktlich.voxel.palette import rgb_palette
 from puenktlich.voxel.squash import body_split, colour_counts, for_road_render, squash_x, widen_y
@@ -79,7 +80,7 @@ def build_grid(target: Vehicle | CarSpec, variant: str = DEFAULT_VARIANT, dark: 
     car = _car(target)
     d = model_dir(car)
     if car.model.kind == "vox":
-        return read_vox(d / "model.vox")
+        return _renderable(read_vox(d / "model.vox"))
     recipe = d / "recipe.py"
     key = hashlib.sha1(
         recipe.read_bytes()
@@ -89,11 +90,17 @@ def build_grid(target: Vehicle | CarSpec, variant: str = DEFAULT_VARIANT, dark: 
     cached = paths.CACHE / "vox" / f"{key}.npy"
     if cached.exists():
         return VoxelGrid(np.load(cached))
-    grid = _run_recipe(car, recipe, variant, dark)
+    grid = _renderable(_run_recipe(car, recipe, variant, dark))
     cached.parent.mkdir(parents=True, exist_ok=True)
     tmp = cached.with_suffix(".tmp.npy")
     np.save(tmp, grid.data)
     tmp.replace(cached)
+    return grid
+
+
+def _renderable(grid: VoxelGrid) -> VoxelGrid:
+    """GoRender renders palette index 1 transparent: map it to black (P.BLACK)."""
+    grid.data[grid.data == P.UNRENDERABLE_BLACK] = P.BLACK
     return grid
 
 

@@ -1,0 +1,61 @@
+# SBB RABe 501 "Giruno" (Stadler SMILE / EC250) — 11-car articulated high-speed unit on Jakobs
+# bogies. See models/sbb/giruno/REFERENCE.md. Car order L (1st, front) ... A (2nd, rear).
+id: giruno
+grf_id: 109          # never change — saved games reference this
+name:
+  en: SBB RABe 501 Giruno
+  de: SBB RABe 501 Giruno
+  fr: CFF RABe 501 Giruno
+  it: FFS RABe 501 Giruno
+operator: sbb
+kind: emu
+railtype: standard_ac
+intro_year: 2019
+vehicle_life_years: 35
+model_life_years: 30
+max_speed_kmh: 250
+power_kw: 6000
+tractive_effort_kn: 300
+weight_t: 380
+length_m: 202.0
+capacity:
+  PASS: 422
+cost_factor: 240
+running_cost_factor: 135
+liveries:
+  - id: sbb
+    name: { en: SBB, de: SBB, fr: CFF, it: FFS }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+cars:
+  - model: { path: sbb/giruno, lights: true, params: { car: cab_first, role: front } }
+    length_m: 22.4
+  - model: { path: sbb/giruno, lights: true, params: { car: first, role: middle } }
+    length_m: 16.0
+  - model: { path: sbb/giruno, lights: true, params: { car: first, role: middle } }
+    length_m: 16.0
+  - model: { path: sbb/giruno, lights: true, params: { car: first_2d, role: middle } }
+    length_m: 16.0
+  - model: { path: sbb/giruno, lights: true, params: { car: dining, role: middle } }
+    length_m: 16.0
+  - model: { path: sbb/giruno, lights: true, params: { car: second_2d, role: middle } }
+    length_m: 16.0
+  - model: { path: sbb/giruno, lights: true, params: { car: second, role: middle } }
+    length_m: 16.0
+  - model: { path: sbb/giruno, lights: true, params: { car: second_pan, role: middle } }
+    length_m: 16.0
+  - model: { path: sbb/giruno, lights: true, params: { car: second, role: middle } }
+    length_m: 16.0
+  - model: { path: sbb/giruno, lights: true, params: { car: second_pan_up, role: middle } }
+    length_m: 16.0
+  - model: { path: sbb/giruno, lights: true, params: { car: cab, role: rear } }
+    length_m: 22.4
+reference: [sbb-rabe501]
+description:
+  en: Low-floor high-speed train for the Gotthard base tunnel, eleven cars on Jakobs bogies.
+  de: Niederflur-Hochgeschwindigkeitszug für den Gotthard-Basistunnel, elf Wagen auf Jakobs-Drehgestellen.
+  fr: Train à grande vitesse à plancher surbaissé pour le tunnel de base du Gothard, onze voitures sur bogies Jacobs.
+  it: Treno ad alta velocità a pianale ribassato per la galleria di base del San Gottardo, undici carrozze su carrelli Jacobs.

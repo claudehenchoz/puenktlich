@@ -26,7 +26,9 @@ ICY_BLUE = (210, 214)
 CARGO_MASK = (253, 255)  # Cargopositor replacement area; never rendered
 
 # --- Single named indices commonly used in recipes ---
-BLACK = 1
+# index 1 (the darkest grey) renders transparent in GoRender, so black is index 2
+UNRENDERABLE_BLACK = 1
+BLACK = 2
 DARK_GREY = 3
 MID_GREY = 6
 LIGHT_GREY = 10
@@ -43,7 +45,8 @@ LAMP = 15  # headlights read as white
 def ramp(r: tuple[int, int], t: float) -> int:
     """Pick a colour along ramp `r` with t in [0, 1] (0 = darkest)."""
     lo, hi = r
-    return int(round(lo + max(0.0, min(1.0, t)) * (hi - lo)))
+    i = int(round(lo + max(0.0, min(1.0, t)) * (hi - lo)))
+    return BLACK if i == UNRENDERABLE_BLACK else i
 
 
 @cache

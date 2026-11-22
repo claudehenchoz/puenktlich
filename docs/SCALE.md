@@ -57,3 +57,9 @@ FV-Dosto (4.59 m high, `voxel/parts/dosto.py`):
 
 A raised pantograph on the cab roof uses `raise_height=12` to stay within the z ≤ 68 tilt headroom.
 
+
+## Articulated units (Jakobs bogies)
+Giruno (`voxel/parts/smile.py`): end cars 22.25 m → 7/8 (22.4 m), intermediate cars 17.5 m →
+5/8 (16.0 m, compressed ×0.914), 11 cars = 59/8 ≈ 7.4 tiles. Every car draws the half of each
+shared Jakobs bogie under its own body; the halves meet at the joint. Roof z 51 (4.255 m),
+window band z 17–31, cant-rail stripe z 44–45, low skirt z 4 between the bogies, z 11 over them.

@@ -275,3 +275,30 @@ def test_face_mask_only_touches_the_front_skin() -> None:
     f = face_mask(m, True, depth=2)
     X, _, _ = m.coords()
     assert f.any() and (np.broadcast_to(X, f.shape)[f] >= 48).all()
+
+
+def test_jakobs_half_bogies() -> None:
+    """Giruno intermediate car: one wheelset under each end (the car's half of the shared
+    Jakobs bogie), nothing beyond the body ends, and the low skirt between the bogies."""
+    from puenktlich.voxel.parts.running_gear import GAUGES
+    from puenktlich.voxel.parts.smile import SKIRT_FLOOR, SmileSpec, build_smile_car
+    from puenktlich.voxel.variants import LIGHT_VARIANTS
+
+    d = build_smile_car(SmileSpec(), LIGHT_VARIANTS["none"]).grid.data
+    body = np.flatnonzero(d[:, 20, :].any(axis=1))  # centre line: body, not running gear
+    x0, x1 = body[0], body[-1]
+    occ = np.flatnonzero(d.any(axis=(1, 2)))
+    assert occ[0] >= x0 and occ[-1] <= x1  # half bogies stay under this car
+    wheels = np.flatnonzero(d[:, GAUGES["standard"] + 1, 1])  # wheel rims just above the rail head
+    assert wheels.size and wheels.min() < x0 + 20 and wheels.max() > x1 - 20
+    assert not ((wheels > x0 + 30) & (wheels < x1 - 30)).any()
+    mid = (x0 + x1) // 2
+    assert np.flatnonzero(d[mid, 3, :])[0] == SKIRT_FLOOR
+
+
+def test_no_unrenderable_black() -> None:
+    """Palette index 1 renders transparent in GoRender: ramps and P.BLACK avoid it."""
+    from puenktlich.voxel import palette as P
+
+    assert P.BLACK != P.UNRENDERABLE_BLACK
+    assert all(P.ramp(P.GREY, t / 20) != P.UNRENDERABLE_BLACK for t in range(21))
