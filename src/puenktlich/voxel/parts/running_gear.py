@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import numpy as np
+
 from puenktlich.voxel import palette as P
 from puenktlich.voxel.model import CENTRE_Y, Model
 
@@ -165,3 +167,24 @@ def underframe(
                 yc = model.cy + side * (half_width - r)
                 tank = (xa <= X) & (xb > X) & ((Y - yc) ** 2 + (Z - (top - drop + r)) ** 2 <= r * r)
                 model.solid(tank, P.shade(colour, 2))
+
+
+def half_jakobs_bogies(
+    model: Model,
+    x_rear: float,
+    x_front: float,
+    ends: tuple[bool, bool],
+    wheelbase: float,
+    wheel_diameter: float,
+    top: float,
+) -> None:
+    """Jakobs bogies shared with the neighbouring cars: OpenTTD draws every car separately, so
+    each car draws a whole bogie centred on its joint and keeps only the half under its own
+    body (x_rear..x_front). ends = (rear joint, front joint)."""
+    X, _, _ = model.coords()
+    centres = [c for c, on in zip((x_rear - 0.5, x_front + 0.5), ends, strict=True) if on]
+    for xc in centres:
+        before = model.d.copy()
+        bogie(model, xc, wheelbase=wheelbase, wheel_diameter=wheel_diameter, top=top)
+        outside = np.broadcast_to((x_rear > X) | (x_front < X), model.d.shape)
+        model.d[outside] = before[outside]

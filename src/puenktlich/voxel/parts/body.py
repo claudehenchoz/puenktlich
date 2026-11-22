@@ -224,3 +224,25 @@ def gangway(model: Model, x_end: float, front: bool, half_width: float, z0: floa
     """Dark gangway bellows standing 3 voxels proud of an end face."""
     xa, xb = (x_end + 1, x_end + 4) if front else (x_end - 3, x_end)
     model.solid(model.centred_box(xa, xb, half_width, z0, z1), colour)
+
+
+def windows_in_gaps(
+    model: Model,
+    keep: list[tuple[float, float]],
+    width: float,
+    pitch: float,
+    z0: float,
+    z1: float,
+    frame: int = P.BLACK,
+) -> None:
+    """Rounded windows spread evenly over every free stretch between the `keep` x-ranges
+    (doors, joints, cab): as many as fit at `pitch`, `width` wide (voxels)."""
+    keep = sorted(keep)
+    for (_, a), (b, _) in zip(keep, keep[1:], strict=False):
+        n = int((b - a + (pitch - width)) // pitch)
+        if n <= 0:
+            continue
+        gap = (b - a - n * width) / (n + 1)
+        for i in range(n):
+            x0 = a + gap + i * (width + gap)
+            rounded_window(model, x0, x0 + width, z0, z1, frame=frame)

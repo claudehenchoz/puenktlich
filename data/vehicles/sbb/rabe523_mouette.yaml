@@ -1,0 +1,48 @@
+# SBB RABe 523 501–511 "Mouette" (Stadler FLIRT 3 with long-distance interior), InterRegio
+# Basel–Zürich Flughafen (IR 36) since December 2022. See models/sbb/rabe523/REFERENCE.md.
+# No photos on Commons: exterior from the FLIRT 3 RABe 523 1xx; door layout unverified.
+id: rabe523_mouette
+grf_id: 114          # never change — saved games reference this (`pk lock`)
+name:
+  en: SBB RABe 523 Mouette
+  de: SBB RABe 523 Mouette
+  fr: CFF RABe 523 Mouette
+  it: FFS RABe 523 Mouette
+operator: sbb
+kind: emu
+railtype: standard_ac
+intro_year: 2022
+vehicle_life_years: 30
+model_life_years: 25
+max_speed_kmh: 160
+power_kw: 2000
+tractive_effort_kn: 175
+weight_t: 130
+length_m: 74.1
+capacity:
+  PASS: 181
+cost_factor: 95
+running_cost_factor: 55
+liveries:               # append-only: item id = grf_id * 8 + position
+  - id: sbb
+    name: { en: SBB, de: SBB, fr: CFF, it: FFS }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+cars:   # front to rear: end car (1st/2nd) · B · B · end car
+  - model: { path: sbb/rabe523, lights: true, params: { car: cab_first, role: front, generation: 3 } }
+    length_m: 19.2
+  - model: { path: sbb/rabe523, lights: true, params: { car: second, role: middle, generation: 3 } }
+    length_m: 16.0
+  - model: { path: sbb/rabe523, lights: true, params: { car: second, role: middle, generation: 3 } }
+    length_m: 16.0
+  - model: { path: sbb/rabe523, lights: true, params: { car: cab, role: rear, generation: 3 } }
+    length_m: 19.2
+reference: [sbb-rabe523]
+description:
+  en: FLIRT 3 with long-distance interior for InterRegio services, four cars.
+  de: FLIRT 3 mit Fernverkehrsausstattung für InterRegio-Verbindungen, vierteilig.
+  fr: FLIRT 3 aménagé pour les grandes lignes, en service InterRegio, quatre voitures.
+  it: FLIRT 3 con allestimento a lunga percorrenza per servizi InterRegio, quattro carrozze.

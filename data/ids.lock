@@ -37,6 +37,15 @@ rabe511:
 rabe511_re:
   grf_id: 111
   liveries: [regio, zvv, company]
+rabe512:
+  grf_id: 112
+  liveries: [sbb, company]
+rabe523:
+  grf_id: 113
+  liveries: [sbb, company]
+rabe523_mouette:
+  grf_id: 114
+  liveries: [sbb, company]
 ge44iii:
   grf_id: 200
   liveries: [rhb, company]

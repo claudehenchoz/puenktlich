@@ -301,6 +301,55 @@ def test_jakobs_half_bogies() -> None:
     assert np.flatnonzero(d[mid, 3, :])[0] == SKIRT_FLOOR
 
 
+def test_flirt_cars_jakobs_and_generations() -> None:
+    """FLIRT: an intermediate car draws only its halves of the Jakobs bogies, a cab car adds
+    the motor bogie under the cab; generation 1 has the black skirt, generation 3 is white to
+    the sill, and the two noses differ."""
+    from puenktlich.voxel import palette as P
+    from puenktlich.voxel.parts.flirt import SKIRT_TOP, FlirtSpec, build_flirt_car, end_car
+    from puenktlich.voxel.parts.running_gear import GAUGES
+    from puenktlich.voxel.variants import LIGHT_VARIANTS
+
+    none = LIGHT_VARIANTS["none"]
+    d = build_flirt_car(FlirtSpec(), none).grid.data
+    body = np.flatnonzero(d[:, 20, :].any(axis=1))
+    x0, x1 = body[0], body[-1]
+    occ = np.flatnonzero(d.any(axis=(1, 2)))
+    assert occ[0] >= x0 and occ[-1] <= x1
+    wheels = np.flatnonzero(d[:, GAUGES["standard"] + 1, 1])
+    assert wheels.min() < x0 + 20 and wheels.max() > x1 - 20
+    assert not ((wheels > x0 + 30) & (wheels < x1 - 30)).any()
+
+    cab1 = build_flirt_car(end_car(generation=1, mu_role="front"), none).grid.data
+    cab3 = build_flirt_car(end_car(generation=3, mu_role="front"), none).grid.data
+    cab_wheels = np.flatnonzero(cab1[:, GAUGES["standard"] + 1, 1])
+    front = np.flatnonzero(cab1.any(axis=(1, 2)))[-1]
+    assert ((cab_wheels > front - 60) & (cab_wheels < front - 20)).any()  # motor bogie under the cab
+    mid = d.shape[0] // 2
+    skirt1 = cab1[mid, 1, : SKIRT_TOP - 1]
+    skirt3 = cab3[mid, 1, : SKIRT_TOP - 1]
+    assert (skirt1[skirt1 != 0] == P.BLACK).all()
+    assert P.BLACK not in skirt3[skirt3 != 0]
+    assert (cab1[front - 30 :] != cab3[front - 30 :]).any()
+
+
+def test_kiss2_cab_car_upper_deck_between_doors() -> None:
+    """RABe 512 cab car: long single-level cab section, so no upper-deck windows in front of the
+    first door; the shared shield nose puts glass on the front face."""
+    from puenktlich.voxel import palette as P
+    from puenktlich.voxel.parts.kiss import K2_UPPER_WIN, build_kiss_car, kiss2_cab_car
+    from puenktlich.voxel.variants import LIGHT_VARIANTS
+
+    spec = kiss2_cab_car(mu_role="front")
+    d = build_kiss_car(spec, LIGHT_VARIANTS["none"]).grid.data
+    front = np.flatnonzero(d.any(axis=(1, 2)))[-1]
+    door1 = int(front - spec.doors[0][0] * 10)  # front edge of door 1
+    side = d[:, 1:3, K2_UPPER_WIN[0] + 1 : K2_UPPER_WIN[1] - 1]  # side skin (glass is inset one voxel)
+    assert P.GLASS not in side[door1 + 5 : front - 60]  # cab section (behind the cab window)
+    assert P.GLASS in side[door1 - 100 : door1]
+    assert P.GLASS in d[front - 4 : front + 1, 15:26, 35:45]  # windscreen
+
+
 def test_no_unrenderable_black() -> None:
     """Palette index 1 renders transparent in GoRender: ramps and P.BLACK avoid it."""
     from puenktlich.voxel import palette as P

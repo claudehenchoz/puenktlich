@@ -33,6 +33,7 @@ entries:
   - { id: sbb-rbe44,    name: "RBe 540 (RBe 4/4)", category: emu, built: "1959–1966" }
   - { id: sbb-rabde500, name: "RABDe 500 (ICN)",   category: emu, built: "1998–2005" }
   - { id: sbb-rabe511,  name: "RABe 511 (KISS)",   category: emu, built: "2010–" }
+  - { id: sbb-rabe512,  name: "RABe 512 (IR-Dosto)", category: emu, built: "2022–2026" }
   - { id: sbb-rabe514,  name: "RABe 514 (DTZ)",    category: emu, built: "2006–2008" }
   - { id: sbb-rabe521,  name: "RABe 521 (FLIRT)",  category: emu, built: "2004–" }
   - { id: sbb-rabe523,  name: "RABe 523 (FLIRT)",  category: emu, built: "2004–" }

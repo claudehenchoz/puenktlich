@@ -88,6 +88,7 @@ class DostoSpec:
     upper_width: float = 1.38
     lower_width: float = 1.47
     mezz_windows: tuple[tuple[float, float], ...] = ((1.0, 2.2), (23.4, 24.6))
+    upper_to: float | None = None  # last upper-deck window ends here (None: 0.7 m before the rear end)
     extras: list = field(default_factory=list)
 
 
@@ -126,7 +127,8 @@ def deck_windows(
     mezz_z: tuple[float, float],
 ) -> None:
     """Window rows of a double-deck car: `spec.lower_windows` spread evenly between the doors,
-    upper-deck windows every `upper_pitch` m from `upper_from` to the rear end, and the
+    upper-deck windows every `upper_pitch` m from `upper_from` to `upper_to` (default: the rear
+    end), and the
     `mezz_windows` of the intermediate levels. `at` maps metres from the front end to x."""
     gap0, gap1 = door_x[-1][1] + 5, door_x[0][0] - 5
     lw = spec.lower_width * 10
@@ -139,7 +141,7 @@ def deck_windows(
     k = 0
     while True:
         a_u = spec.upper_from + k * spec.upper_pitch
-        if a_u + spec.upper_width > spec.length_m - 0.7:
+        if a_u + spec.upper_width > (spec.length_m - 0.7 if spec.upper_to is None else spec.upper_to):
             break
         rounded_window(mdl, at(a_u + spec.upper_width), at(a_u + spec.upper_width) + uw, *upper_z)
         k += 1

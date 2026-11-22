@@ -1,0 +1,51 @@
+# SBB RABe 512 "IR-Dosto" (Stadler KISS, second generation), 60 six-car units 2022–2026.
+# See models/sbb/rabe512/REFERENCE.md. Car order and class split from photos (approximate).
+id: rabe512
+grf_id: 112          # never change — saved games reference this (`pk lock`)
+name:
+  en: SBB RABe 512 IR-Dosto
+  de: SBB RABe 512 IR-Dosto
+  fr: CFF RABe 512 Duplex IR
+  it: FFS RABe 512 Bipiano IR
+operator: sbb
+kind: emu
+railtype: standard_ac       # data/railtypes.yaml
+intro_year: 2023
+vehicle_life_years: 35
+model_life_years: 30
+max_speed_kmh: 160
+power_kw: 6000
+tractive_effort_kn: 400
+weight_t: 299
+length_m: 151.9
+capacity:
+  PASS: 466
+cost_factor: 165
+running_cost_factor: 95
+liveries:               # append-only: item id = grf_id * 8 + position
+  - id: sbb
+    name: { en: SBB, de: SBB, fr: CFF, it: FFS }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+cars:   # front to rear: Bt · B (pantograph) · AB · B · B (pantograph) · Bt
+  - model: { path: sbb/rabe512, lights: true, params: { car: cab, role: front } }
+    length_m: 25.3
+  - model: { path: sbb/rabe512, lights: true, params: { car: panto, role: middle } }
+    length_m: 25.3
+  - model: { path: sbb/rabe512, lights: true, params: { car: first, role: middle } }
+    length_m: 25.3
+  - model: { path: sbb/rabe512, lights: true, params: { car: second, role: middle } }
+    length_m: 25.3
+  - model: { path: sbb/rabe512, lights: true, params: { car: panto_rear, role: middle } }
+    length_m: 25.3
+  - model: { path: sbb/rabe512, lights: true, params: { car: cab, role: rear } }
+    length_m: 25.3
+reference: [sbb-rabe512]
+description:
+  en: InterRegio double-decker (Stadler KISS), the second generation with the raked nose, six cars.
+  de: InterRegio-Doppelstockzug (Stadler KISS) der zweiten Generation mit geneigter Front, sechsteilig.
+  fr: Train duplex InterRegio (Stadler KISS) de deuxième génération à nez incliné, six voitures.
+  it: Treno InterRegio a due piani (Stadler KISS) di seconda generazione con frontale inclinato, sei carrozze.

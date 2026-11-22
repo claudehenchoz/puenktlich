@@ -29,13 +29,13 @@ from puenktlich.voxel.parts.body import (
     Shell,
     door_outline,
     face_mask,
-    rounded_window,
     side_band,
     side_skin,
+    windows_in_gaps,
 )
 from puenktlich.voxel.parts.lights import lamp_cluster, mu_lights
 from puenktlich.voxel.parts.roof import pantograph, roof_box
-from puenktlich.voxel.parts.running_gear import bogie
+from puenktlich.voxel.parts.running_gear import bogie, half_jakobs_bogies
 from puenktlich.voxel.variants import Lights
 
 # heights (z, ≈12.1 voxels per metre), REFERENCE.md "Measurements"
@@ -179,16 +179,8 @@ def build_smile_car(spec: SmileSpec, lights: Lights) -> Model:
     keep = [(at(spec.real_m - 0.9), at(spec.real_m))]  # rear joint
     keep.append((at(band_from + 0.9), x_front + 1) if spec.cab else (at(0.9), x_front + 1))
     keep += [(x0 - 4, x1 + 4) for x0, x1 in door_x]
-    keep.sort()
     ww, pitch = spec.window_width * 10 * scale, spec.window_pitch * 10 * scale
-    for (_, a), (b, _) in zip(keep, keep[1:], strict=False):
-        n = int((b - a + (pitch - ww)) // pitch)
-        if n <= 0:
-            continue
-        gap = (b - a - n * ww) / (n + 1)
-        for i in range(n):
-            x0 = a + gap + i * (ww + gap)
-            rounded_window(mdl, x0, x0 + ww, *WIN, frame=DARK)
+    windows_in_gaps(mdl, keep, ww, pitch, *WIN, frame=DARK)
 
     # SBB logo near the rear end of every car: red box with the white cross, then the lettering
     lx = at(spec.real_m - 1.2)
@@ -224,12 +216,7 @@ def build_smile_car(spec: SmileSpec, lights: Lights) -> Model:
 
     # --- running gear --------------------------------------------------------------
     jb = JAKOBS_WHEELBASE * 10 * scale
-    jakobs = [x_rear - 0.5] + ([] if spec.cab else [x_front + 0.5])
-    for xc in jakobs:  # half Jakobs bogie: draw it whole, keep only this car's half
-        before = mdl.d.copy()
-        bogie(mdl, xc, wheelbase=jb, wheel_diameter=WHEEL, top=BOGIE_FLOOR)
-        outside = np.broadcast_to((x_rear > X) | (x_front < X), mdl.d.shape)
-        mdl.d[outside] = before[outside]
+    half_jakobs_bogies(mdl, x_rear, x_front, (True, not spec.cab), jb, WHEEL, BOGIE_FLOOR)
     if spec.cab:
         bogie(mdl, at(end_bogie), wheelbase=END_WHEELBASE * 10, wheel_diameter=WHEEL, top=BOGIE_FLOOR)
 
