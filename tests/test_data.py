@@ -85,3 +85,31 @@ def test_saved_game_ids_are_locked() -> None:
     assert any("no longer in data/vehicles" in p for p in lock.problems(removed))
     reused = re460.model_copy(update={"id": "other"})
     assert any("can't be reused" in p for p in lock.problems(removed | {"other": reused}, lock.load()))
+
+
+def test_schema_rejects_data_that_would_break_the_build() -> None:
+    """Rules that used to surface only at build time (or not at all)."""
+    from puenktlich.schema import MAX_GRF_ID, Track, Vehicle
+
+    base = vehicles()["re460"].model_dump()
+    coach = vehicles()["ew4_a"].model_dump()
+
+    def bad(data: dict, **changes) -> None:
+        with pytest.raises(ValidationError):
+            Vehicle(**(data | changes))
+
+    Vehicle(**(base | {"grf_id": MAX_GRF_ID}))
+    bad(base, grf_id=MAX_GRF_ID + 1)  # item id grf_id * 8 + 7 would not fit 16 bits
+    bad(base, liveries=base["liveries"] * 5)  # more than 8 liveries: outside the item-id block
+    bad(base, retire_year=base["intro_year"])
+    bad(coach, capacity={"PASS": 60, "MAIL": 5})  # one default cargo
+    bad(coach, capacity={"WOOD": 30})  # unknown label without refit_classes
+    Vehicle(**(coach | {"capacity": {"WOOD": 30}, "refit_classes": ["CC_PIECE_GOODS"]}))
+    bad(coach, refit_classes=["CC_NONSENSE"])
+    bad(coach, power_kw=500)
+    bad(coach, capacity={})
+    track = next(iter(__import__("puenktlich.schema", fromlist=["tracks"]).tracks().values())).model_dump()
+    with pytest.raises(ValidationError):
+        Track(**(track | {"powered": ["XXXX"]}))  # powered must be a subset of compatible
+    with pytest.raises(ValidationError):
+        Track(**(track | {"style": "narrow"}))

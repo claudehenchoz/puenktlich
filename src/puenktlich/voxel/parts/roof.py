@@ -1,4 +1,4 @@
-"""Roof equipment: single-arm pantographs, insulators, main switch, cable runs."""
+"""Roof equipment: single-arm pantographs, insulators, main switch, cable runs, vents, ribs."""
 
 from __future__ import annotations
 
@@ -73,3 +73,17 @@ def main_switch(model: Model, x: float, roof_z: float) -> None:
 
 def roof_cable(model: Model, x0: float, x1: float, roof_z: float, y_offset: float = 4) -> None:
     model.solid(model.box(x0, x1, CENTRE_Y + y_offset, CENTRE_Y + y_offset + 1, roof_z, roof_z + 1.5), P.BLACK)
+
+
+def roof_ribs(model: Model, x0: float, x1: float, z_from: float, pitch: float = 20, half_width: float = 15) -> None:
+    """Transverse panel seams on a plain coach roof: every `pitch` voxels one row of the roof
+    skin a shade darker, so a long bare roof gets some texture at 2x/4x without adding height."""
+    X, Y, Z = model.coords()
+    seam = (((X - x0) % pitch) < 1) & (x0 <= X) & (x1 > X) & (z_from <= Z) & (abs(Y - model.cy) <= half_width)
+    model.paint(seam & model.surface(), P.shade(P.ROOF, -2), only=(P.ROOF, P.ROOF))
+
+
+def roof_vents(model: Model, centres: list[float], roof_z: float, half_width: float = 2, length: float = 4) -> None:
+    """Low ventilator hoods on the roof centre line."""
+    for c in centres:
+        model.solid(model.centred_box(c - length / 2, c + length / 2, half_width, roof_z, roof_z + 1), P.MID_GREY)

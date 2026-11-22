@@ -61,7 +61,10 @@ class Model:
         return (x0 <= X) & (x1 > X) & (y0 <= Y) & (y1 > Y) & (z0 <= Z) & (z1 > Z)
 
     def centred_box(self, x0: float, x1: float, half_width: float, z0: float, z1: float) -> np.ndarray:
-        return self.box(x0, x1, self.cy - half_width + 0.5, self.cy + half_width + 0.5, z0, z1)
+        """Box [x0,x1) x [z0,z1) reaching `half_width` to each side of the centre line: always
+        symmetric (half_width 13 -> 26 voxels, 19.5 -> the full 40-voxel body width)."""
+        X, Y, Z = self.coords()
+        return (x0 <= X) & (x1 > X) & (abs(Y - self.cy) <= half_width) & (z0 <= Z) & (z1 > Z)
 
     def cylinder_y(self, xc: float, zc: float, r: float, y0: float, y1: float) -> np.ndarray:
         """Cylinder with its axis along y (wheels, axles)."""

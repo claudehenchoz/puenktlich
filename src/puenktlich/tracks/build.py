@@ -1,6 +1,6 @@
-"""Build the companion track GRF (build/puenktlich_tracks.grf): metre-gauge railtypes with
-procedurally drawn ballast (underlay) and rails (track_overlay). Everything else
-(tunnels, bridges, crossings, depots, catenary, signals, GUI) falls back to the base set."""
+"""Build the companion track GRF (build/puenktlich_tracks.grf): metre-gauge and rack railtypes
+(data/tracks.yaml) with procedurally drawn track, level crossings, bridge decks, tunnel track,
+depots and GUI icons. Catenary, signals, fences and the bridge structure stay base set."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ from PIL import Image
 from puenktlich import paths
 from puenktlich.nml.generate import LANG_FILES, LANG_IDS, Strings, project_version
 from puenktlich.render import SCALES
+from puenktlich.schema import tracks as schema_tracks
 from puenktlich.tracks.infra import infra_sprites
 from puenktlich.tracks.raster import STYLES, Sprite, quantise, track_sprites
 from puenktlich.voxel.palette import rgb_palette
@@ -147,9 +148,13 @@ def _nml(sheets: dict, railtypes: list[dict], strings: Strings) -> str:
 
 def _inputs_digest() -> str:
     """Everything the track GRF is generated from (code, data, strings, version, palette)."""
-    h = hashlib.sha1()
+    from importlib.metadata import version
+
+    h = hashlib.sha1(version("nml").encode())
     files = sorted(Path(__file__).parent.glob("*.py")) + [
         paths.DATA / "tracks.yaml",
+        paths.ROOT / "src" / "puenktlich" / "schema.py",  # Track model
+        paths.ROOT / "src" / "puenktlich" / "nml" / "generate.py",  # Strings, languages, version
         paths.LANG / "strings.yaml",
         paths.ROOT / "pyproject.toml",
         paths.PALETTE_JSON,
@@ -167,7 +172,7 @@ def build_tracks(out_grf: Path | None = None, force: bool = False) -> Path:
     digest = _inputs_digest()
     if not force and grf.exists() and stamp.exists() and stamp.read_text() == digest:
         return grf
-    railtypes = yaml.safe_load((paths.DATA / "tracks.yaml").read_text(encoding="utf-8"))
+    railtypes = [t.model_dump(exclude_none=True) for t in schema_tracks().values()]
     strings = Strings()
     static = yaml.safe_load((paths.LANG / "strings.yaml").read_text(encoding="utf-8"))
     for key in ("STR_TRACKS_GRF_NAME", "STR_TRACKS_GRF_DESC", "STR_GRF_URL"):

@@ -6,7 +6,7 @@ import pytest
 
 from puenktlich import paths
 from puenktlich.nml.generate import compile_grf, generate
-from puenktlich.pipeline import render_vehicle
+from puenktlich.pipeline import render_vehicles
 from puenktlich.schema import vehicles
 
 pytestmark = [
@@ -41,9 +41,9 @@ def _assert_sprites_fit_length(v) -> None:
 def test_full_build(tmp_path) -> None:
     if shutil.which("nmlc") is None:
         pytest.skip("nmlc not installed")
+    for result in render_vehicles(list(vehicles().values())):
+        assert result.problems == [], result.vehicle_id
     for v in vehicles().values():
-        _, problems, _ = render_vehicle(v)
-        assert problems == []
         _assert_sprites_fit_length(v)
     nml = generate(tmp_path / "nml")
     text = nml.read_text()

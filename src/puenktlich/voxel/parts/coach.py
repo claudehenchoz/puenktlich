@@ -28,18 +28,28 @@ from typing import Literal
 
 from puenktlich.voxel import palette as P
 from puenktlich.voxel.model import CENTRE_Y, Model
-from puenktlich.voxel.parts.body import CrossSection, EndShape, Shell, end_band, end_span, side_band
-from puenktlich.voxel.parts.lights import lamp_cluster
-from puenktlich.voxel.parts.running_gear import bogie, buffers, skirt
+from puenktlich.voxel.parts.body import (
+    CrossSection,
+    EndShape,
+    Shell,
+    door_outline,
+    end_band,
+    end_span,
+    gangway,
+    side_band,
+)
+from puenktlich.voxel.parts.lights import lamp_cluster, mu_lights
+from puenktlich.voxel.parts.roof import roof_ribs, roof_vents
+from puenktlich.voxel.parts.running_gear import bogie, buffers, underframe
 from puenktlich.voxel.variants import Lights
 
-BODY = P.ramp(P.CC2, 0.75)
-DOOR = P.ramp(P.CC1, 0.6)
-DOOR_SEAM = P.ramp(P.CC1, 0.25)
-LINE = P.ramp(P.CC1, 0.55)
-ROOF = P.ramp(P.GREY, 0.5)
-DARK = P.ramp(P.GREY, 0.08)
-FIRST_CLASS_YELLOW = 66
+BODY = P.BODY_CC2
+DOOR = P.BODY_CC1
+DOOR_SEAM = P.SEAM_CC1
+LINE = P.BODY_CC1
+ROOF = P.ROOF
+DARK = P.DARK
+FIRST_CLASS_YELLOW = P.YELLOW
 BUFFER_DEPTH = 6
 
 
@@ -51,6 +61,7 @@ class CabSpec:
     windscreen_z: tuple[float, float] = (33, 48)
     windscreen_half_width: float = 16
     door_from_end: tuple[float, float] = (26, 34)  # cab/vestibule door right behind the cab
+    top_lamp_z: tuple[float, float] | None = None  # default: between windscreen top and roof
 
 
 @dataclass
@@ -83,10 +94,13 @@ class CoachSpec:
     # metre gauge / shorter cars
     length_m: float | None = None  # over buffers; None = the full 8/8 canvas
     gauge: Literal["standard", "metre"] = "standard"
-    body_colour: int | None = None  # None = BODY (CC2 sides); e.g. P.ramp(P.CC1, 0.6) for all-red RhB cars
+    body_colour: int | None = None  # None = BODY (CC2 sides); e.g. P.BODY_CC1 for all-red RhB cars
     buffer_spacing: float = 13
     gangway_half_width: float = 9
     roof_half_width: float = 15  # grey roof area
+    roof_ribs: bool = True  # transverse roof panel seams
+    roof_vents: int = 4  # ventilator hoods along the roof centre line
+    motor_bogies: bool = False  # powered car of a multiple unit: locomotive-type bogies
     skirt_half_width: float = 16
     first_class_z: tuple[float, float] | None = None  # yellow band; None = just below the roof line
 
@@ -95,22 +109,15 @@ def _door(mdl: Model, shell: Shell, front: bool, span: tuple[float, float], top:
     x0, x1 = end_span(shell, front, *span)
     leaf = side_band(mdl, x0, x1, shell.section.floor + 1, top)
     mdl.paint(leaf, DOOR)
-    seam = leaf & ~side_band(mdl, x0 + 1, x1 - 1, shell.section.floor + 2, top - 1)
-    mdl.inset(seam, DOOR_SEAM)
+    door_outline(mdl, x0, x1, shell.section.floor + 1, top, DOOR_SEAM)
     mdl.inset(side_band(mdl, x0 + 2, x1 - 2, 31, top - 4), P.GLASS)
 
 
 def build_coach(spec: CoachSpec, lights: Lights) -> Model:
-    if spec.mu_role == "rear":
-        # last car of a multiple unit: cab built at the front, carrying the unit's rear lamps
-        turn_round = True
-        lights = Lights(front=lights.rear, rear="off", dark=lights.dark)  # type: ignore[arg-type]
-    elif spec.mu_role == "front":
-        turn_round = False
-        lights = Lights(front=lights.front, rear="off", dark=lights.dark)
-    elif spec.mu_role == "middle":
-        turn_round = False
-        lights = Lights(front="off", rear="off", dark=lights.dark)
+    if spec.mu_role is not None:
+        # car of a multiple unit; the last car is built cab-first and turned round
+        turn_round = spec.mu_role == "rear"
+        lights = mu_lights(spec.mu_role, lights)
     else:
         # stand-alone control car at the end of the train: build cab-first with red lamps, turn round
         turn_round = spec.cab is not None and lights.front == "off" and lights.rear == "red"
@@ -133,6 +140,10 @@ def build_coach(spec: CoachSpec, lights: Lights) -> Model:
     mdl.solid(shell.mask(mdl), BODY if spec.body_colour is None else spec.body_colour)
     roof = (cs.roof - 4 <= Z) & (abs(Y - CENTRE_Y) <= spec.roof_half_width)
     mdl.paint(roof, ROOF)
+    if spec.roof_ribs:
+        roof_ribs(mdl, x_rear + 4, x_front - (24 if spec.cab else 4), cs.roof - 4, half_width=spec.roof_half_width)
+    span = x_front - x_rear
+    roof_vents(mdl, [x_rear + span * (i + 1) / (spec.roof_vents + 1) for i in range(spec.roof_vents)], cs.roof + 1)
     if spec.roof_line:
         mdl.paint(side_band(mdl, x_rear, x_front + 1, cs.roof - 6, cs.roof - 5), LINE)  # red line at the roof edge
     if spec.first_class:
@@ -181,12 +192,13 @@ def build_coach(spec: CoachSpec, lights: Lights) -> Model:
         if front and spec.cab:
             continue
         xe = x_front if front else x_rear
-        xa, xb = (xe + 1, xe + 4) if front else (xe - 3, xe)
-        mdl.solid(mdl.centred_box(xa, xb, spec.gangway_half_width, cs.floor + 1, cs.roof - 6), DARK)
+        gangway(mdl, xe, front, spec.gangway_half_width, cs.floor + 1, cs.roof - 6, DARK)
 
     # --- lamps ----------------------------------------------------------------
     if spec.cab:
-        lamp_cluster(mdl, shell, True, lights.state("front"))
+        # top lamp above the windscreen, just under the roof crown (follows the section height)
+        top_z = spec.cab.top_lamp_z or (max(spec.cab.windscreen_z[1], cs.roof - 3), cs.roof + 1)
+        lamp_cluster(mdl, shell, True, lights.state("front"), top_z=top_z)
     else:
         lamp_cluster(mdl, shell, True, "off", low_z=(18, 22), top_z=None, spacing=13, lamp_half_width=1.5)
     lamp_cluster(mdl, shell, False, lights.state("rear"), low_z=(18, 22), top_z=None, spacing=13, lamp_half_width=1.5)
@@ -197,10 +209,18 @@ def build_coach(spec: CoachSpec, lights: Lights) -> Model:
     # --- running gear ----------------------------------------------------------
     off = spec.bogie_centres_m * 10
     for c in (mid - off, mid + off):
-        bogie(mdl, c, wheelbase=spec.wheelbase, wheel_diameter=spec.wheel_diameter, top=cs.floor, gauge=spec.gauge)
-    skirt(mdl, mid - off + 22, mid + off - 22, 7, cs.floor, spec.skirt_half_width, colour=DARK)
-    buffers(mdl, x_front, front=True, z=cs.floor, length=BUFFER_DEPTH, spacing=spec.buffer_spacing)
-    buffers(mdl, x_rear, front=False, z=cs.floor, length=BUFFER_DEPTH, spacing=spec.buffer_spacing)
+        bogie(
+            mdl,
+            c,
+            wheelbase=spec.wheelbase,
+            wheel_diameter=spec.wheel_diameter,
+            top=cs.floor,
+            gauge=spec.gauge,
+            style="loco" if spec.motor_bogies else "coach",
+        )
+    underframe(mdl, mid - off + 22, mid + off - 22, cs.floor, spec.skirt_half_width)
+    buffers(mdl, x_front, front=True, length=BUFFER_DEPTH, spacing=spec.buffer_spacing, gauge=spec.gauge)
+    buffers(mdl, x_rear, front=False, length=BUFFER_DEPTH, spacing=spec.buffer_spacing, gauge=spec.gauge)
 
     if turn_round:
         mdl.rotate_180()

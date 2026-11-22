@@ -12,12 +12,16 @@ they are not rendered as full sprite sets each. `variant_plan` splits them into:
 
 from __future__ import annotations
 
+import ast
 import functools
 import hashlib
 import importlib.util
 import inspect
 import json
+import os
+import shutil
 import tempfile
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -61,41 +65,88 @@ def load_recipe(path: Path):
     return mod
 
 
-_VOXEL_SRC = Path(__file__).parent / "voxel"
+_SRC = Path(__file__).parents[1]  # .../src
+CACHE_MAX_AGE_DAYS = 14
+
+
+def _imported_files(source: str) -> set[Path]:
+    """Files of the `puenktlich` modules a source file imports (packages: their __init__)."""
+    found: set[Path] = set()
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Import):
+            names = [a.name for a in node.names]
+        elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+            # `from pkg import name`: name may be a submodule
+            names = [node.module] + [f"{node.module}.{a.name}" for a in node.names]
+        else:
+            continue
+        for name in names:
+            if name.split(".")[0] != "puenktlich":
+                continue
+            base = _SRC.joinpath(*name.split("."))
+            for f in (base.with_suffix(".py"), base / "__init__.py"):
+                if f.exists():
+                    found.add(f)
+    return found
 
 
 @functools.cache
-def _library_digest() -> str:
-    """Digest of the modelling library: any change to it invalidates every cached grid."""
-    h = hashlib.sha1()
-    for f in sorted(_VOXEL_SRC.rglob("*.py")):
-        h.update(f.relative_to(_VOXEL_SRC).as_posix().encode())
-        h.update(f.read_bytes())
+def _source_digest(recipe: Path) -> str:
+    """Digest of a recipe and of every `puenktlich` module it imports, directly or not: a
+    change to one part only rebuilds the models that use it."""
+    seen: dict[Path, bytes] = {}
+    todo = [recipe]
+    while todo:
+        f = todo.pop()
+        if f in seen:
+            continue
+        seen[f] = f.read_bytes()
+        todo += _imported_files(seen[f].decode("utf-8"))
+    h = hashlib.sha1(inspect.getsource(_renderable).encode() + inspect.getsource(_run_recipe).encode())
+    for f in sorted(seen):
+        h.update(f.as_posix().encode())
+        h.update(seen[f])
     return h.hexdigest()
 
 
 def build_grid(target: Vehicle | CarSpec, variant: str = DEFAULT_VARIANT, dark: bool = False) -> VoxelGrid:
-    """Run the car's recipe for one variant. Cached in build/.cache/vox/ by the recipe source,
-    the voxel library source, params, variant and dark flag."""
+    """Run the car's recipe for one variant. Cached in build/.cache/vox/ by the source of the
+    recipe and of the modules it imports, params, variant and dark flag."""
     car = _car(target)
     d = model_dir(car)
     if car.model.kind == "vox":
         return _renderable(read_vox(d / "model.vox"))
     recipe = d / "recipe.py"
     key = hashlib.sha1(
-        recipe.read_bytes()
-        + _library_digest().encode()
-        + json.dumps([sorted(car.model.params.items()), variant, dark]).encode()
+        _source_digest(recipe).encode() + json.dumps([sorted(car.model.params.items()), variant, dark]).encode()
     ).hexdigest()
-    cached = paths.CACHE / "vox" / f"{key}.npy"
+    cached = paths.CACHE / "vox" / f"{key}.npz"
     if cached.exists():
-        return VoxelGrid(np.load(cached))
+        os.utime(cached)  # last use, for prune_caches
+        with np.load(cached) as z:
+            return VoxelGrid(z["grid"])
     grid = _renderable(_run_recipe(car, recipe, variant, dark))
     cached.parent.mkdir(parents=True, exist_ok=True)
-    tmp = cached.with_suffix(".tmp.npy")
-    np.save(tmp, grid.data)
+    tmp = cached.with_suffix(f".{os.getpid()}.tmp.npz")  # parallel renders may build the same grid
+    np.savez_compressed(tmp, grid=grid.data)
     tmp.replace(cached)
     return grid
+
+
+def prune_caches(max_age_days: float = CACHE_MAX_AGE_DAYS) -> int:
+    """Delete cache entries that no build has used for `max_age_days` (every hit touches its
+    entry), plus grids in the old uncompressed format. Returns the bytes freed."""
+    limit = time.time() - max_age_days * 86400
+    freed = 0
+    for f in (paths.CACHE / "vox").glob("*"):
+        if f.suffix == ".npy" or f.stat().st_mtime < limit:
+            freed += f.stat().st_size
+            f.unlink()
+    for d in (paths.CACHE / "cargopositor").glob("*"):
+        if d.is_dir() and d.stat().st_mtime < limit:
+            freed += sum(f.stat().st_size for f in d.rglob("*") if f.is_file())
+            shutil.rmtree(d)
+    return freed
 
 
 def _renderable(grid: VoxelGrid) -> VoxelGrid:
@@ -143,9 +194,7 @@ def _cargo_plan(car: CarSpec, recipe) -> VariantPlan:
     from puenktlich.render import cargopositor
 
     spec = recipe.CARGO
-    kwargs = dict(car.model.params)
-    masked = recipe.build(**kwargs)
-    masked = widen_y(squash_x(masked.grid if isinstance(masked, Model) else masked))  # render scale
+    masked = widen_y(squash_x(build_grid(car)))  # render scale
     with tempfile.TemporaryDirectory(prefix=f"pk_cargo_{car.key}_") as tmp:
         src, out = Path(tmp) / "in", Path(tmp) / "out"
         write_vox(masked, src / f"{car.key}.vox", rgb_palette())

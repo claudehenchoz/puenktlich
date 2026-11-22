@@ -20,6 +20,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -33,6 +34,8 @@ SCALES = (1, 2, 4)
 # renderers run at lower priority so a build never freezes the desktop
 NICE = ["nice", "-n", "10"] if shutil.which("nice") else []
 SPRITE_SPACING = 8  # GoRender constant
+GORENDER_BATCH = 6  # .vox files per GoRender process (memory, see gorender())
+GORENDER_MEMORY_MB = 3500  # budget per GoRender process: parallel jobs are limited by it
 Y_JOGGLE = 4
 KINDS = ("normal", "turn_1", "turn_2", "up", "down")
 
@@ -273,8 +276,10 @@ def gorender(
     manifest: str = "train",
     scales: tuple[int, ...] = SCALES,
     force: bool = False,
+    fast: bool = False,
 ) -> None:
-    """Render `vox_files` into `out_dir/<scale>x/`. GoRender skips up-to-date outputs."""
+    """Render `vox_files` into `out_dir/<scale>x/`. GoRender skips up-to-date outputs.
+    fast: GoRender's draft sampler (accuracy 1, no overlap): for previews only."""
     if not paths.GORENDER.exists():
         raise FileNotFoundError(f"{paths.GORENDER} missing — run tools/install.sh")
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -290,10 +295,35 @@ def gorender(
         "-u",
         "-r",
     ]
-    if force:
+    # GoRender only compares sheet mtimes with the .vox and the manifest. Everything else that
+    # shapes a sheet (the renderer itself, the palette with its lighting settings, the scales)
+    # goes into a stamp: when it changes, every sheet of this directory is rendered again.
+    if fast:
+        cmd.append("-fast")
+    stamp = out_dir / f".render_{manifest}.stamp"
+    want = render_stamp(manifest, scales) + ("\nfast" if fast else "")
+    stale = not stamp.exists() or stamp.read_text() != want
+    if force or stale:
         cmd.append("-overwrite")
-    cmd += [str(p.resolve()) for p in vox_files]
-    subprocess.run(cmd, cwd=out_dir, check=True, stdout=subprocess.DEVNULL)
+    if stale:
+        stamp.unlink(missing_ok=True)  # an interrupted render must not look complete
+    # Memory: a 4x render needs about 2.8 GB live, whatever the model, and Go's collector lets
+    # the process grow to 4-5.5 GB over many files. GOMEMLIMIT caps that slack (measured: 3.1 GB
+    # peak, same speed); a few files per process bound whatever else accumulates.
+    env = {"GOMEMLIMIT": f"{GORENDER_MEMORY_MB - 300}MiB"} | os.environ
+    files = [str(p.resolve()) for p in vox_files]
+    for i in range(0, len(files), GORENDER_BATCH):
+        subprocess.run(cmd + files[i : i + GORENDER_BATCH], cwd=out_dir, check=True, stdout=subprocess.DEVNULL, env=env)
+    if stale:
+        stamp.write_text(want)
+
+
+def render_stamp(manifest: str, scales: tuple[int, ...] = SCALES) -> str:
+    h = hashlib.sha1(_tool_digest(paths.GORENDER).encode())
+    h.update(paths.PALETTE_JSON.read_bytes())
+    h.update(manifest_path(manifest).read_bytes())
+    h.update(repr(scales).encode())
+    return h.hexdigest()
 
 
 @cache
@@ -318,7 +348,7 @@ def cargopositor(batch: Path, voxel_dir: Path, out_dir: Path) -> None:
     cached = paths.CACHE / "cargopositor" / h.hexdigest()
     out_dir.mkdir(parents=True, exist_ok=True)
     if not cached.is_dir():
-        tmp = cached.with_name(cached.name + ".tmp")
+        tmp = cached.with_name(f"{cached.name}.{os.getpid()}.tmp")
         shutil.rmtree(tmp, ignore_errors=True)
         tmp.mkdir(parents=True)
         subprocess.run(
@@ -326,7 +356,11 @@ def cargopositor(batch: Path, voxel_dir: Path, out_dir: Path) -> None:
             check=True,
             stdout=subprocess.DEVNULL,
         )
-        tmp.rename(cached)
+        try:
+            tmp.rename(cached)
+        except OSError:  # a parallel render got there first
+            shutil.rmtree(tmp, ignore_errors=True)
+    os.utime(cached)  # last use, for models.prune_caches
     for f in cached.iterdir():
         dst = out_dir / f.name
         if not dst.exists() or dst.read_bytes() != f.read_bytes():
@@ -344,6 +378,10 @@ def apply_overrides(vehicle_id: str, name: str, sprite_dir: Path) -> list[Path]:
             continue
         dst = sprite_dir / src.parent.name / src.name
         dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(src, dst)
         applied.append(dst)
+        if dst.exists() and dst.read_bytes() == src.read_bytes():
+            continue  # already in place: leave the mtime alone (no re-render, nmlc cache stays valid)
+        # plain copy, not copy2: the sheet must look newer than the .vox and than nmlc's sprite
+        # cache, or GoRender re-renders it on every build and nmlc keeps the rendered sprite
+        shutil.copy(src, dst)
     return applied

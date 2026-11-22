@@ -23,9 +23,17 @@ import numpy as np
 
 from puenktlich.voxel import palette as P
 from puenktlich.voxel.model import Model
-from puenktlich.voxel.parts.body import CrossSection, EndShape, Shell, face_mask, side_band
-from puenktlich.voxel.parts.dosto import side_skin
-from puenktlich.voxel.parts.lights import lamp_cluster
+from puenktlich.voxel.parts.body import (
+    CrossSection,
+    EndShape,
+    Shell,
+    door_outline,
+    face_mask,
+    rounded_window,
+    side_band,
+    side_skin,
+)
+from puenktlich.voxel.parts.lights import lamp_cluster, mu_lights
 from puenktlich.voxel.parts.roof import pantograph, roof_box
 from puenktlich.voxel.parts.running_gear import bogie
 from puenktlich.voxel.variants import Lights
@@ -46,15 +54,15 @@ SECTION = CrossSection(floor=BOGIE_FLOOR, roof=ROOF, half_width=19.5, roof_radiu
 NOSE = EndShape(rake=60, rake_from=15, corner_radius=13, undercut=6, undercut_height=11, profile="ellipse")
 JOINT = EndShape(rake=0, corner_radius=4)
 
-WHITE = P.ramp(P.CC2, 0.75)
-RED = P.ramp(P.CC1, 0.6)
-RED_DARK = P.ramp(P.CC1, 0.3)
+WHITE = P.BODY_CC2
+RED = P.BODY_CC1
+RED_DARK = P.SEAM_CC1
 BLACK = P.BLACK
-DARK = P.ramp(P.GREY, 0.2)
-ROOF_DARK = P.ramp(P.GREY, 0.35)
+DARK = P.DARK
+ROOF_DARK = P.ROOF_DARK
 CLASS_BLUE = P.ramp(P.BRIGHT_BLUE, 0.4)
-FIRST_YELLOW = 66
-CROSS = P.ramp(P.GREY, 0.93)  # not P.WHITE: that is a lamp colour
+FIRST_YELLOW = P.YELLOW
+CROSS = P.OFF_WHITE
 
 JAKOBS_WHEELBASE = 2.75  # m
 END_WHEELBASE = 2.7
@@ -82,23 +90,9 @@ def end_car(**kw) -> SmileSpec:
     return SmileSpec(cab=True, real_m=22.25, length_m=22.4, doors=(16.7,), **kw)
 
 
-def _window(mdl: Model, x0: float, x1: float, frame: int = DARK) -> None:
-    X, _, Z = mdl.coords()
-    z0, z1 = WIN
-    outer = side_band(mdl, x0, x1, z0, z1)
-    corner = ((x0 + 1 > X) | (x1 - 1 <= X)) & ((z0 + 1 > Z) | (z1 - 1 <= Z))
-    mdl.paint(outer & ~corner, frame)
-    mdl.inset(side_band(mdl, x0 + 1, x1 - 1, z0 + 1, z1 - 1), P.GLASS)
-
-
 def build_smile_car(spec: SmileSpec, lights: Lights) -> Model:
     turn_round = spec.mu_role == "rear" and spec.cab
-    if spec.mu_role == "rear":  # cab built at the front, carrying the unit's rear lamps
-        lights = Lights(front=lights.rear, rear="off", dark=lights.dark)  # type: ignore[arg-type]
-    elif spec.mu_role == "front":
-        lights = Lights(front=lights.front, rear="off", dark=lights.dark)
-    else:
-        lights = Lights(front="off", rear="off", dark=lights.dark)
+    lights = mu_lights(spec.mu_role, lights)
 
     mdl = Model.new()
     sx = mdl.d.shape[0]
@@ -174,7 +168,7 @@ def build_smile_car(spec: SmileSpec, lights: Lights) -> Model:
         z0, z1 = DOOR_Z
         leaf = side_band(mdl, x0, x1, z0, z1)
         mdl.paint(leaf, RED)
-        mdl.inset(leaf & ~side_band(mdl, x0 + 1, x1 - 1, z0, z1 - 1), RED_DARK)
+        door_outline(mdl, x0, x1, z0, z1, RED_DARK, sill=0)
         mid = (x0 + x1) / 2
         mdl.inset(side_band(mdl, mid - 2, mid + 2, WIN[0], WIN[1] - 1), P.GLASS)
         mdl.paint(side_band(mdl, x1, x1 + 2, BAND[0], BAND[1]), CLASS_BLUE)  # "1"/"2" panel
@@ -194,7 +188,7 @@ def build_smile_car(spec: SmileSpec, lights: Lights) -> Model:
         gap = (b - a - n * ww) / (n + 1)
         for i in range(n):
             x0 = a + gap + i * (ww + gap)
-            _window(mdl, x0, x0 + ww)
+            rounded_window(mdl, x0, x0 + ww, *WIN, frame=DARK)
 
     # SBB logo near the rear end of every car: red box with the white cross, then the lettering
     lx = at(spec.real_m - 1.2)

@@ -15,6 +15,41 @@ STR_BADGE_CLASS_OPERATOR:
   de: "Betreiber"
   fr: "Exploitant"
   it: "Gestore"
+STR_BADGE_CLASS_GAUGE:
+  en: "Gauge"
+  de: "Spurweite"
+  fr: "Écartement"
+  it: "Scartamento"
+STR_BADGE_GAUGE_STANDARD:
+  en: "Standard gauge"
+  de: "Normalspur"
+  fr: "Voie normale"
+  it: "Scartamento normale"
+STR_BADGE_GAUGE_METRE:
+  en: "Metre gauge"
+  de: "Meterspur"
+  fr: "Voie métrique"
+  it: "Scartamento metrico"
+STR_BADGE_CLASS_TRACTION:
+  en: "Traction"
+  de: "Antrieb"
+  fr: "Traction"
+  it: "Trazione"
+STR_BADGE_TRACTION_ELECTRIC:
+  en: "Electric"
+  de: "Elektrisch"
+  fr: "Électrique"
+  it: "Elettrica"
+STR_BADGE_TRACTION_DIESEL:
+  en: "Diesel"
+  de: "Diesel"
+  fr: "Diesel"
+  it: "Diesel"
+STR_BADGE_TRACTION_RACK:
+  en: "Electric, rack and adhesion"
+  de: "Elektrisch, Zahnrad und Adhäsion"
+  fr: "Électrique, crémaillère et adhérence"
+  it: "Elettrica, cremagliera e aderenza"
 STR_TRACKS_GRF_NAME:
   en: "Pünktlich Tracks {VERSION}"
 STR_TRACKS_GRF_DESC:

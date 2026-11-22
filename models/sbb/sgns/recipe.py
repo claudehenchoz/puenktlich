@@ -30,9 +30,7 @@ def build() -> Model:
     x0, x1 = mid - half + BUFFER_DEPTH, mid + half - BUFFER_DEPTH
     X, _, _ = mdl.coords()
     # deck frame: two deep side sills + cross members, open in between
-    for side in (-1, 1):
-        y0 = 21 + side * 16 - (2 if side > 0 else 0)
-        mdl.solid(mdl.box(x0, x1, y0, y0 + 3, DECK - 6, DECK), FRAME)
+    mdl.solid(mdl.mirror_y(mdl.box(x0, x1, 5, 8, DECK - 6, DECK)), FRAME)
     mdl.solid(mdl.centred_box(x0, x1, 17, DECK - 2, DECK) & ((X.astype(int) % 16) < 3), FRAME_DARK)
     mdl.solid(mdl.centred_box(x0, x0 + 4, 18, DECK - 6, DECK), FRAME)
     mdl.solid(mdl.centred_box(x1 - 4, x1, 18, DECK - 6, DECK), FRAME)
@@ -40,9 +38,9 @@ def build() -> Model:
     lx, ly, lz = LOAD
     mdl.solid(mdl.centred_box(mid - lx / 2, mid + lx / 2, ly / 2, DECK, DECK + lz), CARGO_MASK)
     for c in (mid - m(7.1), mid + m(7.1)):
-        bogie(mdl, c, wheelbase=m(1.8), wheel_diameter=9, top=DECK - 5)
-    buffers(mdl, x1, front=True, z=DECK - 3, length=BUFFER_DEPTH)
-    buffers(mdl, x0, front=False, z=DECK - 3, length=BUFFER_DEPTH)
+        bogie(mdl, c, wheelbase=m(1.8), wheel_diameter=9, top=DECK - 5, style="freight")
+    buffers(mdl, x1, front=True, length=BUFFER_DEPTH, beam=False)
+    buffers(mdl, x0, front=False, length=BUFFER_DEPTH, beam=False)
     return mdl
 
 
@@ -55,9 +53,9 @@ def _containers(count: int) -> VoxelGrid:
         a = i * (CONTAINER_LEN + gap)
         col = CONTAINER_COLOURS[i % len(CONTAINER_COLOURS)]
         d[a : a + CONTAINER_LEN, :, :] = col
-        d[a : a + CONTAINER_LEN : 3, :, 2 : lz - 2] = col - 1  # corrugation
-        d[a : a + 2, :, :] = col - 2  # door / end frames
-        d[a + CONTAINER_LEN - 2 : a + CONTAINER_LEN, :, :] = col - 2
+        d[a : a + CONTAINER_LEN : 3, :, 2 : lz - 2] = P.shade(col, -1)  # corrugation
+        d[a : a + 2, :, :] = P.shade(col, -2)  # door / end frames
+        d[a + CONTAINER_LEN - 2 : a + CONTAINER_LEN, :, :] = P.shade(col, -2)
     return VoxelGrid(d)
 
 

@@ -15,6 +15,7 @@ from puenktlich.paths import PALETTE_JSON
 # --- Ramps (inclusive start, end) — from render/palettes/ttd_palette.json ---
 GREY = (1, 15)  # flat greys (bogies, underframe, roof gear)
 BLUE_GREY = (16, 23)
+GOLDEN_BROWN = (32, 39)
 REDDISH_BROWN = (70, 79)
 CC2 = (80, 87)  # secondary company colour
 MAUVE_WINDOWS = (128, 135)  # glass
@@ -35,11 +36,8 @@ LIGHT_GREY = 10
 WHITE = 15
 GLASS = 131
 GLASS_DARK = 129
-CC1_MID = 202
-CC2_MID = 84
-# TTD "deep red" — SBB red when a fixed (non company-colour) livery is wanted
-SBB_RED = 181
-LAMP = 15  # headlights read as white
+YELLOW = 66  # first-class stripes, destination displays
+LAMP_RED = 184  # tail lamps: brightest pure red in the TTD palette (parts/lights.py, parts/road.py)
 
 
 def ramp(r: tuple[int, int], t: float) -> int:
@@ -53,3 +51,35 @@ def ramp(r: tuple[int, int], t: float) -> int:
 def rgb_palette() -> list[tuple[int, int, int]]:
     entries = json.loads(PALETTE_JSON.read_text())["entries"]
     return [tuple(e) for e in entries]  # type: ignore[misc]
+
+
+# --- Shade table: the one place that says which shade a kind of surface gets (docs/STYLE.md).
+# Builders and recipes use these names, so every vehicle shares the same roof, underframe,
+# seam and stripe shades and sits in one family next to the others.
+BODY_CC1 = ramp(CC1, 0.6)  # livery colour on flat body surfaces (doors on white coaches too)
+SEAM_CC1 = ramp(CC1, 0.25)  # door seams and panel lines on CC1 surfaces (always inset)
+BODY_CC2 = ramp(CC2, 0.75)  # large secondary-colour surfaces (white coach sides)
+STRIPE_CC2 = ramp(CC2, 0.85)  # stripes, bands and logo panels: a step brighter, to read at 1x
+ROOF = ramp(GREY, 0.45)  # silver-grey roofs: locomotives, coaches
+ROOF_DARK = ramp(GREY, 0.3)  # anthracite roofs of modern multiple units (FV-Dosto, Giruno)
+ROOF_LIGHT = ramp(GREY, 0.7)  # light roofs of buses
+DARK = ramp(GREY, 0.2)  # car ends, gangways, dark window bands: dark grey, never pure black
+UNDERFRAME = DARK_GREY  # bogie frames, skirts, underfloor equipment, buffers
+
+RAMPS = (GREY, BLUE_GREY, GOLDEN_BROWN, REDDISH_BROWN, CC2, MAUVE_WINDOWS, BRIGHT_BLUE, PALE_RED)
+RAMPS += (DEEP_RED_YELLOW, CC1, ICY_BLUE)
+
+
+def shade(index: int, steps: int) -> int:
+    """`index` moved `steps` along its own ramp (negative = darker), clamped to the ramp:
+    for seams, corrugation and frames in the colour of the surface they sit on."""
+    for lo, hi in RAMPS:
+        if lo <= index <= hi:
+            i = max(lo, min(hi, index + steps))
+            return BLACK if i == UNRENDERABLE_BLACK else i
+    raise ValueError(f"palette index {index} is not on a named ramp")
+
+
+# Painted white (stripes, logos, lettering). Not WHITE: that index is reserved for lit
+# headlamps, which the light variants and their tests look for.
+OFF_WHITE = ramp(GREY, 0.93)

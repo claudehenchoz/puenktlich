@@ -19,6 +19,21 @@ jobs:
         with:
           path: .tools
           key: tools-${{ hashFiles('tools/install.sh') }}
+      # Rendered sheets and the caches behind them: every stage skips unchanged inputs (content
+      # hashes and mtimes, which the cache preserves), so only edited models are rendered again.
+      # A changed renderer or palette invalidates the sheets through build/sprites/*/.render_*.stamp.
+      - name: Cache renders
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/.cache
+            build/.nmlcache
+            build/manifests
+            build/sprites
+            build/vox
+          key: renders-${{ hashFiles('tools/install.sh') }}-${{ github.sha }}
+          restore-keys: |
+            renders-${{ hashFiles('tools/install.sh') }}-
       - run: uv sync --locked
       - run: ./tools/install.sh
       - run: make lint

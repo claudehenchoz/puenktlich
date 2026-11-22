@@ -12,7 +12,7 @@ from puenktlich.voxel.parts.body import Shell, end_band, face_mask
 from puenktlich.voxel.variants import Lights
 
 LAMP_WHITE = P.WHITE
-LAMP_RED = 184  # brightest pure red in the TTD palette
+LAMP_RED = P.LAMP_RED
 LAMP_OFF = P.GLASS_DARK
 
 
@@ -47,7 +47,10 @@ def lamp_cluster(
         band = region(z0, z1, spacing + lamp_half_width + 1, 8)
         model.paint(band & (abs(Y - (CENTRE_Y + dy)) <= lamp_half_width), low)
     if top_z is not None:
-        model.paint(region(*top_z, lamp_half_width, 26), top)
+        # only as deep as the nose is raked: on a steep cab front a deeper box would also
+        # paint a strip along the roof behind the lamp
+        shape = shell.front if front else (shell.rear or shell.front)
+        model.paint(region(*top_z, lamp_half_width, shape.rake + 4), top)
 
 
 def lamps(model: Model, shell: Shell, lights: Lights, **kw) -> None:
@@ -55,3 +58,18 @@ def lamps(model: Model, shell: Shell, lights: Lights, **kw) -> None:
     Always paint lamps through this module so `Lights.dark` bodies stay lamp-free."""
     lamp_cluster(model, shell, True, lights.state("front"), **kw)
     lamp_cluster(model, shell, False, lights.state("rear"), **kw)
+
+
+def mu_lights(role: str, lights: Lights) -> Lights:
+    """Lamps of one car of a multiple unit, which is drawn as a whole with its front leading.
+
+    front   first car: the unit's front lamps at its front end
+    rear    last car: built cab-first and then turned round by the builder, so the unit's
+            rear lamps go on its (built) front end
+    middle  no lamps
+    """
+    if role == "rear":
+        return Lights(front=lights.rear, rear="off", dark=lights.dark)  # type: ignore[arg-type]
+    if role == "front":
+        return Lights(front=lights.front, rear="off", dark=lights.dark)
+    return Lights(front="off", rear="off", dark=lights.dark)

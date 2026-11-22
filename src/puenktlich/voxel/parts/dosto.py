@@ -25,8 +25,17 @@ import numpy as np
 
 from puenktlich.voxel import palette as P
 from puenktlich.voxel.model import Model
-from puenktlich.voxel.parts.body import CrossSection, EndShape, Shell, face_mask, side_band
-from puenktlich.voxel.parts.lights import lamp_cluster
+from puenktlich.voxel.parts.body import (
+    CrossSection,
+    EndShape,
+    Shell,
+    door_outline,
+    face_mask,
+    rounded_window,
+    side_band,
+    side_skin,
+)
+from puenktlich.voxel.parts.lights import lamp_cluster, mu_lights
 from puenktlich.voxel.parts.roof import main_switch, pantograph, roof_box, roof_cable
 from puenktlich.voxel.parts.running_gear import bogie
 from puenktlich.voxel.variants import Lights
@@ -50,15 +59,15 @@ SECTION = CrossSection(floor=HIGH_FLOOR, roof=ROOF, half_width=19.5, roof_radius
 NOSE = EndShape(rake=37, rake_from=15, corner_radius=9, undercut=5, undercut_height=10, profile="ellipse")
 FLAT_END = EndShape(rake=0, corner_radius=2)
 
-WHITE = P.ramp(P.CC2, 0.75)
-RED = P.ramp(P.CC1, 0.6)
-RED_DARK = P.ramp(P.CC1, 0.3)
+WHITE = P.BODY_CC2
+RED = P.BODY_CC1
+RED_DARK = P.SEAM_CC1
 BLACK = P.BLACK
-DARK = P.ramp(P.GREY, 0.18)
-ROOF_GREY = P.ramp(P.GREY, 0.3)
+DARK = P.DARK
+ROOF_GREY = P.ROOF_DARK
 DOOR_BLUE = P.ramp(P.BRIGHT_BLUE, 0.35)
-FIRST_YELLOW = 66
-DISPLAY = 66
+FIRST_YELLOW = P.YELLOW
+DISPLAY = P.YELLOW
 HATCH = P.ramp(P.GREY, 0.72)
 
 
@@ -95,33 +104,9 @@ def end_car(**kw) -> DostoSpec:
     return replace(base, **kw)
 
 
-def side_skin(mdl: Model) -> np.ndarray:
-    """Filled voxels with an empty neighbour outwards in y (the visible body sides)."""
-    occ = mdl.d != 0
-    out = np.zeros_like(occ)
-    cy = int(mdl.cy)
-    out[:, : cy + 1] = occ[:, : cy + 1] & ~np.pad(occ, ((0, 0), (1, 0), (0, 0)))[:, : cy + 1]
-    out[:, cy + 1 :] = occ[:, cy + 1 :] & ~np.pad(occ, ((0, 0), (0, 1), (0, 0)))[:, cy + 2 :]
-    return out
-
-
-def _window(mdl: Model, x0: float, x1: float, z0: float, z1: float, frame: int = BLACK) -> None:
-    """Rounded-rectangle window on both sides: black frame, glass inset, corners clipped."""
-    X, _, Z = mdl.coords()
-    outer = side_band(mdl, x0, x1, z0, z1)
-    corner = ((x0 + 1 > X) | (x1 - 1 <= X)) & ((z0 + 1 > Z) | (z1 - 1 <= Z))
-    mdl.paint(outer & ~corner, frame)
-    mdl.inset(side_band(mdl, x0 + 1, x1 - 1, z0 + 1, z1 - 1), P.GLASS)
-
-
 def build_dosto_car(spec: DostoSpec, lights: Lights) -> Model:
     turn_round = spec.mu_role == "rear" and spec.cab
-    if spec.mu_role == "rear":  # cab built at the front, carrying the unit's rear lamps
-        lights = Lights(front=lights.rear, rear="off", dark=lights.dark)  # type: ignore[arg-type]
-    elif spec.mu_role == "front":
-        lights = Lights(front=lights.front, rear="off", dark=lights.dark)
-    else:
-        lights = Lights(front="off", rear="off", dark=lights.dark)
+    lights = mu_lights(spec.mu_role, lights)
 
     mdl = Model.new()
     sx = mdl.d.shape[0]
@@ -214,8 +199,7 @@ def build_dosto_car(spec: DostoSpec, lights: Lights) -> Model:
         leaf = side_band(mdl, x0, x1, z0, z1)
         mdl.paint(leaf, RED)
         mdl.paint(side_band(mdl, x0, x1, DOOR_BAND, z1), DOOR_BLUE)
-        seam = leaf & ~side_band(mdl, x0 + 1, x1 - 1, z0 + 1, z1)
-        mdl.inset(seam, RED_DARK)
+        door_outline(mdl, x0, x1, z0, z1, RED_DARK, lintel=0)
         c = (x0 + x1) / 2
         mdl.inset(side_band(mdl, c - 1.5, c + 1.5, 17, 31), P.GLASS)
         if spec.first_class:
@@ -229,7 +213,7 @@ def build_dosto_car(spec: DostoSpec, lights: Lights) -> Model:
     pitch = (gap1 - gap0) / n
     for i in range(n):
         a = gap0 + i * pitch + (pitch - lw) / 2
-        _window(mdl, a, a + lw, *LOWER_WIN)
+        rounded_window(mdl, a, a + lw, *LOWER_WIN)
     # upper deck: from upper_from to the rear end
     uw = spec.upper_width * 10
     k = 0
@@ -237,15 +221,15 @@ def build_dosto_car(spec: DostoSpec, lights: Lights) -> Model:
         a_u = spec.upper_from + k * spec.upper_pitch
         if a_u + spec.upper_width > spec.length_m - 0.7:
             break
-        _window(mdl, at(a_u + spec.upper_width), at(a_u + spec.upper_width) + uw, *UPPER_WIN)
+        rounded_window(mdl, at(a_u + spec.upper_width), at(a_u + spec.upper_width) + uw, *UPPER_WIN)
         k += 1
     for a, b in spec.mezz_windows:
-        _window(mdl, at(b), at(a), *MEZZ_WIN)
+        rounded_window(mdl, at(b), at(a), *MEZZ_WIN)
 
     # SBB logo: red box with the white cross, upper side next to the first door
     lx = door_x[0][0] - 16
     mdl.paint(side_band(mdl, lx, lx + 11, 33, 37), RED)
-    mdl.paint(side_band(mdl, lx + 4, lx + 7, 34, 36), P.ramp(P.GREY, 0.93))  # not P.WHITE: lamp colour
+    mdl.paint(side_band(mdl, lx + 4, lx + 7, 34, 36), P.OFF_WHITE)
     mdl.paint(side_band(mdl, lx - 28, lx - 2, 34, 36), DARK)  # "SBB CFF FFS"
 
     # --- ends --------------------------------------------------------------------

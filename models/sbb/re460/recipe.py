@@ -11,81 +11,31 @@ Colour plan (docs/STYLE.md):
 """
 
 from puenktlich.voxel import palette as P
-from puenktlich.voxel.model import CENTRE_Y, Model, m
-from puenktlich.voxel.parts.body import CrossSection, EndShape, Shell, end_band, end_span, side_band
-from puenktlich.voxel.parts.lights import lamps
-from puenktlich.voxel.parts.roof import main_switch, pantograph, roof_box, roof_cable
-from puenktlich.voxel.parts.running_gear import bogie, buffers, skirt
+from puenktlich.voxel.model import Model
+from puenktlich.voxel.parts.body import CrossSection
+from puenktlich.voxel.parts.loco import LOK2000_NOSE, LocoSpec, Louvres, Panel, Windscreen, build_loco
 from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
 
-LENGTH_OVER_BUFFERS_M = 18.5
-BUFFER_DEPTH = 6
-
-BODY = P.ramp(P.CC1, 0.6)
-BODY_SEAM = P.ramp(P.CC1, 0.25)
-ROOF = P.ramp(P.GREY, 0.45)
+SPEC = LocoSpec(
+    length_m=18.5,
+    section=CrossSection(floor=15, roof=51, half_width=19.5, roof_radius=7, tumblehome=1.5, tumble_from=26),
+    nose=LOK2000_NOSE,
+    windscreen=Windscreen(frame_z=(31, 50), frame_half_width=18, glass_z=(33, 48), glass_half_width=16, depth=26),
+    cab_window=(14, 24),
+    cab_window_z=(35, 45),
+    door=(26, 34),
+    door_z=(17, 47),
+    door_glass_z=(38, 44),
+    # machine-room louvre panels: four groups high on the side, smooth body between
+    louvres=Louvres(offsets=(-40, -16, 16, 40), half_length=9, z=(38, 46)),
+    # "SBB CFF FFS" logo panel (CC2) on the side, centre
+    panels=(Panel(z=(25, 30), colour=P.STRIPE_CC2, half_length=14),),
+    bogie_centres_m=5.5,
+    wheelbase_m=2.8,
+    pantograph_offset=38,
+    roof_boxes=((-18, -8, 8), (8, 18, 8)),
+)
 
 
 def build(lights: Lights = LIGHT_VARIANTS["solo"]) -> Model:
-    mdl = Model.new()
-    canvas_mid = mdl.d.shape[0] / 2
-    lob = m(LENGTH_OVER_BUFFERS_M)
-    x_rear = canvas_mid - lob / 2 + BUFFER_DEPTH
-    x_front = canvas_mid + lob / 2 - BUFFER_DEPTH
-
-    section = CrossSection(floor=15, roof=51, half_width=19.5, roof_radius=7, tumblehome=1.5, tumble_from=26)
-    nose = EndShape(rake=19, rake_from=29, rake_curve=1.35, corner_radius=10, undercut=3, undercut_height=5)
-    shell = Shell(x_rear, x_front, section, front=nose)
-    mid = shell.mid
-
-    # --- body ---------------------------------------------------------------
-    mdl.solid(shell.mask(mdl), BODY)
-
-    # roof: grey walkway area between the pantographs
-    X, Y, Z = mdl.coords()
-    roof_area = (section.roof - 3 <= Z) & (abs(Y - CENTRE_Y) <= 13) & (x_rear + 22 < X) & (x_front - 22 > X)
-    mdl.paint(roof_area, ROOF)
-
-    # windscreens (both ends): black frame, then glass
-    for front in (True, False):
-        mdl.paint(end_band(mdl, shell, 31, 50, 18, front=front, depth=26), P.BLACK)
-        mdl.inset(end_band(mdl, shell, 33, 48, 16, front=front, depth=26), P.GLASS)
-
-    # head/tail lamps: white at the leading end, red at the trailing end (see variants.py)
-    lamps(mdl, shell, lights)
-
-    # cab side windows and doors, both ends
-    for front in (True, False):
-        mdl.inset(side_band(mdl, *end_span(shell, front, 14, 24), 35, 45), P.GLASS)
-        # door outline
-        x0, x1 = end_span(shell, front, 26, 34)
-        door = side_band(mdl, x0, x1, 17, 47) & ~side_band(mdl, x0 + 1, x1 - 1, 18, 46)
-        mdl.inset(door, BODY_SEAM)
-        mdl.inset(side_band(mdl, x0 + 2, x1 - 2, 38, 44), P.GLASS)
-
-    # machine-room louvre panels: four groups high on the side, smooth body between
-    for c in (mid - 40, mid - 16, mid + 16, mid + 40):
-        panel = side_band(mdl, c - 9, c + 9, 38, 46)
-        mdl.inset(panel, P.DARK_GREY)
-        mdl.paint(panel & ((X.astype(int) % 3) == 0), P.MID_GREY)
-
-    # "SBB CFF FFS" logo panel (CC2) on the side, centre
-    mdl.paint(side_band(mdl, mid - 14, mid + 14, 25, 30), P.CC2_MID)
-
-    # --- running gear ---------------------------------------------------------
-    bogie_offset = m(5.5)
-    for c in (mid - bogie_offset, mid + bogie_offset):
-        bogie(mdl, c, wheelbase=m(2.8), wheel_diameter=11, top=section.floor)
-    skirt(mdl, mid - bogie_offset + 22, mid + bogie_offset - 22, 6, section.floor, 15)
-    buffers(mdl, x_front, front=True, z=section.floor, length=BUFFER_DEPTH)
-    buffers(mdl, x_rear, front=False, z=section.floor, length=BUFFER_DEPTH)
-
-    # --- roof equipment -------------------------------------------------------
-    roof_z = section.roof + 1
-    pantograph(mdl, mid - 38, roof_z, raised=True, facing_front=False)
-    pantograph(mdl, mid + 38, roof_z, raised=False, facing_front=True)
-    main_switch(mdl, mid, roof_z)
-    roof_box(mdl, mid - 18, mid - 8, 8, roof_z, 2)
-    roof_box(mdl, mid + 8, mid + 18, 8, roof_z, 2)
-    roof_cable(mdl, mid - 38, mid + 38, roof_z)
-    return mdl
+    return build_loco(SPEC, lights)

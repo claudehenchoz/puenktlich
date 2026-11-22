@@ -4,7 +4,7 @@ Swiss trains and buses for [OpenTTD](https://www.openttd.org): SBB, BLS, RhB, MG
 
 ![Re 460 preview](docs/img/re460.png)
 
-**Status:** early. SBB Re 460, EW IV coaches with Bt control car, RBDe 560 Domino multiple unit, SBB Cargo Eanos and Sgns wagons with cargo loads; on metre gauge the RhB Ge 4/4 III with EW IV coaches and the MGB HGe 4/4 II rack locomotive (rack track needs a rack engine); PostAuto Citaro and Citaro G buses. Two GRFs: `puenktlich.grf` (vehicles) and `puenktlich_tracks.grf` (metre-gauge and rack railtypes with their own crossings, bridges, tunnels and depots; load it before the vehicles). See [docs/COMPLETENESS.md](docs/COMPLETENESS.md).
+**Status:** early. SBB Re 460, EW IV coaches with Bt control car, RBDe 560 Domino, FV-Dosto (IR 100, IC 200) and Giruno multiple units, SBB Cargo Eanos and Sgns wagons with cargo loads; on metre gauge the RhB Ge 4/4 III with EW IV coaches, the MGB HGe 4/4 II rack locomotive (rack track needs a rack engine) and the Glacier Express panorama coaches; PostAuto Citaro and Citaro G buses. Two GRFs: `puenktlich.grf` (vehicles) and `puenktlich_tracks.grf` (metre-gauge and rack railtypes with their own crossings, bridges, tunnels and depots; load it before the vehicles). See [docs/COMPLETENESS.md](docs/COMPLETENESS.md).
 
 ## Build
 
@@ -25,7 +25,8 @@ recipe.py ──→ .vox ──→ GoRender 1×/2×/4× (8bpp, 32bpp, mask) ─�
 ```
 
 - Every vehicle is a YAML file (`data/vehicles/`) plus a **voxel recipe** (`models/`). The recipe is a short Python program built from a parts library: shells, noses, bogies, pantographs. That makes models diffable and parametric, and easy for AI assistants to write and iterate on. Hand-made MagicaVoxel `.vox` files work too.
-- `uv run pk preview <id>` renders a contact sheet with all views, zooms and the colour mask for review.
+- `uv run pk new <operator> <id> --kind …` starts a vehicle from a stub that already builds.
+- `uv run pk preview <id>` renders a contact sheet with all views, zooms and the colour mask for review (`--draft` for a quick look).
 - Completeness is tracked against official fleet lists in `data/reference/`.
 
 More detail: [Architecture](docs/ARCHITECTURE.md) · [Scale](docs/SCALE.md) · [Style](docs/STYLE.md) · [Agent guide](CLAUDE.md)

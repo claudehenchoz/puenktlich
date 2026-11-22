@@ -26,7 +26,7 @@ HALF_WIDTH = 19.5
 # can recolour the cargo layer per cargo without touching the wagon (see voxel/cargo.py).
 WALL = P.ramp(P.REDDISH_BROWN, 0.45)
 RIB = P.ramp(P.REDDISH_BROWN, 0.2)
-FRAME = P.ramp(P.GREY, 0.15)
+FRAME = P.UNDERFRAME
 
 
 def build() -> Model:
@@ -48,9 +48,9 @@ def build() -> Model:
     mdl.solid(mdl.centred_box(x0 + 2, x1 - 2, HALF_WIDTH - 2, FLOOR, BOX_TOP - 1), CARGO_MASK)
     # running gear
     for c in (mid - m(4.5), mid + m(4.5)):
-        bogie(mdl, c, wheelbase=m(1.8), wheel_diameter=9, top=FLOOR - 2)
-    buffers(mdl, x1, front=True, z=FLOOR - 2, length=BUFFER_DEPTH)
-    buffers(mdl, x0, front=False, z=FLOOR - 2, length=BUFFER_DEPTH)
+        bogie(mdl, c, wheelbase=m(1.8), wheel_diameter=9, top=FLOOR - 2, style="freight")
+    buffers(mdl, x1, front=True, length=BUFFER_DEPTH, beam=False)
+    buffers(mdl, x0, front=False, length=BUFFER_DEPTH, beam=False)
     return mdl
 
 

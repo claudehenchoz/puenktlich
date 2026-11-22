@@ -1,12 +1,12 @@
 """Headless in-game test: run OpenTTD with the built GRF and take screenshots.
 
-Each zoom level runs in its own throw-away profile (XDG_DATA_HOME/XDG_CONFIG_HOME
-under build/ingame/), so the user's OpenTTD config is never touched.
+Runs use a throw-away profile (XDG_DATA_HOME/XDG_CONFIG_HOME under build/ingame/), so
+the user's OpenTTD config is never touched. All zoom levels share one run.
 
     tools/ingame/pk_test/   Game Script: levels land, builds an electrified loop +
                             depot, builds one train from every engine whose name
-                            matches TARGETS, runs it and stops it on day 20 of each
-                            month with every viewport scrolled onto it.
+                            matches TARGETS, runs it and stops it on the next
+                            STOP_TILES tile for one month per zoom level.
     console scripts         on the 1st of each month take one viewport screenshot.
 
 Rendering uses SDL's offscreen backend (no window). The null video driver can't
@@ -16,7 +16,6 @@ written on the next drawn frame.
 
 from __future__ import annotations
 
-import contextlib
 import json
 import os
 import re
@@ -128,7 +127,8 @@ def find_baseset(name: str) -> Path:
 
 
 def _profile(
-    zoom_name: str,
+    name: str,
+    zooms: list[str],
     grf: Path,
     targets: list[str],
     shots: int,
@@ -136,7 +136,7 @@ def _profile(
     extras: list[str] | None = None,
     baseset: Path | None = None,
 ) -> Path:
-    root = OUT / zoom_name
+    root = OUT / name
     shutil.rmtree(root, ignore_errors=True)
     data = root / "data" / "openttd"
     (data / "newgrf").mkdir(parents=True)
@@ -152,10 +152,11 @@ def _profile(
         graphicsset = f"\n[graphicsset]\nname = {_baseset_name(baseset)}\n"
     stops = ", ".join(f"[{x}, {y}]" for x, y in STOP_TILES)
     loop = ", ".join(f"{k} = {v}" for k, v in LOOP.items())
+    hold = 1 if scene == "infra" else len(zooms)  # months the train waits at each stop
     (gs / "targets.nut").write_text(
         f"TARGETS <- {json.dumps(targets)};\nLOOP <- {{{loop}}};\nSTOP_TILES <- [{stops}];\n"
         f"RAISE_X <- {RAISE_X};\nSTOP_DELAY <- {STOP_DELAY};\nREVERSE_AT_MONTH <- {REVERSE_AT_MONTH};\n"
-        f"SCENE <- {json.dumps(scene)};\nEXTRAS <- {json.dumps(extras or [])};\n"
+        f"SCENE <- {json.dumps(scene)};\nEXTRAS <- {json.dumps(extras or [])};\nHOLD_MONTHS <- {hold};\n"
     )
     cfg = root / "config" / "openttd"
     cfg.mkdir(parents=True)
@@ -165,61 +166,82 @@ def _profile(
     scripts = data / "scripts"
     scripts.mkdir()
     (scripts / "game_start.scr").write_text("schedule on-next-calendar-month scripts/m1.scr\n")
-    for i in range(1, shots + 1):
-        x, y = STOP_TILES[(i - 1) % len(STOP_TILES)]
-        # infra scene: alternate an overview (2x) and a close-up (4x) in one run
-        zl = ZOOM_LEVELS["2x" if i % 2 else "4x"] if scene == "infra" else ZOOM_LEVELS[zoom_name]
-        name = f"infra_{i}_{'2x' if i % 2 else '4x'}" if scene == "infra" else f"{zoom_name}_{i}_at_{x}_{y}"
+    plan = shot_plan(zooms, shots, scene)
+    for i, (zoom, shot_name) in enumerate(plan, start=1):
         (scripts / f"m{i}.scr").write_text(
-            f"zoomto {zl}\nscreenshot viewport no_con {name}\nschedule on-next-calendar-month scripts/m{i + 1}.scr\n"
+            f"zoomto {ZOOM_LEVELS[zoom]}\nscreenshot viewport no_con {shot_name}\n"
+            f"schedule on-next-calendar-month scripts/m{i + 1}.scr\n"
         )
-    (scripts / f"m{shots + 1}.scr").write_text("quit\n")
+    (scripts / f"m{len(plan) + 1}.scr").write_text("quit\n")
     return root
 
 
+def shot_plan(zooms: list[str], shots: int, scene: str = "loop") -> list[tuple[str, str]]:
+    """(zoom, screenshot name) per game month. The train waits at each stop for one month per
+    zoom level, so one OpenTTD run covers every zoom."""
+    if scene == "infra":  # alternate an overview (2x) and a close-up (4x)
+        return [(z, f"infra_{i}_{z}") for i in range(1, shots + 1) for z in ["2x" if i % 2 else "4x"]]
+    plan = []
+    for i in range(1, shots + 1):
+        x, y = STOP_TILES[(i - 1) % len(STOP_TILES)]
+        plan += [(z, f"{z}_{i}_at_{x}_{y}") for z in zooms]
+    return plan
+
+
+def run_timeout(months: int) -> int:
+    """Seconds allowed for a run: world generation and scene building, then ~67 s per month."""
+    return 180 + 80 * months
+
+
 def _run(
-    zoom_name: str,
+    name: str,
+    zooms: list[str],
     grf: Path,
     targets: list[str],
     shots: int,
-    timeout: int,
     scene: str = "loop",
     extras: list[str] | None = None,
     baseset: Path | None = None,
-) -> Result:
-    root = _profile(zoom_name, grf, targets, shots, scene, extras, baseset)
+) -> list[Result]:
+    root = _profile(name, zooms, grf, targets, shots, scene, extras, baseset)
+    plan = shot_plan(zooms, shots, scene)
     env = dict(
         os.environ, SDL_VIDEODRIVER="offscreen", XDG_DATA_HOME=str(root / "data"), XDG_CONFIG_HOME=str(root / "config")
     )
     log = root / "openttd.log"
-    with log.open("w") as fh, contextlib.suppress(subprocess.TimeoutExpired):  # run() kills the child on timeout
-        subprocess.run(
-            [
-                *NICE,
-                "openttd",
-                "-x",
-                "-v",
-                "sdl",
-                "-r",
-                "1280x720",
-                "-s",
-                "null",
-                "-m",
-                "null",
-                "-b",
-                "32bpp-anim",
-                "-d",
-                "grf=1,script=4",
-                "-g",
-                "-G",  # the config's generation_seed is ignored for `-g`; pin the terrain
-                str(SEED),
-            ],
-            env=env,
-            stdout=fh,
-            stderr=subprocess.STDOUT,
-            timeout=timeout,
-            check=False,
-        )
+    timeout = run_timeout(len(plan) + 1)
+    timed_out = False
+    with log.open("w") as fh:
+        try:  # run() kills the child on timeout
+            subprocess.run(
+                [
+                    *NICE,
+                    "openttd",
+                    "-x",
+                    "-v",
+                    "sdl",
+                    "-r",
+                    "1280x720",
+                    "-s",
+                    "null",
+                    "-m",
+                    "null",
+                    "-b",
+                    "32bpp-anim",
+                    "-d",
+                    "grf=1,script=4",
+                    "-g",
+                    "-G",  # the config's generation_seed is ignored for `-g`; pin the terrain
+                    str(SEED),
+                ],
+                env=env,
+                stdout=fh,
+                stderr=subprocess.STDOUT,
+                timeout=timeout,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            timed_out = True
     text = log.read_text(errors="replace")
     lines = [ln.split("[I] ", 1)[1] for ln in text.splitlines() if "PKTEST" in ln and "[I] " in ln]
     errors = [
@@ -230,8 +252,18 @@ def _run(
     errors += [ln for ln in text.splitlines() if "[S]" in ln or "ERROR" in ln]
     errors += [ln for ln in lines if re.search(r"\b(rail|depot|attach) fail\b|infra FAIL|cargo FAIL|road fail", ln)]
     shots_dir = root / "data" / "openttd" / "screenshot"
-    found = sorted(shots_dir.glob("*.png")) if shots_dir.exists() else []
-    return Result(zoom_name, found, log, lines, errors)
+    found = {p.stem: p for p in shots_dir.glob("*.png")} if shots_dir.exists() else {}
+    missing = [shot for _, shot in plan if shot not in found]
+    if timed_out:
+        errors.append(f"OpenTTD did not finish within {timeout} s and was stopped; missing: {', '.join(missing)}")
+    elif missing:
+        errors.append(f"missing screenshots: {', '.join(missing)}")
+    results = []
+    for zoom in dict.fromkeys(z for z, _ in plan):
+        results.append(
+            Result(zoom, [found[shot] for z, shot in plan if z == zoom and shot in found], log, lines, errors)
+        )
+    return results
 
 
 def run(
@@ -239,15 +271,20 @@ def run(
     targets: list[str],
     zooms: list[str],
     shots: int = 6,
-    timeout: int = 600,
     parallel: bool = False,
     scene: str = "loop",
     extras: list[str] | None = None,
     baseset: Path | None = None,
 ) -> list[Result]:
-    """One zoom level after another by default: several offscreen OpenTTDs plus renders can
-    freeze a 4-core laptop. `parallel=True` runs all zoom levels at once."""
+    """All zoom levels share one OpenTTD run by default (`build/ingame/all/`; a single zoom
+    runs in `build/ingame/<zoom>/`): the train waits one month per zoom at each stop.
+    `parallel=True` starts one OpenTTD per zoom level instead: faster, but several offscreen
+    OpenTTDs can freeze a 4-core laptop."""
     if shutil.which("openttd") is None:
         raise FileNotFoundError("openttd not found on PATH")
-    with ThreadPoolExecutor(len(zooms) if parallel else 1) as pool:
-        return list(pool.map(lambda z: _run(z, grf, targets, shots, timeout, scene, extras, baseset), zooms))
+    if parallel and len(zooms) > 1:
+        with ThreadPoolExecutor(len(zooms)) as pool:
+            runs = pool.map(lambda z: _run(z, [z], grf, targets, shots, scene, extras, baseset), zooms)
+            return [r for rs in runs for r in rs]
+    name = zooms[0] if len(zooms) == 1 else "all"
+    return _run(name, zooms, grf, targets, shots, scene, extras, baseset)
