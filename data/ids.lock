@@ -73,6 +73,15 @@ ic2000_b:
 ic2000_bt:
   grf_id: 123
   liveries: [sbb, company]
+ee922:
+  grf_id: 124
+  liveries: [sbb, company]
+re484:
+  grf_id: 125
+  liveries: [cargo, company]
+rabe521:
+  grf_id: 126
+  liveries: [sbb, company]
 ge44iii:
   grf_id: 200
   liveries: [rhb, company]

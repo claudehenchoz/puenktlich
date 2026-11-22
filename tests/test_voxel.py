@@ -402,7 +402,7 @@ def test_hood_locos() -> None:
     from puenktlich.voxel.parts.lights import LAMP_RED, LAMP_WHITE
     from puenktlich.voxel.variants import LIGHT_VARIANTS
 
-    for name in ("aem940", "eem923"):
+    for name in ("aem940", "eem923", "ee922"):
         path = paths.ROOT / "models" / "sbb" / name / "recipe.py"
         mod = importlib.util.module_from_spec(spec := importlib.util.spec_from_file_location(name, path))
         spec.loader.exec_module(mod)  # type: ignore[union-attr]

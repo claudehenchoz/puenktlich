@@ -1,8 +1,15 @@
 # SBB RABe 523 (Stadler FLIRT) and the FLIRT 3 "Mouette": reference
 
-Two vehicles share this recipe:
+Three vehicles share this recipe:
 - `rabe523`: FLIRT 1, 4-car regional units RABe 523 001–073 (Stadtbahn Zug 001–012, RER Vaud
   013–031, S-Bahn Luzern 032–043, RegiOlten 044–073), built 2004–2017.
+- `rabe521`: FLIRT 1, RABe 521 001–030 (S-Bahn Basel, Wiesentalbahn) and 521 201–209 (Seehas,
+  ex RABe 526 651–659), built 2004–2006, approved for Switzerland and Germany. fr.wikipedia
+  "RABe 521": 74.078 m, 20 1st + 160 2nd seats, 2,000 kW continuous, 160 km/h, 120 t (as stated),
+  Schwab FK-15 couplers. de.wikipedia "Stadler Flirt": the sister classes 521, 522 and 524 "differ
+  in principle only in traction equipment and train protection for the neighbouring countries",
+  so the RABe 523 model is used unchanged. The "Trireno" heart logo (since 2020) and the
+  "Seehas" branding are not modelled.
 - `rabe523_mouette`: FLIRT 3 with long-distance interior, RABe 523 501–511 ("Mouette"), in
   service since December 2022 on IR 36 Basel – Zürich Flughafen (IR 56 Basel – Biel planned).
 

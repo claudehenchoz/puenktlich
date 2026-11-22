@@ -1,0 +1,48 @@
+# SBB RABe 521 (Stadler FLIRT 1), 4-car units for the S-Bahn Basel / Wiesentalbahn (521 001–030)
+# and the Seehas (521 201–209), approved for Switzerland and Germany. Same body as the RABe 523:
+# uses its model (models/sbb/rabe523). See models/sbb/rabe523/REFERENCE.md.
+id: rabe521
+grf_id: 126          # never change — saved games reference this (`pk lock`)
+name:
+  en: SBB RABe 521 FLIRT
+  de: SBB RABe 521 FLIRT
+  fr: CFF RABe 521 FLIRT
+  it: FFS RABe 521 FLIRT
+operator: sbb
+kind: emu
+railtype: standard_ac
+intro_year: 2004
+vehicle_life_years: 30
+model_life_years: 25
+max_speed_kmh: 160
+power_kw: 2000
+tractive_effort_kn: 200
+weight_t: 120
+length_m: 74.1
+capacity:
+  PASS: 180
+cost_factor: 85
+running_cost_factor: 50
+liveries:               # append-only: item id = grf_id * 8 + position
+  - id: sbb
+    name: { en: SBB, de: SBB, fr: CFF, it: FFS }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+cars:   # front to rear: end car (1st/2nd) · B · B · end car
+  - model: { path: sbb/rabe523, lights: true, params: { car: cab_first, role: front, generation: 1 } }
+    length_m: 19.2
+  - model: { path: sbb/rabe523, lights: true, params: { car: second, role: middle, generation: 1 } }
+    length_m: 16.0
+  - model: { path: sbb/rabe523, lights: true, params: { car: second, role: middle, generation: 1 } }
+    length_m: 16.0
+  - model: { path: sbb/rabe523, lights: true, params: { car: cab, role: rear, generation: 1 } }
+    length_m: 19.2
+reference: [sbb-rabe521]
+description:
+  en: Low-floor FLIRT for the Basel S-Bahn and the Seehas, cleared for Germany, four cars.
+  de: Niederflur-FLIRT für die S-Bahn Basel und den Seehas, auch für Deutschland zugelassen, vierteilig.
+  fr: FLIRT à plancher bas pour le RER bâlois et le Seehas, admis en Allemagne, quatre voitures.
+  it: FLIRT a pianale ribassato per la S-Bahn di Basilea e il Seehas, ammesso in Germania, quattro carrozze.

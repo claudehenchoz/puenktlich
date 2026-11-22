@@ -22,7 +22,7 @@ entries:
   - { id: sbb-re474,    name: "Re 474",            category: locomotive, built: "2003–2004" }
   - { id: sbb-re482,    name: "Re 482",            category: locomotive, built: "2002–2004" }
   - { id: sbb-re484,    name: "Re 484",            category: locomotive, built: "2004" }
-  - { id: sbb-re475,    name: "Re 475 (Vectron)",  category: locomotive, built: "2017–" }
+  - { id: sbb-re475,    name: "Re 475 (Vectron)",  category: locomotive, built: "2017–", in_scope: false, notes: "BLS Cargo class (475 401–450); SBB Cargo International runs leased Vectrons as German class 193" }
   - { id: sbb-ee922,    name: "Ee 922",            category: locomotive, built: "2007–2009" }
   - { id: sbb-eem923,   name: "Eem 923",           category: locomotive, built: "2010–2012" }
   - { id: sbb-aem940,   name: "Aem 940",           category: locomotive, built: "2018–2019" }

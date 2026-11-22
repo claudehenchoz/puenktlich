@@ -1,0 +1,39 @@
+# SBB Cargo Re 484 (Bombardier TRAXX F140 MS1): multi-system freight locomotive (15 kV / 3 kV DC)
+# for Switzerland–Italy traffic, 21 units 2004–2007. See models/sbb/re484/REFERENCE.md.
+id: re484
+grf_id: 125          # never change — saved games reference this (`pk lock`)
+name:
+  en: SBB Cargo Re 484
+  de: SBB Cargo Re 484
+  fr: CFF Cargo Re 484
+  it: FFS Cargo Re 484
+operator: sbb
+kind: locomotive
+railtype: standard_ac
+intro_year: 2005
+vehicle_life_years: 30
+model_life_years: 25
+max_speed_kmh: 140
+power_kw: 5600
+tractive_effort_kn: 300
+weight_t: 85
+length_m: 18.9
+cost_factor: 38
+running_cost_factor: 28
+liveries:
+  - id: cargo
+    name: { en: SBB Cargo, de: SBB Cargo, fr: CFF Cargo, it: FFS Cargo }
+    cc1: DARK_BLUE
+    cc2: RED
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: sbb/re484
+  lights: true
+reference: [sbb-re484]
+description:
+  en: Multi-system freight locomotive for the transalpine routes into Italy.
+  de: Mehrsystem-Güterzuglok für die Alpentransversalen nach Italien.
+  fr: Locomotive marchandises polycourant pour les axes alpins vers l'Italie.
+  it: Locomotiva merci politensione per gli assi alpini verso l'Italia.

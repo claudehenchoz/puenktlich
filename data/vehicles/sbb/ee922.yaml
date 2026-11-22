@@ -1,0 +1,39 @@
+# SBB Ee 922 (Stadler): two-axle electric shunting locomotive, 25 units 2009–2010 and 2015.
+# See models/sbb/ee922/REFERENCE.md.
+id: ee922
+grf_id: 124          # never change — saved games reference this (`pk lock`)
+name:
+  en: SBB Ee 922
+  de: SBB Ee 922
+  fr: CFF Ee 922
+  it: FFS Ee 922
+operator: sbb
+kind: locomotive
+railtype: standard_ac
+intro_year: 2009
+vehicle_life_years: 35
+model_life_years: 30
+max_speed_kmh: 100
+power_kw: 600
+tractive_effort_kn: 120
+weight_t: 44
+length_m: 8.8
+cost_factor: 14
+running_cost_factor: 10
+liveries:
+  - id: sbb
+    name: { en: SBB red, de: SBB-Rot, fr: Rouge CFF, it: Rosso FFS }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: sbb/ee922
+  lights: true
+reference: [sbb-ee922]
+description:
+  en: Small electric shunter for marshalling passenger trains in the big stations.
+  de: Kleine elektrische Rangierlok für die Personenzugbildung in den grossen Bahnhöfen.
+  fr: Petite locomotive de manœuvre électrique pour la formation des trains voyageurs dans les grandes gares.
+  it: Piccola locomotiva elettrica da manovra per la composizione dei treni viaggiatori nelle grandi stazioni.
