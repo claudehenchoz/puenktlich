@@ -1,0 +1,41 @@
+# SBB IC2000 A (FIAT-SIG/Schindler double-deck coach, 1997–2004). See models/sbb/ic2000/REFERENCE.md.
+id: ic2000_a
+grf_id: 120          # never change — saved games reference this (`pk lock`)
+name:
+  en: SBB IC2000 A
+  de: SBB IC2000 A
+  fr: CFF IC2000 A
+  it: FFS IC2000 A
+operator: sbb
+kind: coach
+railtype: standard
+intro_year: 1997
+vehicle_life_years: 40
+model_life_years: 30
+max_speed_kmh: 200
+power_kw: 0
+weight_t: 48
+length_m: 26.8
+capacity:
+  PASS: 86
+cost_factor: 20
+running_cost_factor: 9
+liveries:
+  - id: sbb
+    name: { en: SBB IC, de: SBB IC, fr: CFF IC, it: FFS IC }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: sbb/ic2000
+  kind: recipe
+  lights: true         # tail lamps on the last vehicle
+  params: { car: a }
+reference: [sbb-ic2000]
+description:
+  en: Double-deck InterCity coach, 1st class.
+  de: Doppelstock-InterCity-Wagen, 1. Klasse.
+  fr: Voiture duplex InterCity, 1re classe.
+  it: Carrozza InterCity a due piani, 1a classe.

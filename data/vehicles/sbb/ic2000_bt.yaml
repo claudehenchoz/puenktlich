@@ -1,0 +1,41 @@
+# SBB IC2000 Bt (FIAT-SIG/Schindler double-deck coach, 1997–2004). See models/sbb/ic2000/REFERENCE.md.
+id: ic2000_bt
+grf_id: 123          # never change — saved games reference this (`pk lock`)
+name:
+  en: SBB IC2000 Bt
+  de: SBB IC2000 Bt
+  fr: CFF IC2000 Bt
+  it: FFS IC2000 Bt
+operator: sbb
+kind: control_car
+railtype: standard
+intro_year: 1997
+vehicle_life_years: 40
+model_life_years: 30
+max_speed_kmh: 200
+power_kw: 1          # nominal: lets the Bt lead a push-pull train (see ew4_bt.yaml)
+weight_t: 50
+length_m: 26.8
+capacity:
+  PASS: 98
+cost_factor: 20
+running_cost_factor: 9
+liveries:
+  - id: sbb
+    name: { en: SBB IC, de: SBB IC, fr: CFF IC, it: FFS IC }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: sbb/ic2000
+  kind: recipe
+  lights: true         # tail lamps on the last vehicle; the Bt turns its cab outward
+  params: { car: bt }
+reference: [sbb-ic2000-bt]
+description:
+  en: Double-deck control car for push-pull trains with the Re 460.
+  de: Doppelstock-Steuerwagen für Pendelzüge mit der Re 460.
+  fr: Voiture-pilote duplex pour les trains navettes avec la Re 460.
+  it: Carrozza pilota a due piani per treni navetta con la Re 460.

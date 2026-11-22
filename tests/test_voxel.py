@@ -391,6 +391,52 @@ def test_dtz_end_car() -> None:
     assert np.flatnonzero(d[mid, 20, :])[-1] == ROOF
 
 
+def test_hood_locos() -> None:
+    """Aem 940 / Eem 923: the cab stands above both hoods, cab glass on the sides, buffers at both
+    ends, lamps white at the front and red at the rear; the Eem's short hood is CC2 (cargo)."""
+    import importlib.util
+
+    from puenktlich import paths
+    from puenktlich.voxel import palette as P
+    from puenktlich.voxel.parts.hood import build_hood_loco
+    from puenktlich.voxel.parts.lights import LAMP_RED, LAMP_WHITE
+    from puenktlich.voxel.variants import LIGHT_VARIANTS
+
+    for name in ("aem940", "eem923"):
+        path = paths.ROOT / "models" / "sbb" / name / "recipe.py"
+        mod = importlib.util.module_from_spec(spec := importlib.util.spec_from_file_location(name, path))
+        spec.loader.exec_module(mod)  # type: ignore[union-attr]
+        s = mod.SPEC
+        d = build_hood_loco(s, LIGHT_VARIANTS["solo"]).grid.data
+        assert s.cab.top > max(h.top for h in s.hoods)
+        assert P.GLASS in d
+        occ = np.flatnonzero(d.any(axis=(1, 2)))
+        front, rear = d[occ[-1] - 14 :], d[: occ[0] + 15]  # buffers stick out ~6, hoods start 3 behind
+        assert LAMP_WHITE in front and LAMP_RED in rear
+        if s.livery == "cargo":
+            assert P.BODY_CC2 in d[occ[-1] - 25 :, :, s.frame_z[1] : s.hoods[0].top]
+
+
+def test_ic2000_coaches() -> None:
+    """IC2000: coaches have buffers at both ends and red tail lamps when last; the Bt turns its
+    cab outward with red lamps when it is the last vehicle."""
+    from puenktlich.voxel.parts.kiss import build_kiss_car, ic2000_bt, ic2000_coach
+    from puenktlich.voxel.parts.lights import LAMP_RED, LAMP_WHITE
+    from puenktlich.voxel.parts.running_gear import COUPLING_Z
+    from puenktlich.voxel.variants import LIGHT_VARIANTS
+
+    d = build_kiss_car(ic2000_coach(), LIGHT_VARIANTS["tail"]).grid.data
+    occ = np.flatnonzero(d.any(axis=(1, 2)))
+    for x in (occ[0], occ[-1]):  # buffer plates stick out at coupling height
+        assert d[x, :, COUPLING_Z["standard"]].any()
+    assert LAMP_RED in d[: occ[0] + 12] and LAMP_WHITE not in d  # behind the buffers
+    head = build_kiss_car(ic2000_bt(), LIGHT_VARIANTS["head"]).grid.data
+    tail = build_kiss_car(ic2000_bt(), LIGHT_VARIANTS["tail"]).grid.data
+    hx, tx = np.flatnonzero(head.any(axis=(1, 2))), np.flatnonzero(tail.any(axis=(1, 2)))
+    assert LAMP_WHITE in head[hx[-1] - 14 :]  # cab leading: white
+    assert LAMP_RED in tail[: tx[0] + 14]  # last: cab turned to the rear, red
+
+
 def test_no_unrenderable_black() -> None:
     """Palette index 1 renders transparent in GoRender: ramps and P.BLACK avoid it."""
     from puenktlich.voxel import palette as P

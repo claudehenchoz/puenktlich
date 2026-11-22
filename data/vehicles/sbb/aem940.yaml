@@ -1,0 +1,39 @@
+# SBB Aem 940 (Alstom Prima H4): bi-mode Bo'Bo' hood unit, electric 2000 kW + diesel 900 kW,
+# for SBB Infrastruktur, 2018–2024. See models/sbb/aem940/REFERENCE.md.
+id: aem940
+grf_id: 118          # never change — saved games reference this (`pk lock`)
+name:
+  en: SBB Aem 940
+  de: SBB Aem 940
+  fr: CFF Aem 940
+  it: FFS Aem 940
+operator: sbb
+kind: locomotive
+railtype: standard          # bi-mode: runs with or without catenary
+intro_year: 2018
+vehicle_life_years: 35
+model_life_years: 30
+max_speed_kmh: 120
+power_kw: 2000
+tractive_effort_kn: 300
+weight_t: 90
+length_m: 18.75
+cost_factor: 30
+running_cost_factor: 25
+liveries:
+  - id: sbb
+    name: { en: SBB red, de: SBB-Rot, fr: Rouge CFF, it: Rosso FFS }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: sbb/aem940
+  lights: true
+reference: [sbb-aem940]
+description:
+  en: Bi-mode electric/diesel locomotive for works trains and shunting, also off the wires.
+  de: Zweikraftlok (elektrisch/Diesel) für Bau- und Rangierdienst, auch abseits der Fahrleitung.
+  fr: Locomotive bimode électrique/diesel pour les trains de chantier et la manœuvre, aussi sans caténaire.
+  it: Locomotiva bimodale elettrica/diesel per treni cantiere e manovre, anche senza linea di contatto.

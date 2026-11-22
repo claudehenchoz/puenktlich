@@ -1,0 +1,39 @@
+# SBB Eem 923 (Stadler): two-axle electro-diesel shunting locomotive for SBB Cargo, 30 units
+# 2011–2013, named after Swiss hills. See models/sbb/eem923/REFERENCE.md.
+id: eem923
+grf_id: 119          # never change — saved games reference this (`pk lock`)
+name:
+  en: SBB Cargo Eem 923
+  de: SBB Cargo Eem 923
+  fr: CFF Cargo Eem 923
+  it: FFS Cargo Eem 923
+operator: sbb
+kind: locomotive
+railtype: standard          # electro-diesel: runs with or without catenary
+intro_year: 2012
+vehicle_life_years: 35
+model_life_years: 30
+max_speed_kmh: 120          # as built; reduced to 100 km/h in December 2025 (fr.wikipedia)
+power_kw: 1500
+tractive_effort_kn: 150
+weight_t: 47
+length_m: 9.13
+cost_factor: 18
+running_cost_factor: 14
+liveries:
+  - id: cargo
+    name: { en: SBB Cargo, de: SBB Cargo, fr: CFF Cargo, it: FFS Cargo }
+    cc1: DARK_BLUE
+    cc2: RED
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: sbb/eem923
+  lights: true
+reference: [sbb-eem923]
+description:
+  en: Small hybrid shunter that serves sidings with or without catenary.
+  de: Kleine Hybrid-Rangierlok für Anschlussgleise mit und ohne Fahrleitung.
+  fr: Petit locotracteur hybride pour la desserte des embranchements, avec ou sans caténaire.
+  it: Piccolo locomotore ibrido per raccordi con o senza linea di contatto.

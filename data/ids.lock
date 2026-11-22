@@ -55,6 +55,24 @@ rabde500:
 rabe514:
   grf_id: 117
   liveries: [zvv, company]
+aem940:
+  grf_id: 118
+  liveries: [sbb, company]
+eem923:
+  grf_id: 119
+  liveries: [cargo, company]
+ic2000_a:
+  grf_id: 120
+  liveries: [sbb, company]
+ic2000_ad:
+  grf_id: 121
+  liveries: [sbb, company]
+ic2000_b:
+  grf_id: 122
+  liveries: [sbb, company]
+ic2000_bt:
+  grf_id: 123
+  liveries: [sbb, company]
 ge44iii:
   grf_id: 200
   liveries: [rhb, company]

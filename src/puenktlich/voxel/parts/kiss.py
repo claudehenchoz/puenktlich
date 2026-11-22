@@ -54,7 +54,7 @@ from puenktlich.voxel.parts.dosto import (
 )
 from puenktlich.voxel.parts.lights import lamp_cluster, mu_lights
 from puenktlich.voxel.parts.roof import main_switch, pantograph, roof_box, roof_cable
-from puenktlich.voxel.parts.running_gear import bogie
+from puenktlich.voxel.parts.running_gear import bogie, buffers
 from puenktlich.voxel.parts.stadler import ShieldNose, shield_nose
 from puenktlich.voxel.variants import Lights
 
@@ -90,6 +90,12 @@ DTZ_NOSE = EndShape(rake=10, rake_from=30, corner_radius=10, undercut=2, undercu
 DTZ_LOWER_WIN = (18, 28)
 DTZ_UPPER_WIN = (37, 48)
 DTZ_DOOR_Z = (6, 31)
+# SBB IC2000 coaches (style="ic2000", coach=True), REFERENCE.md of the IC2000
+IC_NOSE = EndShape(rake=12, rake_from=28, rake_curve=1.4, corner_radius=8, undercut=2, undercut_height=6)
+IC_LOWER_BAND = 21  # anthracite below
+IC_WAIST = (31, 35)  # anthracite mid band
+IC_LOWER_WIN = (15, 27)
+IC_UPPER_WIN = (38, 49)
 K2_SHIELD = ShieldNose(red_line_z=K2_RED_LINE[0], roof_from=K2_ROOF_FROM, shield_top=49)
 
 WHITE = P.OFF_WHITE
@@ -119,7 +125,8 @@ class KissSpec(DostoSpec):
     mezz_windows: tuple[tuple[float, float], ...] = ((1.4, 2.6), (22.4, 23.6))
     pantograph_raised: bool = True
     turned: bool = False  # built front-first, then turned round (pantograph well at the rear)
-    style: Literal["kiss", "kiss2", "dtz"] = "kiss"
+    style: Literal["kiss", "kiss2", "dtz", "ic2000"] = "kiss"
+    coach: bool = False  # loco-hauled coach: buffers at both ends, stand-alone tail/cab lamps
 
 
 def cab_car(**kw) -> KissSpec:
@@ -190,13 +197,52 @@ def dtz_cab_car(**kw) -> KissSpec:
     return replace(base, **kw)
 
 
+def ic2000_coach(**kw) -> KissSpec:
+    """IC2000 double-deck coach (26.8 m, compressed to 25.6 m over buffers, body 24.4 m): doors at
+    both lower-deck ends; positions in metres along the modelled body."""
+    return replace(
+        KissSpec(
+            style="ic2000",
+            coach=True,
+            length_m=25.6,
+            doors=((3.4, 5.0), (19.4, 21.0)),
+            bogies=(2.1, 22.3),
+            lower_windows=6,
+            upper_from=0.8,
+            upper_pitch=2.0,
+            upper_width=1.4,
+            mezz_windows=((1.0, 2.2), (22.2, 23.4)),
+        ),
+        **kw,
+    )
+
+
+def ic2000_bt(**kw) -> KissSpec:
+    """IC2000 Bt control car: single-level cab section 0–5.6 m (Re 460-style front), then the
+    double-deck body."""
+    return ic2000_coach(
+        cab=True,
+        doors=((5.8, 7.4), (19.4, 21.0)),
+        bogies=(3.2, 22.3),
+        lower_windows=5,
+        upper_from=8.0,
+        mezz_windows=((22.2, 23.4),),
+        **kw,
+    )
+
+
 def build_kiss_car(spec: KissSpec, lights: Lights) -> Model:
-    turn_round = (spec.mu_role == "rear" and spec.cab) or spec.turned
-    lights = mu_lights(spec.mu_role, lights)
+    if spec.coach:  # stand-alone coach / control car (as parts/coach.py)
+        turn_round = spec.cab and lights.front == "off" and lights.rear == "red"
+        if turn_round:  # control car last in the train: cab outward with red lamps
+            lights = Lights(front="red", rear="off", dark=lights.dark)  # type: ignore[arg-type]
+    else:
+        turn_round = (spec.mu_role == "rear" and spec.cab) or spec.turned
+        lights = mu_lights(spec.mu_role, lights)
 
     mdl = Model.new()
     sx = mdl.d.shape[0]
-    lob = spec.length_m * 10
+    lob = spec.length_m * 10 - (12 if spec.coach else 0)  # coaches: length over buffers (0.6 m each)
     x_rear, x_front = sx / 2 - lob / 2 + 1, sx / 2 + lob / 2 - 2
 
     def at(u: float) -> float:
@@ -224,7 +270,9 @@ def build_kiss_car(spec: KissSpec, lights: Lights) -> Model:
         x_rear,
         x_front,
         SECTION,
-        front={"kiss": NOSE, "kiss2": K2_NOSE, "dtz": DTZ_NOSE}[spec.style] if spec.cab else FLAT_END,
+        front={"kiss": NOSE, "kiss2": K2_NOSE, "dtz": DTZ_NOSE, "ic2000": IC_NOSE}[spec.style]
+        if spec.cab
+        else FLAT_END,
         rear=FLAT_END,
         floor_at=floor_at,
         roof_at=roof_at,
@@ -234,6 +282,8 @@ def build_kiss_car(spec: KissSpec, lights: Lights) -> Model:
         _paint_kiss2(mdl, spec, shell, at, door_x)
     elif spec.style == "dtz":
         _paint_dtz(mdl, spec, shell, at, door_x)
+    elif spec.style == "ic2000":
+        _paint_ic2000(mdl, spec, shell, at, door_x)
     else:
         _paint_kiss1(mdl, spec, at, door_x, x_rear, x_front)
 
@@ -245,12 +295,27 @@ def build_kiss_car(spec: KissSpec, lights: Lights) -> Model:
             shell,
             True,
             lights.state("front"),
-            low_z={"kiss": (20, 24), "kiss2": (21, 24), "dtz": (16, 19)}[spec.style],
-            top_z={"kiss": (50, 52), "kiss2": (51, 53), "dtz": (50, 52)}[spec.style],
+            low_z={"kiss": (20, 24), "kiss2": (21, 24), "dtz": (16, 19), "ic2000": (21, 24)}[spec.style],
+            top_z={"kiss": (50, 52), "kiss2": (51, 53), "dtz": (50, 52), "ic2000": (48, 50)}[spec.style],
             spacing=13,
             lamp_half_width=2,
             face=True,
         )
+
+    if spec.coach:  # tail lamps on the gangway end, buffers and couplers at both ends
+        lamp_cluster(
+            mdl,
+            shell,
+            False,
+            lights.state("rear"),
+            low_z=(18, 21),
+            top_z=None,
+            spacing=13,
+            lamp_half_width=1.5,
+            face=True,
+        )
+        buffers(mdl, x_front, front=True)
+        buffers(mdl, x_rear, front=False)
 
     # --- roof ----------------------------------------------------------------------
     if spec.pantograph:
@@ -424,3 +489,47 @@ def _paint_dtz(mdl: Model, spec: KissSpec, shell: Shell, at, door_x) -> None:
         mdl.paint(side_band(mdl, lx - 9, lx, WAIST[1], WAIST[1] + 3), RED)
         mdl.paint(side_band(mdl, lx - 6, lx - 3, WAIST[1] + 1, WAIST[1] + 2), P.OFF_WHITE)
         mdl.paint(side_band(mdl, lx - 30, lx - 11, WAIST[1] + 1, WAIST[1] + 2), DARK)
+
+
+def _paint_ic2000(mdl: Model, spec: KissSpec, shell: Shell, at, door_x) -> None:
+    """IC2000 (de.wikipedia "Design"): white body (CC2), anthracite lower band and mid band, red
+    (CC1) door panels up to the roof with a blue class strip, red marks on the roof edge over the
+    doors, grey roof; 1st class with a yellow line over the mid band. Bt: Re 460-style front, red
+    lower front, anthracite windscreen band and red band above it running back along the cab."""
+    X, Y, Z = mdl.coords()
+    dy = abs(Y - mdl.cy)
+    u = (shell.x_front - X) / 10
+    mdl.paint(mdl.d != 0, P.BODY_CC2)
+    mdl.paint(Z < IC_LOWER_BAND, DARK)
+    mdl.paint(Z >= GREY_FROM, ROOF_GREY)
+    band_from = 5.6 if spec.cab else 0.0
+    mdl.paint(side_band(mdl, shell.x_rear + 2, at(band_from), *IC_WAIST), DARK)
+    if spec.first_class:
+        mdl.paint(side_band(mdl, shell.x_rear + 2, at(band_from), IC_WAIST[1], IC_WAIST[1] + 1), FIRST_YELLOW)
+
+    if spec.cab:
+        cab = u < 5.6
+        mdl.paint(cab & (Z >= 30) & (Z < 42), DARK)  # windscreen band, round the cab section
+        mdl.paint(cab & (Z >= 42) & (Z < 47), RED)  # red band above it
+        face = face_mask(mdl, True, depth=3) & (u < 3.0) & (dy <= 18)
+        mdl.paint(face & (Z >= 6) & (Z < 30), RED)
+        mdl.paint(face & (Z < 6), DARK)
+        mdl.inset(face & (Z >= 32) & (Z < 41) & (dy <= 14), P.GLASS)
+        mdl.paint(face & (Z >= 47), ROOF_GREY)
+        mdl.paint(face & (Z >= 49) & (Z < 52) & (dy <= 4) & (X.astype(int) % 2 == 0), DARK)  # grille
+        cab_win = side_band(mdl, at(3.6), at(2.4), 31, 41)
+        mdl.inset(cab_win, P.GLASS)
+        door_outline(mdl, at(5.2), at(4.3), 8, 40, P.MID_GREY)  # cab door
+
+    for x0, x1 in door_x:
+        mdl.paint(side_band(mdl, x0, x1, 6, GREY_FROM), RED)
+        mdl.paint(side_band(mdl, x1, x1 + 1, 18, 47), DOOR_BLUE)  # class number strip
+        mdl.paint(side_band(mdl, x0 + 2, x1 - 2, GREY_FROM, GREY_FROM + 2) & (dy >= 15), RED)  # roof mark
+        door_outline(mdl, x0 + 1, x1 - 1, 6, 33, RED_DARK, lintel=0)
+        mdl.inset(side_band(mdl, (x0 + x1) / 2 - 1.5, (x0 + x1) / 2 + 1.5, 15, 30), P.GLASS)
+
+    deck_windows(mdl, spec, at, door_x, IC_LOWER_WIN, IC_UPPER_WIN, MEZZ_WIN)
+
+    lx = door_x[0][0] - 4  # SBB logo and lettering between the upper windows and the mid band
+    mdl.paint(side_band(mdl, lx - 9, lx, IC_WAIST[1] + 1, IC_WAIST[1] + 4), RED)
+    mdl.paint(side_band(mdl, lx - 6, lx - 3, IC_WAIST[1] + 2, IC_WAIST[1] + 3), P.OFF_WHITE)
