@@ -350,6 +350,47 @@ def test_kiss2_cab_car_upper_deck_between_doors() -> None:
     assert P.GLASS in d[front - 4 : front + 1, 15:26, 35:45]  # windscreen
 
 
+def test_tilting_cars_taper_and_noses() -> None:
+    """ETR 610 / ICN: the body narrows above the window band (tilting profile), the two styles
+    have their own roof height and nose, and cab cars are longer in the nose than a flat end."""
+    from puenktlich.voxel.parts.tilting import STYLES, TiltSpec, build_tilting_car, cab_car
+    from puenktlich.voxel.variants import LIGHT_VARIANTS
+
+    none = LIGHT_VARIANTS["none"]
+    for style in ("etr610", "icn"):
+        st = STYLES[style]
+        d = build_tilting_car(TiltSpec(style=style), none).grid.data
+        mid = d.shape[0] // 2
+        widths = [np.flatnonzero(d[mid, :, z]).size for z in (st.band[0], st.roof - 4)]
+        assert widths[0] > widths[1]  # tapered upper body
+        assert np.flatnonzero(d[mid, 20, :])[-1] == st.roof
+        cab = build_tilting_car(cab_car(style, mu_role="front"), none).grid.data
+        front = np.flatnonzero(cab.any(axis=(1, 2)))[-1]
+        tip_z = np.flatnonzero(cab[front, 20, :])
+        assert tip_z.size and tip_z.max() < st.roof - 15  # pointed nose: roof far behind the tip
+    etr = build_tilting_car(cab_car("etr610", mu_role="front"), none).grid.data
+    icn = build_tilting_car(cab_car("icn", mu_role="front"), none).grid.data
+    assert (etr != icn).any()
+
+
+def test_dtz_end_car() -> None:
+    """RABe 514: red (CC1) front, S-Bahn Zürich dark CC2 skirt, a pantograph over the cab section
+    (raised on request), no KISS roof well."""
+    from puenktlich.voxel import palette as P
+    from puenktlich.voxel.parts.dosto import ROOF
+    from puenktlich.voxel.parts.kiss import SKIRT_TOP, build_kiss_car, dtz_cab_car
+    from puenktlich.voxel.variants import LIGHT_VARIANTS
+
+    d = build_kiss_car(dtz_cab_car(mu_role="front", pantograph_raised=True), LIGHT_VARIANTS["none"]).grid.data
+    front = np.flatnonzero(d.any(axis=(1, 2)))[-1]
+    assert P.BODY_CC1 in d[front - 3 : front + 1, 10:30, 20:30]
+    mid = d.shape[0] // 2
+    skirt = d[mid, 1, :SKIRT_TOP]
+    assert (skirt[skirt != 0] == P.DARK_CC2).all()
+    assert d[front - 60 : front - 40, 18:23, ROOF + 6 :].any()  # raised pantograph
+    assert np.flatnonzero(d[mid, 20, :])[-1] == ROOF
+
+
 def test_no_unrenderable_black() -> None:
     """Palette index 1 renders transparent in GoRender: ramps and P.BLACK avoid it."""
     from puenktlich.voxel import palette as P

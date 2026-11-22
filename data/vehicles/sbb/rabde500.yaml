@@ -1,0 +1,53 @@
+# SBB RABDe 500 ICN (InterCity-Neigezug), 44 seven-car tilting units 1999–2005.
+# See models/sbb/rabde500/REFERENCE.md.
+id: rabde500
+grf_id: 116          # never change — saved games reference this (`pk lock`)
+name:
+  en: SBB RABDe 500 ICN
+  de: SBB RABDe 500 ICN
+  fr: CFF RABDe 500 ICN
+  it: FFS RABDe 500 ICN
+operator: sbb
+kind: emu
+railtype: standard_ac
+intro_year: 2000
+vehicle_life_years: 35
+model_life_years: 30
+max_speed_kmh: 200
+power_kw: 5200
+tractive_effort_kn: 210
+weight_t: 355
+length_m: 188.8
+capacity:
+  PASS: 467
+cost_factor: 175
+running_cost_factor: 105
+liveries:               # append-only: item id = grf_id * 8 + position
+  - id: sbb
+    name: { en: SBB, de: SBB, fr: CFF, it: FFS }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+cars:   # front to rear: Bt · B · WRA · A · AD · B · Bt
+  - model: { path: sbb/rabde500, lights: true, params: { car: cab, role: front } }
+    length_m: 25.6
+  - model: { path: sbb/rabde500, lights: true, params: { car: second, role: middle } }
+    length_m: 25.6
+  - model: { path: sbb/rabde500, lights: true, params: { car: dining_first, role: middle } }
+    length_m: 25.6
+  - model: { path: sbb/rabde500, lights: true, params: { car: first, role: middle } }
+    length_m: 25.6
+  - model: { path: sbb/rabde500, lights: true, params: { car: first_pan, role: middle } }
+    length_m: 25.6
+  - model: { path: sbb/rabde500, lights: true, params: { car: second, role: middle } }
+    length_m: 25.6
+  - model: { path: sbb/rabde500, lights: true, params: { car: cab, role: rear } }
+    length_m: 25.6
+reference: [sbb-rabde500]
+description:
+  en: Tilting InterCity train for the Jura foot line and Gotthard, seven cars.
+  de: InterCity-Neigezug für die Jurasüdfusslinie und den Gotthard, siebenteilig.
+  fr: Train pendulaire InterCity pour la ligne du pied du Jura et le Gothard, sept voitures.
+  it: Elettrotreno InterCity ad assetto variabile per la linea ai piedi del Giura e il San Gottardo, sette carrozze.

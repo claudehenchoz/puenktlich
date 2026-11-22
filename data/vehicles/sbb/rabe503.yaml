@@ -1,0 +1,53 @@
+# SBB RABe 503 "Astoro" (Alstom ETR 610, New Pendolino), 7-car tilting EuroCity units
+# (Gotthard, Simplon, Zürich–München). See models/sbb/rabe503/REFERENCE.md.
+id: rabe503
+grf_id: 115          # never change — saved games reference this (`pk lock`)
+name:
+  en: SBB RABe 503 Astoro
+  de: SBB RABe 503 Astoro
+  fr: CFF RABe 503 Astoro
+  it: FFS RABe 503 Astoro
+operator: sbb
+kind: emu
+railtype: standard_ac       # data/railtypes.yaml
+intro_year: 2009
+vehicle_life_years: 30
+model_life_years: 25
+max_speed_kmh: 250
+power_kw: 5500
+tractive_effort_kn: 225
+weight_t: 450
+length_m: 187.4
+capacity:
+  PASS: 431
+cost_factor: 190
+running_cost_factor: 120
+liveries:               # append-only: item id = grf_id * 8 + position
+  - id: sbb
+    name: { en: SBB, de: SBB, fr: CFF, it: FFS }
+    cc1: RED
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+cars:   # front to rear: A (cab) · A · WR/A · B (pantograph) · B (pantograph) · B · B (cab)
+  - model: { path: sbb/rabe503, lights: true, params: { car: cab_first, role: front } }
+    length_m: 25.6
+  - model: { path: sbb/rabe503, lights: true, params: { car: first, role: middle } }
+    length_m: 25.6
+  - model: { path: sbb/rabe503, lights: true, params: { car: dining, role: middle } }
+    length_m: 25.6
+  - model: { path: sbb/rabe503, lights: true, params: { car: second_pan_up, role: middle } }
+    length_m: 25.6
+  - model: { path: sbb/rabe503, lights: true, params: { car: second_pan, role: middle } }
+    length_m: 25.6
+  - model: { path: sbb/rabe503, lights: true, params: { car: second, role: middle } }
+    length_m: 25.6
+  - model: { path: sbb/rabe503, lights: true, params: { car: cab, role: rear } }
+    length_m: 25.6
+reference: [sbb-rabe503]
+description:
+  en: Tilting EuroCity train (Alstom ETR 610) for the routes to Italy, seven cars.
+  de: Neigezug (Alstom ETR 610) für den EuroCity-Verkehr nach Italien, siebenteilig.
+  fr: Train pendulaire (Alstom ETR 610) des EuroCity vers l'Italie, sept voitures.
+  it: Elettrotreno ad assetto variabile (Alstom ETR 610) per gli EuroCity verso l'Italia, sette carrozze.

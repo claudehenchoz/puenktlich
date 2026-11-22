@@ -1,0 +1,47 @@
+# SBB RABe 514 "DTZ" (Siemens Desiro Double Deck), 61 four-car units for the S-Bahn Zürich,
+# 2006–2009. See models/sbb/rabe514/REFERENCE.md.
+id: rabe514
+grf_id: 117          # never change — saved games reference this (`pk lock`)
+name:
+  en: SBB RABe 514 DTZ
+  de: SBB RABe 514 DTZ
+  fr: CFF RABe 514 DTZ
+  it: FFS RABe 514 DTZ
+operator: sbb
+kind: emu
+railtype: standard_ac       # data/railtypes.yaml
+intro_year: 2006
+vehicle_life_years: 35
+model_life_years: 30
+max_speed_kmh: 140
+power_kw: 3200
+tractive_effort_kn: 240
+weight_t: 225
+length_m: 100.0
+capacity:
+  PASS: 378
+cost_factor: 115
+running_cost_factor: 65
+liveries:               # append-only: item id = grf_id * 8 + position
+  - id: zvv
+    name: { en: S-Bahn Zürich, de: S-Bahn Zürich, fr: S-Bahn Zurich, it: S-Bahn Zurigo }
+    cc1: RED
+    cc2: DARK_BLUE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+cars:   # front to rear: Bt · B · B · At
+  - model: { path: sbb/rabe514, lights: true, params: { car: cab, role: front } }
+    length_m: 25.0
+  - model: { path: sbb/rabe514, lights: true, params: { car: second, role: middle } }
+    length_m: 25.0
+  - model: { path: sbb/rabe514, lights: true, params: { car: second, role: middle } }
+    length_m: 25.0
+  - model: { path: sbb/rabe514, lights: true, params: { car: cab_first, role: rear } }
+    length_m: 25.0
+reference: [sbb-rabe514]
+description:
+  en: Double-deck S-Bahn train (Siemens Desiro Double Deck) for Zürich, four cars.
+  de: Doppelstock-Triebzug (Siemens Desiro Double Deck) der S-Bahn Zürich, vierteilig.
+  fr: Automotrice duplex (Siemens Desiro Double Deck) du RER zurichois, quatre voitures.
+  it: Elettrotreno a due piani (Siemens Desiro Double Deck) della S-Bahn di Zurigo, quattro carrozze.

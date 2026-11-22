@@ -85,6 +85,11 @@ K2_DOOR_BAND = (30, 33)
 K2_RED_LINE = (52, 54)  # thin red line under the roof edge
 K2_ROOF_FROM = 54
 K2_LOGO_Z = (31, 35)
+# Siemens Desiro Double Deck (style="dtz"), REFERENCE.md of the RABe 514
+DTZ_NOSE = EndShape(rake=10, rake_from=30, corner_radius=10, undercut=2, undercut_height=6, profile="ellipse")
+DTZ_LOWER_WIN = (18, 28)
+DTZ_UPPER_WIN = (37, 48)
+DTZ_DOOR_Z = (6, 31)
 K2_SHIELD = ShieldNose(red_line_z=K2_RED_LINE[0], roof_from=K2_ROOF_FROM, shield_top=49)
 
 WHITE = P.OFF_WHITE
@@ -114,7 +119,7 @@ class KissSpec(DostoSpec):
     mezz_windows: tuple[tuple[float, float], ...] = ((1.4, 2.6), (22.4, 23.6))
     pantograph_raised: bool = True
     turned: bool = False  # built front-first, then turned round (pantograph well at the rear)
-    style: Literal["kiss", "kiss2"] = "kiss"
+    style: Literal["kiss", "kiss2", "dtz"] = "kiss"
 
 
 def cab_car(**kw) -> KissSpec:
@@ -165,6 +170,26 @@ def kiss2_cab_car(**kw) -> KissSpec:
     return replace(base, **kw)
 
 
+def dtz_car(**kw) -> KissSpec:
+    """Siemens Desiro Double Deck intermediate car (RABe 514): doors at the lower-deck ends."""
+    return replace(KissSpec(style="dtz", lower_windows=6, upper_pitch=1.55, upper_width=1.15), **kw)
+
+
+def dtz_cab_car(**kw) -> KissSpec:
+    """Desiro Double Deck end car (RABe 514, REFERENCE.md "End car"): near-vertical red front,
+    motor bogie and pantograph over the cab section, upper deck from 7.6 m."""
+    base = dtz_car(
+        cab=True,
+        doors=((8.6, 10.1), (20.6, 22.1)),
+        bogies=(4.4, 22.4),
+        lower_windows=5,
+        upper_from=7.6,
+        mezz_windows=((22.8, 23.8),),
+        pantograph_raised=False,
+    )
+    return replace(base, **kw)
+
+
 def build_kiss_car(spec: KissSpec, lights: Lights) -> Model:
     turn_round = (spec.mu_role == "rear" and spec.cab) or spec.turned
     lights = mu_lights(spec.mu_role, lights)
@@ -199,18 +224,16 @@ def build_kiss_car(spec: KissSpec, lights: Lights) -> Model:
         x_rear,
         x_front,
         SECTION,
-        front=(K2_NOSE if spec.style == "kiss2" else NOSE) if spec.cab else FLAT_END,
+        front={"kiss": NOSE, "kiss2": K2_NOSE, "dtz": DTZ_NOSE}[spec.style] if spec.cab else FLAT_END,
         rear=FLAT_END,
         floor_at=floor_at,
         roof_at=roof_at,
     )
-    X, Y, Z = mdl.coords()
-    abs(Y - mdl.cy)
-    (x_front - X) / 10
-
     mdl.solid(shell.mask(mdl), WHITE)
     if spec.style == "kiss2":
         _paint_kiss2(mdl, spec, shell, at, door_x)
+    elif spec.style == "dtz":
+        _paint_dtz(mdl, spec, shell, at, door_x)
     else:
         _paint_kiss1(mdl, spec, at, door_x, x_rear, x_front)
 
@@ -222,8 +245,8 @@ def build_kiss_car(spec: KissSpec, lights: Lights) -> Model:
             shell,
             True,
             lights.state("front"),
-            low_z=(21, 24) if spec.style == "kiss2" else (20, 24),
-            top_z=(51, 53) if spec.style == "kiss2" else (50, 52),
+            low_z={"kiss": (20, 24), "kiss2": (21, 24), "dtz": (16, 19)}[spec.style],
+            top_z={"kiss": (50, 52), "kiss2": (51, 53), "dtz": (50, 52)}[spec.style],
             spacing=13,
             lamp_half_width=2,
             face=True,
@@ -234,6 +257,9 @@ def build_kiss_car(spec: KissSpec, lights: Lights) -> Model:
         pantograph(mdl, at(2.4), WELL_ROOF + 1, raised=spec.pantograph_raised, facing_front=False, raise_height=14)
         main_switch(mdl, at(3.6), WELL_ROOF + 1)
         roof_cable(mdl, at(4.0), at(1.0), WELL_ROOF + 1)
+    if spec.style == "dtz" and spec.cab:  # one pantograph on each end car, over the cab section
+        pantograph(mdl, at(5.2), ROOF, raised=spec.pantograph_raised, facing_front=False, raise_height=10)
+        main_switch(mdl, at(6.6), ROOF)
     for a in (8.0, 15.5) if not spec.cab else (14.0,):  # air-conditioning units
         roof_box(mdl, at(a + 1.4), at(a), 9, ROOF - 1, 2, P.MID_GREY)
 
@@ -351,3 +377,50 @@ def _paint_kiss2(mdl: Model, spec: KissSpec, shell: Shell, at, door_x) -> None:
     mdl.paint(side_band(mdl, lx - 9, lx, *K2_LOGO_Z), RED)
     mdl.paint(side_band(mdl, lx - 6, lx - 3, K2_LOGO_Z[0] + 1, K2_LOGO_Z[1] - 1), P.OFF_WHITE)
     mdl.paint(side_band(mdl, lx - 30, lx - 11, K2_LOGO_Z[0] + 1, K2_LOGO_Z[1] - 1), DARK)
+
+
+def _paint_dtz(mdl: Model, spec: KissSpec, shell: Shell, at, door_x) -> None:
+    """Desiro Double Deck in the S-Bahn Zürich scheme (RABe 514): white body, dark CC2 skirt and
+    waist line as the RABe 511, red (CC1) front with a red arc sweeping onto the sides, red door
+    leaves, yellow panels over the 1st-class doors, grey roof."""
+    X, Y, Z = mdl.coords()
+    dy = abs(Y - mdl.cy)
+    u = (shell.x_front - X) / 10
+
+    mdl.paint(Z < SKIRT_TOP, ACCENT)
+    mdl.paint(Z >= GREY_FROM, ROOF_GREY)
+    mdl.paint(side_band(mdl, shell.x_rear + 3, shell.x_front - (60 if spec.cab else 3), *WAIST), ACCENT)
+
+    if spec.cab:
+        # red front and side arc: red in front of a curve from 1.7 m at the sill to 3.3 m at the roof
+        arc = 1.7 + 1.6 * np.clip((Z - 8) / (ROOF - 8), 0, 1) ** 0.6
+        mdl.paint((arc > u) & (Z >= 8) & (Z < GREY_FROM), RED)
+        mdl.paint((arc > u) & (arc - 0.5 <= u) & (Z >= GREY_FROM), RED)  # arc over the roof edge
+        face = face_mask(mdl, True, depth=3) & (u < 2.0)
+        mdl.paint(face & (Z >= 30) & (Z < 48) & (dy <= 16), BLACK)  # windscreen
+        mdl.inset(face & (Z >= 32) & (Z < 46) & (dy <= 15), P.GLASS)
+        mdl.paint(face & (Z >= 44) & (Z < 46) & (dy <= 8), DISPLAY)
+        mdl.paint(face & (Z < 8), BLACK)  # coupler area
+        mdl.paint(face & (Z >= GREY_FROM) & (dy <= 12), DARK)  # roof grille
+        # cab side window behind the arc
+        cab_win = side_band(mdl, at(4.6), at(3.4), 31, 43)
+        mdl.paint(cab_win, BLACK)
+        mdl.inset(side_band(mdl, at(4.5), at(3.5), 32, 42), P.GLASS)
+        door_outline(mdl, at(6.4), at(5.2), 12, 38, P.MID_GREY)  # equipment door
+
+    for x0, x1 in door_x:
+        if spec.first_class:  # yellow panel round the upper-deck window over the door
+            mdl.paint(side_band(mdl, x0, x1, DTZ_DOOR_Z[1] + 4, GREY_FROM - 1), FIRST_YELLOW)
+        mdl.paint(side_band(mdl, x0, x1, *DTZ_DOOR_Z), RED)
+        door_outline(mdl, x0, x1, *DTZ_DOOR_Z, RED_DARK, lintel=0)
+        c = (x0 + x1) / 2
+        for a, b in ((x0 + 2, c - 1), (c + 1, x1 - 2)):
+            mdl.inset(side_band(mdl, a, b, 15, 28), P.GLASS)
+
+    deck_windows(mdl, spec, at, door_x, DTZ_LOWER_WIN, DTZ_UPPER_WIN, MEZZ_WIN)
+
+    if spec.cab:  # SBB logo and lettering just above the waist line, behind the first door
+        lx = door_x[0][0] - 2
+        mdl.paint(side_band(mdl, lx - 9, lx, WAIST[1], WAIST[1] + 3), RED)
+        mdl.paint(side_band(mdl, lx - 6, lx - 3, WAIST[1] + 1, WAIST[1] + 2), P.OFF_WHITE)
+        mdl.paint(side_band(mdl, lx - 30, lx - 11, WAIST[1] + 1, WAIST[1] + 2), DARK)

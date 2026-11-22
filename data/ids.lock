@@ -46,6 +46,15 @@ rabe523:
 rabe523_mouette:
   grf_id: 114
   liveries: [sbb, company]
+rabe503:
+  grf_id: 115
+  liveries: [sbb, company]
+rabde500:
+  grf_id: 116
+  liveries: [sbb, company]
+rabe514:
+  grf_id: 117
+  liveries: [zvv, company]
 ge44iii:
   grf_id: 200
   liveries: [rhb, company]
