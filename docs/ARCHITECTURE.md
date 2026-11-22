@@ -92,3 +92,4 @@ src/puenktlich/
 6. ~~Metre gauge~~: done (companion track GRF with crossings, bridges, tunnels, depots, GUI icons and rack railtypes; RhB Ge 4/4 III). ~~Rack vehicles~~ (HGe 4/4 II) and ~~PostAuto buses~~ (road manifest): done. Open: metre-gauge catenary masts, light variants for buses.
 7. Blender → voxeliser path for complex noses (Giruno, FLIRT).
 8. GRF size: about 0.4–0.5 MB per car body (all zooms). With hundreds of vehicles, consider a split "HD" GRF for the 4× sprites.
+9. Known visual defect, open: an unlit top headlamp shows as a two-pixel pinkish speck when a cab is in the middle of a train (e.g. the NPZ rear cab with more vehicles behind it). Unlit lamps use the dark-glass colour (`lights.LAMP_OFF`), which catches light on the roof edge. Fix: paint the unlit *top* lamp in `P.DARK` in `lights.lamp_cluster`; every vehicle with a cab then needs re-rendering.
