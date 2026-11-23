@@ -152,24 +152,17 @@ def widen_y(
 
 
 # --- road vehicles ---------------------------------------------------------------------------
-# aBase's buses are ~1.6x wider (end-on) and ~1.3x taller than a bus on Timberwolf's road
-# canvas (widening alone adds some height in the 30° view); road models are widened and
-# raised as a whole (no rails to keep a gauge for).
+# Road models are rescaled across as a whole (no rails to keep a gauge for) to their real width,
+# like train bodies, and keep their height. The render canvas stays 126 x 60 x 64 (it once held
+# buses widened 1.5x and raised 1.15x), so the sprite offsets don't change.
 ROAD_RENDER = (126, 60, 64)
-ROAD_WIDEN, ROAD_RAISE = 1.5, 1.15
 
 
-def stretch_z(grid: VoxelGrid, factor: float, new_z: int) -> VoxelGrid:
-    """Stretch upwards from z = 0 (the ground) by `factor` onto `new_z` levels (nearest)."""
-    d = grid.data
-    src = np.floor(np.arange(new_z) / factor).astype(int)
-    ok = src < d.shape[2]
-    out = d[:, :, np.clip(src, 0, d.shape[2] - 1)] * ok[None, None, :]
-    return VoxelGrid(np.ascontiguousarray(out.astype(np.uint8)))
-
-
-def for_road_render(grid: VoxelGrid) -> VoxelGrid:
-    """Road authoring grid (126x40x48) -> render grid (126x60x64)."""
-    split = np.zeros(grid.data.shape[0], dtype=int)  # widen every row
-    wide = widen_y(grid, split, render_width=ROAD_RENDER[1], factor=ROAD_WIDEN)
-    return stretch_z(wide, ROAD_RAISE, ROAD_RENDER[2])
+def for_road_render(grid: VoxelGrid, factor: float = 1.0, counts: np.ndarray | None = None) -> VoxelGrid:
+    """Road authoring grid (126x40x48) -> render grid (126x60x64): every row scaled across by
+    `factor` and centred, then padded upwards to the render height (z = 0 stays the road)."""
+    split = np.zeros(grid.data.shape[0], dtype=int)  # every row
+    d = widen_y(grid, split, render_width=ROAD_RENDER[1], factor=factor, counts=counts).data
+    out = np.zeros((*d.shape[:2], ROAD_RENDER[2]), dtype=np.uint8)
+    out[:, :, : d.shape[2]] = d[:, :, : ROAD_RENDER[2]]
+    return VoxelGrid(out)

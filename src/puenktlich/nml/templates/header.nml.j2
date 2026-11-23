@@ -14,12 +14,14 @@ cargotable {
 }
 
 {% endif -%}
+{%- if railtypes %}
 railtypetable {
 {%- for rt in railtypes %}
     {{ rt.label }}: [{{ ([rt.label] + rt.fallbacks) | map("tojson") | join(", ") }}],
 {%- endfor %}
 }
 
+{% endif -%}
 badgetable {
 {%- for b in badges %}
     {{ b.label | tojson }},

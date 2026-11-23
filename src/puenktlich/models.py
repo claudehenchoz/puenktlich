@@ -276,8 +276,9 @@ def _plan(vehicle_id: str, vehicle: CarSpec) -> VariantPlan:
             split = body_split(dark)
             dark = widen_y(dark, split, factor=factor, counts=counts)
             lit = widen_y(lit, split, factor=factor, counts=counts)
-        else:  # buses: wider and taller (aBase proportions)
-            dark, lit = for_road_render(dark), for_road_render(lit)
+        else:  # buses: rescaled as a whole to their real width (voxel/squash.py)
+            factor, counts = width_factor(recipe, dark), colour_counts(dark)
+            dark, lit = for_road_render(dark, factor, counts), for_road_render(lit, factor, counts)
         dd = _digest(dark)
         if dd not in body_by_digest:
             body_by_digest[dd] = f"{vehicle_id}_body{len(body_by_digest)}"

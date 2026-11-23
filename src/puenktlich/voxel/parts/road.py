@@ -2,8 +2,8 @@
 
 Same axes as trains: x along the vehicle (high x = front), y across (centre `model.cy`
 = 19.5), z up with z = 0 the road surface. 10 voxels per metre along x; width and height
-are exaggerated like the trains (docs/SCALE.md): a 2.55 m bus body is 34 voxels wide and
-the roof sits at z ≈ 40.
+are ~13.9 voxels per metre (docs/SCALE.md): a 2.55 m bus body is 34 voxels wide (rendered
+at its real 36), the roof sits at z ≈ 40 and the roof equipment reaches z 43 (3.1 m).
 
 Livery convention: body CC1 (PostAuto yellow), a thin CC2 line below the windows.
 Doors are on the right-hand side of the bus (`DOOR_SIDE`), as on Swiss roads.

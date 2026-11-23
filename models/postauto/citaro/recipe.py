@@ -1,7 +1,7 @@
 """PostAuto Mercedes-Benz Citaro — low-floor city/regional bus (solo 12 m and articulated G).
 
-Approximate prototype data (from memory, to be cross-checked): Citaro O 530 solo 12.0 m,
-2.55 m wide, about 3.1 m high, three double doors; Citaro G O 530 G 18.1 m with four doors.
+Prototype data: Citaro O 530 solo 12.0 m, 2.55 m wide, 3.095 m high (3.12–3.13 m with air
+conditioning; Mercedes-Benz "facts citaro" data sheet), three double doors; Citaro G O 530 G 18.1 m with four doors.
 PostAuto livery: yellow body (CC1), here with a thin red line (CC2) below the windows.
 
 One recipe builds every car via `params: {car: solo|front|rear}` on the road canvas:
@@ -14,6 +14,9 @@ from 12 m to 8/8, the Citaro G from 18.1 m to 6 + 4.
 
 from puenktlich.voxel.model import ROAD_CANVAS, Model
 from puenktlich.voxel.parts import road as R
+
+BODY_WIDTH_M = 2.55  # 2,550 mm (Mercedes-Benz data sheet, docs/SCALE.md)
+Z_PER_M = 13.9  # height 3,095 mm = roof equipment top z 43
 
 
 def build(car: str = "solo") -> Model:

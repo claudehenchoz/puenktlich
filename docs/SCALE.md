@@ -38,10 +38,12 @@ Canvas **126 × 40 × 48** voxels (`render/manifests/road.json`, copied from Tim
 Vehicles), not squashed. 10 voxels per metre along x. One 1/8 unit = 4 px = 14 voxels on this
 manifest (126 voxels → 36 px), so 8/8 = 11.2 m and OpenTTD road length = round(length_m / 1.4).
 Models are fitted to their length: the 12 m Citaro is modelled at 11.2 m (8/8), the 18 m Citaro G
-as 8.4 + 5.6 m (6 + 4), with the bellows inside each part. For rendering, road models are widened
-1.5× and raised 1.15× as a whole onto a 126 × 60 × 64 canvas (aBase's Leopard bus is ~1.6× wider
-and ~1.3× taller than a bus on Timberwolf's road canvas; widening alone already adds some height). Body 34 voxels wide (y 2..37, centre 19.5),
-floor at z ≈ 4 (low floor), roof at z ≈ 40, roof equipment up to z ≈ 44.
+as 8.4 + 5.6 m (6 + 4), with the bellows inside each part. Body 34 voxels wide (y 2..37, centre 19.5),
+floor at z ≈ 4 (low floor), roof at z ≈ 40, roof equipment up to z ≈ 43 (3.1 m, so ~13.9 voxels
+per metre in height). For rendering, road models are rescaled across as a whole to their real
+width, like trains (`BODY_WIDTH_M`, `Z_PER_M = 13.9`: the Citaro's 2.55 m → 36 voxels), and keep
+their height, on a 126 × 60 × 64 canvas (until 2026-11 they were widened 1.5× and raised 1.15×
+to match aBase's buses).
 
 ## Double-deck cars
 Shared double-deck layout (`voxel/parts/dosto.py`, used by the KISS family; the FV-Dosto in true proportions is `voxel/parts/fv_dosto.py`, heights in its REFERENCE.md):

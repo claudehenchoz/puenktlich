@@ -248,8 +248,11 @@ def new_vehicle(operator: str, vehicle_id: str, kind: str, name: str) -> list[Pa
     model_dir.mkdir(parents=True, exist_ok=True)
     doc = f'"""{name} — TODO: prototype summary. Facts and sources: REFERENCE.md in this directory."""\n\n'
     recipe = RECIPES[kind].format(length=length)
-    if kind != "bus":  # trains render at their real width (docs/SCALE.md)
-        recipe = _after_imports(recipe, "BODY_WIDTH_M = 2.8  # TODO: real body width in metres (docs/SCALE.md)")
+    # rendered at the real width (docs/SCALE.md); road parts are ~13.9 voxels per metre in height
+    width = "BODY_WIDTH_M = {}  # TODO: real body width in metres (docs/SCALE.md)"
+    if kind == "bus":
+        width = width.format(2.55) + "\nZ_PER_M = 13.9  # roof equipment z 43 = 3.1 m"
+    recipe = _after_imports(recipe, width.format(2.8) if kind != "bus" else width)
     (model_dir / "recipe.py").write_text(doc + recipe, encoding="utf-8")
     (model_dir / "REFERENCE.md").write_text(REFERENCE.format(name=name), encoding="utf-8")
     return files
