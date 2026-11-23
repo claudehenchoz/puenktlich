@@ -1,31 +1,37 @@
-"""SBB FV-Dosto (RABe 502 / RABDe 502, Twindexx Swiss Express): every car of the IR 100 and
-IC 200 sets. Measurements, photos and livery: REFERENCE.md in this directory.
+"""SBB FV-Dosto (RABe 502 / RABDe 502, Bombardier TWINDEXX Swiss Express): every car of the IR100
+and IC200 sets, in true proportions. Measurements (3D model + Bombardier factsheets), livery and
+car layouts: REFERENCE.md in this directory.
 
     build(lights, car=..., role=...)
-    car:  cab_first  end car with cab, 1st class (yellow door strips), pantograph
-          cab        end car with cab, 2nd class, pantograph
-          first      1st-class intermediate car (wider upper windows)
-          second     2nd-class intermediate car
-          dining     dining car (IC 200): red band around the upper windows
+    car:  cab_first      1st-class end car (IR100), passenger door behind the cab, pantograph
+          cab_first_lug  1st-class end car (IC200) with the luggage room's loading door
+          cab            2nd-class end car, pantograph
+          first          1st-class intermediate car (yellow door headers)
+          second         2nd-class intermediate car
+          dining         IC200 restaurant car (restaurant upstairs, red band)
     role: front | middle | rear (multiple-unit lamps; a rear cab car is turned round)
 
-End cars (26.3 m) are compressed to 25.6 m (8/8), and intermediates (≈24.7 m) stretched to it.
+Real lengths in their 8/8 slots: end cars 25.32 m, intermediates 24.28 m (bellows out to the
+slot ends). RENDER_WIDEN = False: the 2.80 m body keeps its true width when rendered.
 """
 
 from puenktlich.voxel.model import Model
-from puenktlich.voxel.parts.dosto import DostoSpec, build_dosto_car, end_car
+from puenktlich.voxel.parts.fv_dosto import FvSpec, build_fv_car, end_car
 from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
 
+RENDER_WIDEN = False  # true proportions (docs/SCALE.md)
+
 CARS = {
-    "cab_first": lambda: end_car(first_class=True, pantograph=True, lower_windows=3, lower_width=1.8),
+    "cab_first": lambda: end_car(first_class=True, pantograph=True),
+    "cab_first_lug": lambda: end_car(first_class=True, pantograph=True, luggage_door=True),
     "cab": lambda: end_car(pantograph=True),
-    "first": lambda: DostoSpec(first_class=True, lower_windows=5, lower_width=1.8, upper_pitch=2.4, upper_width=1.8),
-    "second": lambda: DostoSpec(),
-    "dining": lambda: DostoSpec(dining=True, lower_windows=4, lower_width=1.8, upper_pitch=2.2, upper_width=1.7),
+    "first": lambda: FvSpec(first_class=True),
+    "second": lambda: FvSpec(),
+    "dining": lambda: FvSpec(dining=True),
 }
 
 
 def build(lights: Lights = LIGHT_VARIANTS["solo"], car: str = "second", role: str = "middle") -> Model:
     spec = CARS[car]()
     spec.mu_role = role  # type: ignore[assignment]
-    return build_dosto_car(spec, lights)
+    return build_fv_car(spec, lights)

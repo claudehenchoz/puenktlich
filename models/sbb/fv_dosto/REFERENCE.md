@@ -1,78 +1,97 @@
-# SBB FV-Dosto (RABe 502 / RABDe 502, Twindexx Swiss Express): reference
+# SBB FV-Dosto (RABe 502 / RABDe 502, Bombardier TWINDEXX Swiss Express): reference
 
 SBB calls it the "LD double-decker". Built by Bombardier/Alstom, 62 units 2018–2022:
-IC 200 RABDe 502 001–023 (8 cars, dining car), IR 200 RABe 502 201–230 (8 cars),
-IR 100 RABe 502 401–409 (4 cars).
+IC 200 RABDe 502 001–023 (8 cars, restaurant), IR 200 RABe 502 201–230 (8 cars),
+IR 100 RABe 502 401–409 (4 cars). Modelled in **true proportions** (see "Scale" below).
 
-## Data (de.wikipedia "SBB RABe 502", retrieved 2026-11-21)
-| | IC 200 | IR 100 |
+## Data (Bombardier factsheets in docs/train-3d-models: RABe502-Factsheet-IR100.pdf, RABDe502-Factsheet-IC200.pdf)
+| | IR100 | IC200 |
 |---|---|---|
-| Length over couplers | 200,600 mm | 101,000 mm |
-| Width / height | 2,800 / 4,590 mm | same |
-| Bogie wheelbase | 2,500 mm | same |
+| Train length | 101,000 mm | 200,600 mm |
+| Cars | 4 | 8 |
+| Car width / height | 2,800 / 4,590 mm | same |
+| Entrance height above rail / passenger-room height | 600 / 2,000 mm | same |
+| Doors per side / clear width | 8 / 1,300 mm | 16 / 1,300 mm |
+| Seats (1st / 2nd / restaurant) | 330 (47 / 283) | 606 (176 / 401 / 29) |
+| Power / starting tractive effort | 3.75 MW / 241 kN | 7.5 MW / 482 kN |
+| Driven axles | 37.5 % | 37.5 % |
 | Max speed | 200 km/h | 200 km/h |
-| Short-term power | 7,500 kW | 3,750 kW |
-| Starting tractive effort | 482 kN | 241 kN |
-| Mass | 453 t empty | (≈ half) |
-| Seats | 606 (176 1st, 401 2nd, 29 dining) | 330 (47 1st, 283 2nd) |
-| Axle layout | 2'Bo'+2'Bo'+2'2'+2'2'+Bo'2'+Bo'2'+Bo'2'+Bo'2' | 2'Bo'+2'Bo'+2'2'+Bo'2' |
+| Wheel Ø new / worn | 920 / 840 mm | same |
+| Bogie | FLEXX Tronic WAKO (roll compensation) | same |
 
-Manufacturer factsheets (swissdosto.ch) were unreachable (TLS error), so the car layout
-below comes from the photos. The exact car-by-car class split is approximate.
+Car order from the factsheet diagrams. IR100: Endwagen 2. Klasse · Mittelwagen 2. Klasse mit
+Behindertenbereich · Mittelwagen 2. Klasse · Endwagen 1. Klasse. IC200: Endwagen 1. Klasse (with
+the luggage room and its separate loading door) · Mittelwagen 1. Klasse · Mittelwagen 1. Klasse ·
+Mittelwagen 2. Klasse mit Behindertenbereich (restaurant upstairs) · Mittelwagen 2. Klasse ×3 ·
+Endwagen 2. Klasse. de.wikipedia "SBB RABe 502" (bogie wheelbase 2,500 mm) agrees.
 
-## Photos used (Wikimedia Commons)
-| Ref | File | Author | Licence |
-|---|---|---|---|
-| ref00 | [20240701 SBB 502214 Tecknau.jpg](https://commons.wikimedia.org/wiki/File:20240701_SBB_502214_Tecknau.jpg) | Alex Noble | CC0 |
-| ref02 | [FFS RABe 502 203 Ostermundigen 041216 1.jpg](https://commons.wikimedia.org/wiki/File:FFS_RABe_502_203_Ostermundigen_041216_1.jpg) | NAC | CC BY-SA 4.0 |
-| ref03 | [FFS RABe 502 203 Ostermundigen 041216 2.jpg](https://commons.wikimedia.org/wiki/File:FFS_RABe_502_203_Ostermundigen_041216_2.jpg) | NAC | CC BY-SA 4.0 |
-| ref07 | [SBB RABDe 502 006 "Olten" in Zürich HB (2022).jpg](https://commons.wikimedia.org/wiki/File:SBB_RABDe_502_006_%22Olten%22_in_Z%C3%BCrich_HB_(2022).jpg) | JoachimKohler-HB | CC BY-SA 4.0 |
-| ref11 | [SBB RABe 502 203 Ossingen.jpg](https://commons.wikimedia.org/wiki/File:SBB_RABe_502_203_Ossingen.jpg) | Kabelleger / David Gubler | CC BY-SA 4.0 |
-| ref12 | [SBB RABe 502 405.jpg](https://commons.wikimedia.org/wiki/File:SBB_RABe_502_405.jpg) | Heitersberg | CC BY-SA 4.0 |
-| ref15 | [Twindexx-swiss-exp-geneve.jpg](https://commons.wikimedia.org/wiki/File:Twindexx-swiss-exp-geneve.jpg) | Remontees | CC BY-SA 4.0 |
+## 3D model (measurement source)
+`docs/train-3d-models/SBB RABDe 502 (TWINDEXX)/SBB TWINDEXX-IC Zurich (8)/*.glb`, a converted
+Cities: Skylines workshop asset (third party): used for measurements only, nothing copied.
+glTF units are metres (y up, z along the car). Measured by rasterizing the meshes orthographically
+with their textures (side, top, front, rear) at 40 px/m:
+- end car (mesh 0 "Cube.060", the other end car mesh 8 with the pantograph): 25.32 m long,
+  2.93 m over the mirrors, 4.60 m high; intermediate cars (meshes 4–7): 24.28 m.
+- The model's intermediate cars share one texture, so the class of each intermediate car comes
+  from the factsheet, not from the model.
 
-## Measurements
-Heights come from ref03 (side-on, intermediate end of car 502 203) with roof = 4.59 m. Lengths come from
-ref02 (side-on end car) with bogie wheelbase 2.5 m = 168 px. Voxels: z ≈ 12.2 per m (roof z 56),
-x 10 per m. The end car is about 26.3 m, compressed to 25.6 m (8/8) by ×0.973.
+## Measurements (z and y: 12.2 voxels per metre, roof 4.59 m = z 56; x: 10 voxels per metre)
+Cross-section (intermediate car, half-width by height): 1.19 m at 0.25 m, 1.40 m from 0.5 to
+3.25 m (vertical sides), 1.35 at 3.5, 1.30 at 3.75, 1.18 at 4.0, 0.93 at 4.25, 0.60 at 4.5, roof
+4.59 m. Modelled: half-width 17 (1.40 m), tumblehome 2 below z 7, roof radius 13 with a 1.5 voxel
+chamfer from z 40.
 
-| Feature | Height (m) | z |
+| Feature | m | z |
 |---|---|---|
-| Body bottom, lower-deck section | 0.23 | 3 |
-| Body bottom over bogies (intermediate level) | 0.92 | 12 |
-| Door bottom (platform level) / top | 0.48 / 3.10 | 6 / 38 |
-| Blue band at top of door | 2.82–3.10 | 34–38 |
-| Black lower band top (white above) | 1.43 | 17 |
-| Lower-deck windows (straddle the black/white line) | 1.18–2.10 | 14–26 |
-| Gutter / door-rail line | 3.15 | 38 |
-| Upper-deck windows | 3.47–4.21 | 42–51 |
-| Dark grey upper band (down from roof) | from 3.98 | 48 |
-| Roof (double-deck) / cab roof | 4.59 / 4.35 | 56 / 53 |
+| Lower-deck body bottom / intermediate levels over the bogies | 0.25 / 0.75 | 3 / 9 |
+| Black lower band (all cars) | 0.25–1.42 | 3–17 |
+| Lower-deck windows | 1.25–1.95 | 15–24 |
+| Thin black line | 3.25 | 39–40 |
+| Upper-deck windows | 3.30–3.92 | 40–48 |
+| Dark upper band and roof | from 3.95 | from 48 |
+| Door: red leaves / blue band / yellow header (1st class) | 0.45–2.65 / 2.65–2.80 / 2.90–3.00 | 6–32 / 32–34 / 35–37 |
+| SBB logo and lettering | 2.75–2.95 | 33–36 |
+| Cab section roof (end car, up to 7.6 m, double-deck roof from 8.0 m) | 4.15 | 51 |
 
-| End car feature (from nose tip) | m | Notes |
-|---|---|---|
-| Cab (nose to body joint) | 0–3.8 | raked, rounded nose, rake ≈ 3.7 m at the roof |
-| Cab side window | 2.0–3.4 | z 31–42, inside the black wedge |
-| Front bogie centre | 4.7 | |
-| Pantograph | 4.2–5.8 | on the cab roof |
-| Display window / equipment hatch | 4.8–5.7 / 5.9–6.9 | |
-| Red roof-edge stripe ends | 8.1 | |
-| First door (red, blue top) | 9.0–10.8 | low level, first upper window above it |
-| Doors per car side | 2 | one at each end of the lower deck, next to the intermediate level over each bogie |
+Intermediate car (24.28 m, metres from one end): doors 5.55–7.20 and 17.10–18.75; bogies 3.1 and
+21.0; upper windows 1.4 m wide every 2.0 m from 1.38 to 22.9 (1.0 m over a door); lower windows
+8.55–9.95, 10.55–11.95, 12.55–13.95, 14.9–15.7; small windows over the intermediate levels
+1.75–2.40 and 20.30–20.95; louvred equipment panels at both ends.
 
-| Intermediate car | m from end |
-|---|---|
-| Intermediate level over bogie | 0–3.6 (small window, gangway) |
-| Door | 3.6–5.4 (1.75 m wide) |
-| Lower-deck windows | 1.47 m wide, 2.0 m pitch |
-| Upper-deck windows | 1.38 m wide, 2.0 m pitch (1st class: wider) |
+End car (25.32 m, metres from the nose tip): door 1 7.2–8.8 (IC200 1st class: white loading door
+with a narrow window), door 2 18.1–19.8; bogies 5.2 and 22.5; upper windows 10.50–11.93,
+12.5–13.9, 14.5–15.9, 16.5–17.9, 18.55–19.55, 20.52–21.95, 22.52–23.93; lower windows 12.6–14.0,
+14.55–15.35, 15.95–16.75; pantograph on the cab section roof at ≈5 m.
 
-## Livery (colour map)
-- Body sides: white (CC2). Lower black band below 1.43 m. Dark grey band from 3.98 m up and dark grey roof.
-- Doors: red (CC1) with a blue top band. 1st class has a yellow strip above the door and a "1" on the blue band.
-- Window frames: black, rounded rectangles.
-- Nose (ref02, ref07):
-  - Top and flanks are red (CC1). A black diagonal wedge runs from the lower nose up to the roof line at about 6.4 m, with white behind it. The red roof-edge stripe runs to 8.1 m.
-  - Front face: a black roof cap, and a wide windscreen in a black frame with a destination display. Below it, a black panel with the round headlights at its upper corners and the SBB logo. A white U-band frames it, then a red apron and a black skirt.
-- Dining car (IC 200, ref15): red band around the upper-deck windows.
-- SBB logo: red box with the white cross on the upper side, next to the doors.
+## Nose
+Side profile (top of the silhouette, metres from the tip → height): 0.1 → 1.23, 0.25 → 1.58,
+0.5 → 2.01, 0.75 → 2.33, 1.0 → 2.63, 1.5 → 3.13, 2.0 → 3.66, 2.5 → 4.06, 3.0 → 4.13 (cab roof).
+Bottom: 0.73 at the tip, 0.5 at 0.5–1.0, 0.23 from 1.5. Plan half-width: 0.74 at 0.1, 0.85 at
+0.25, 0.98 at 0.5, 1.14 at 1.0, 1.26 at 1.5, 1.34 at 2.0, 1.38 from 2.5.
+Modelled: `EndShape(rake=32, rake_from=13, rake_curve=1.35, undercut=15, undercut_height=6,
+plan_depth=26, plan_power=5)` (rake and plan taper combined by max()).
+
+Livery boundaries on the side (metres from the tip → height), used as interpolation tables in
+`parts/fv_dosto.py`: lower edge of the red mask 0.95 (tip), 1.35 (1.0), 2.0 (1.5), 2.55 (2.0),
+2.95 (2.5), 3.25 (3.0), 3.65 (4.0), 3.85 (5.0), 3.95 (5.5–5.9), then as the red roof-edge band
+3.65 (6.0) rising to the roof at 7.0–7.4; lower edge of the black wedge 1.45 (1.5), 1.75 (2.0),
+2.1 (2.5), 2.15 (3.0), 2.45 (3.5), 2.75 (4.0), 3.05 (4.5), 3.25 (5.0), 3.45 (5.5), 3.6 (5.9),
+white below it; below 1.5 m from the tip the nose is black up to the red mask. The red mask
+covers the nose top to ≈3.8 m, then runs on along both roof edges.
+
+Front face (half-width by height): dark roof cap above 4.25 m; black windscreen panel ±1.0 m
+from 2.3 to 4.15 m, glass ±0.85 m 2.35–3.65 m; grey-blue U outline at ±0.95–1.05 m from 1.15 m
+up to ≈2.95 m, round a black lower panel 1.2–2.25 m; red outside the outline and as a chin
+0.85–1.05 m; black bumper below 0.85 m.
+
+## Scale (true proportions)
+The body is authored 34 voxels wide (2.80 m at the same 12.2 voxels per metre as the height)
+and the recipe sets `RENDER_WIDEN = False`, so the render step keeps that width instead of
+the 1.5× aBase widening used by the other trains (docs/SCALE.md). Width:height = 0.61, as on the
+real train. Cars keep their real lengths in their 8/8 slots; the intermediates' gangway bellows
+reach out to the slot ends so coupled cars meet.
+
+## Approximations
+- Pantograph positions (one on each end car's cab section, the rear one raised) and the restaurant
+  car's red window band are from photos, not the 3D model.
+- Lamps, the SBB logo on the front and the door window are simplified.

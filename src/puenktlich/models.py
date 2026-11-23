@@ -236,10 +236,12 @@ def _cargo_plan(car: CarSpec, recipe) -> VariantPlan:
 
 
 def _plan(vehicle_id: str, vehicle: CarSpec) -> VariantPlan:
+    widen = True
     if vehicle.model.kind == "recipe":
         recipe = load_recipe(model_dir(vehicle) / "recipe.py")
         if hasattr(recipe, "CARGO"):
             return _cargo_plan(vehicle, recipe)
+        widen = bool(getattr(recipe, "RENDER_WIDEN", True))
     bodies: dict[str, VoxelGrid] = {}
     body_by_digest: dict[str, str] = {}
     overlays: dict[str, tuple[str, VoxelGrid]] = {}
@@ -251,7 +253,9 @@ def _plan(vehicle_id: str, vehicle: CarSpec) -> VariantPlan:
         if not vehicle.road:  # trains: half length, widened body (voxel/squash.py, docs/SCALE.md)
             counts = colour_counts(dark)
             dark, lit = squash_x(dark, counts), squash_x(lit, counts)
-            split = body_split(dark)  # same widening for lit and dark: overlays stay lamp diffs
+            # same widening for lit and dark: overlays stay lamp diffs. RENDER_WIDEN = False:
+            # no row counts as body, so the model is only re-centred onto the render canvas
+            split = body_split(dark) if widen else np.full(dark.data.shape[0], dark.data.shape[2])
             dark, lit = widen_y(dark, split), widen_y(lit, split)
         else:  # buses: wider and taller (aBase proportions)
             dark, lit = for_road_render(dark), for_road_render(lit)

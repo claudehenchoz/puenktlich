@@ -80,6 +80,10 @@ class EndShape:
     # "power": rake * t**rake_curve; "ellipse": a quarter ellipse (vertical at rake_from,
     # flat at the roof), the bulbous noses of modern multiple units
     profile: str = "power"
+    # plan taper of pointed noses (FV-Dosto): setback plan_depth * (dy / half_width)**plan_power,
+    # combined with the windscreen rake by max() (the nose recedes either way); 0 = off
+    plan_depth: float = 0
+    plan_power: float = 5
 
     def setback(self, Z: np.ndarray, dy: np.ndarray, cs: CrossSection) -> np.ndarray:
         span = max(1.0, cs.roof - self.rake_from)
@@ -88,6 +92,8 @@ class EndShape:
             sb = self.rake * (1 - np.sqrt(np.maximum(1 - t * t, 0)))
         else:
             sb = self.rake * t**self.rake_curve
+        if self.plan_depth > 0:
+            sb = np.maximum(sb, self.plan_depth * np.clip(dy / cs.half_width, 0, 1) ** self.plan_power)
         rc = self.corner_radius
         if rc > 0:
             edge = np.clip(dy - (cs.half_width - rc), 0, rc)

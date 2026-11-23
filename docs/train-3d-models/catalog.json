@@ -1,0 +1,1182 @@
+{
+ "results": [
+  {
+   "source": "downloaded\\1043207438\\ETR6101st_Prop.crp",
+   "package": "1043207438",
+   "format_version": 5,
+   "assets": [
+    {
+     "name": "ETR6101st_Prop",
+     "type": "Prop",
+     "folder": "converted\\SBB ETR 610 (RABe 503)\\ETR6101st_Prop",
+     "vehicles": 1,
+     "triangles": 2668,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB ETR 610 (RABe 503)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1043207438"
+  },
+  {
+   "source": "downloaded\\1043207438\\ETR6102nd_Prop.crp",
+   "package": "1043207438",
+   "format_version": 5,
+   "assets": [
+    {
+     "name": "ETR6102nd_Prop",
+     "type": "Prop",
+     "folder": "converted\\SBB ETR 610 (RABe 503)\\ETR6102nd_Prop",
+     "vehicles": 1,
+     "triangles": 4374,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB ETR 610 (RABe 503)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1043207438"
+  },
+  {
+   "source": "downloaded\\1043207438\\ETR610Eng_Prop.crp",
+   "package": "1043207438",
+   "format_version": 5,
+   "assets": [
+    {
+     "name": "ETR610Eng_Prop",
+     "type": "Prop",
+     "folder": "converted\\SBB ETR 610 (RABe 503)\\ETR610Eng_Prop",
+     "vehicles": 1,
+     "triangles": 5120,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB ETR 610 (RABe 503)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1043207438"
+  },
+  {
+   "source": "downloaded\\1043207438\\ETR610resto_Prop.crp",
+   "package": "1043207438",
+   "format_version": 5,
+   "assets": [
+    {
+     "name": "ETR610resto_Prop",
+     "type": "Prop",
+     "folder": "converted\\SBB ETR 610 (RABe 503)\\ETR610resto_Prop",
+     "vehicles": 1,
+     "triangles": 3504,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB ETR 610 (RABe 503)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1043207438"
+  },
+  {
+   "source": "downloaded\\1123530001\\Prop SBB Re 420 cargo.crp",
+   "package": "1123530001",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "Prop SBB Re 420 cargo",
+     "type": "Prop",
+     "folder": "converted\\SBB Re 420\\Prop SBB Re 420 cargo",
+     "vehicles": 1,
+     "triangles": 10113,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB Re 420"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1123530001"
+  },
+  {
+   "source": "downloaded\\1123530001\\Prop SBB Re 420.crp",
+   "package": "1123530001",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "Prop SBB Re 420",
+     "type": "Prop",
+     "folder": "converted\\SBB Re 420\\Prop SBB Re 420",
+     "vehicles": 1,
+     "triangles": 10593,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB Re 420"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1123530001"
+  },
+  {
+   "source": "downloaded\\1266709083\\Prop SBB Re 460.crp",
+   "package": "1266709083",
+   "format_version": 6,
+   "assets": [
+    {
+     "name": "Prop SBB Re 460",
+     "type": "Prop",
+     "folder": "converted\\SBB Re 460\\Prop SBB Re 460",
+     "vehicles": 1,
+     "triangles": 3618,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB Re 460"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1266709083"
+  },
+  {
+   "source": "downloaded\\1329986744\\Prop SBB IC2000A.crp",
+   "package": "1329986744",
+   "format_version": 6,
+   "assets": [
+    {
+     "name": "Prop SBB IC2000A",
+     "type": "Prop",
+     "folder": "converted\\SBB IC2000 coaches\\Prop SBB IC2000A",
+     "vehicles": 1,
+     "triangles": 1956,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB IC2000 coaches"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1329986744"
+  },
+  {
+   "source": "downloaded\\1329986744\\Prop SBB IC2000AD.crp",
+   "package": "1329986744",
+   "format_version": 6,
+   "assets": [
+    {
+     "name": "Prop SBB IC2000AD",
+     "type": "Prop",
+     "folder": "converted\\SBB IC2000 coaches\\Prop SBB IC2000AD",
+     "vehicles": 1,
+     "triangles": 2162,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB IC2000 coaches"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1329986744"
+  },
+  {
+   "source": "downloaded\\1329986744\\Prop SBB IC2000B.crp",
+   "package": "1329986744",
+   "format_version": 6,
+   "assets": [
+    {
+     "name": "Prop SBB IC2000B",
+     "type": "Prop",
+     "folder": "converted\\SBB IC2000 coaches\\Prop SBB IC2000B",
+     "vehicles": 1,
+     "triangles": 1956,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB IC2000 coaches"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1329986744"
+  },
+  {
+   "source": "downloaded\\1329986744\\Prop SBB IC2000Bt.crp",
+   "package": "1329986744",
+   "format_version": 6,
+   "assets": [
+    {
+     "name": "Prop SBB IC2000Bt",
+     "type": "Prop",
+     "folder": "converted\\SBB IC2000 coaches\\Prop SBB IC2000Bt",
+     "vehicles": 1,
+     "triangles": 3068,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB IC2000 coaches"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1329986744"
+  },
+  {
+   "source": "downloaded\\1329986744\\Prop SBB IC2000WRB.crp",
+   "package": "1329986744",
+   "format_version": 6,
+   "assets": [
+    {
+     "name": "Prop SBB IC2000WRB",
+     "type": "Prop",
+     "folder": "converted\\SBB IC2000 coaches\\Prop SBB IC2000WRB",
+     "vehicles": 1,
+     "triangles": 1956,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB IC2000 coaches"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1329986744"
+  },
+  {
+   "source": "downloaded\\1339996216\\SBB RABe 511.crp",
+   "package": "1339996216",
+   "format_version": 6,
+   "assets": [
+    {
+     "name": "SBB RABe 511",
+     "type": "Vehicle",
+     "folder": "converted\\SBB RABe 511 (KISS)\\SBB RABe 511",
+     "vehicles": 4,
+     "triangles": 11562,
+     "materials": 7,
+     "reversed_variants": 0,
+     "train": "SBB RABe 511 (KISS)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1339996216"
+  },
+  {
+   "source": "downloaded\\1376559539\\Prop SBB RABe 511AB.crp",
+   "package": "1376559539",
+   "format_version": 6,
+   "assets": [
+    {
+     "name": "Prop SBB RABe 511AB",
+     "type": "Prop",
+     "folder": "converted\\SBB RABe 511 (KISS)\\Prop SBB RABe 511AB",
+     "vehicles": 1,
+     "triangles": 1742,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABe 511 (KISS)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1376559539"
+  },
+  {
+   "source": "downloaded\\1376559539\\Prop SBB RABe 511B.crp",
+   "package": "1376559539",
+   "format_version": 6,
+   "assets": [
+    {
+     "name": "Prop SBB RABe 511B",
+     "type": "Prop",
+     "folder": "converted\\SBB RABe 511 (KISS)\\Prop SBB RABe 511B",
+     "vehicles": 1,
+     "triangles": 1742,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABe 511 (KISS)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1376559539"
+  },
+  {
+   "source": "downloaded\\1376559539\\Prop SBB RABe 511Bt.crp",
+   "package": "1376559539",
+   "format_version": 6,
+   "assets": [
+    {
+     "name": "Prop SBB RABe 511Bt",
+     "type": "Prop",
+     "folder": "converted\\SBB RABe 511 (KISS)\\Prop SBB RABe 511Bt",
+     "vehicles": 1,
+     "triangles": 4039,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABe 511 (KISS)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1376559539"
+  },
+  {
+   "source": "downloaded\\1376559539\\Prop SBB RABe 511Bt2.crp",
+   "package": "1376559539",
+   "format_version": 6,
+   "assets": [
+    {
+     "name": "Prop SBB RABe 511Bt2",
+     "type": "Prop",
+     "folder": "converted\\SBB RABe 511 (KISS)\\Prop SBB RABe 511Bt2",
+     "vehicles": 1,
+     "triangles": 4039,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABe 511 (KISS)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1376559539"
+  },
+  {
+   "source": "downloaded\\1425072288\\Re474.crp",
+   "package": "1425072288",
+   "format_version": 6,
+   "assets": [
+    {
+     "name": "SBB Re 474",
+     "type": "Vehicle",
+     "folder": "converted\\SBB Re 474\\SBB Re 474",
+     "vehicles": 9,
+     "triangles": 37624,
+     "materials": 4,
+     "reversed_variants": 0,
+     "train": "SBB Re 474"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1425072288"
+  },
+  {
+   "source": "downloaded\\1607716962\\SBB RABe 511 (4_4 Cars).crp",
+   "package": "1607716962",
+   "format_version": 6,
+   "assets": [
+    {
+     "name": "SBB RABe 511 (4+4 Cars)",
+     "type": "Vehicle",
+     "folder": "converted\\SBB RABe 511 (KISS)\\SBB RABe 511 (4+4 Cars)",
+     "vehicles": 8,
+     "triangles": 23124,
+     "materials": 7,
+     "reversed_variants": 0,
+     "train": "SBB RABe 511 (KISS)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1607716962"
+  },
+  {
+   "source": "downloaded\\1611677189\\flirt-sbb04.crp",
+   "package": "1611677189",
+   "format_version": 6,
+   "assets": [
+    {
+     "name": "FLIRT SBB (4)",
+     "type": "Vehicle",
+     "folder": "converted\\SBB FLIRT (class not stated)\\FLIRT SBB (4)",
+     "vehicles": 7,
+     "triangles": 11666,
+     "materials": 7,
+     "reversed_variants": 0,
+     "train": "SBB FLIRT (class not stated)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1611677189"
+  },
+  {
+   "source": "downloaded\\1836246250\\sbb21-p.crp",
+   "package": "1836246250",
+   "format_version": 6,
+   "assets": [
+    {
+     "name": "sbb21-p",
+     "type": "Prop",
+     "folder": "converted\\SBB EW IV coaches\\sbb21-p",
+     "vehicles": 1,
+     "triangles": 4588,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB EW IV coaches"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1836246250"
+  },
+  {
+   "source": "downloaded\\1836246250\\sbb22-p.crp",
+   "package": "1836246250",
+   "format_version": 6,
+   "assets": [
+    {
+     "name": "sbb22-p",
+     "type": "Prop",
+     "folder": "converted\\SBB EW IV coaches\\sbb22-p",
+     "vehicles": 1,
+     "triangles": 4576,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB EW IV coaches"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1836246250"
+  },
+  {
+   "source": "downloaded\\1836246250\\sbb23-p.crp",
+   "package": "1836246250",
+   "format_version": 6,
+   "assets": [
+    {
+     "name": "sbb23-p",
+     "type": "Prop",
+     "folder": "converted\\SBB EW IV coaches\\sbb23-p",
+     "vehicles": 1,
+     "triangles": 5329,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB EW IV coaches"
+    }
+   ],
+   "log": [],
+   "workshop_id": "1836246250"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-01-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-01-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-01-p",
+     "vehicles": 1,
+     "triangles": 20765,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-02-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-02-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-02-p",
+     "vehicles": 1,
+     "triangles": 25407,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-03-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-03-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-03-p",
+     "vehicles": 1,
+     "triangles": 21163,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-04-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-04-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-04-p",
+     "vehicles": 1,
+     "triangles": 25679,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-05-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-05-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-05-p",
+     "vehicles": 1,
+     "triangles": 20776,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-06-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-06-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-06-p",
+     "vehicles": 1,
+     "triangles": 25418,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-07-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-07-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-07-p",
+     "vehicles": 1,
+     "triangles": 21174,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-08-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-08-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-08-p",
+     "vehicles": 1,
+     "triangles": 25690,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-09-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-09-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-09-p",
+     "vehicles": 1,
+     "triangles": 20764,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-10-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-10-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-10-p",
+     "vehicles": 1,
+     "triangles": 25406,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-11-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-11-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-11-p",
+     "vehicles": 1,
+     "triangles": 21162,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-12-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-12-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-12-p",
+     "vehicles": 1,
+     "triangles": 25678,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-13-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-13-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-13-p",
+     "vehicles": 1,
+     "triangles": 20760,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-14-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-14-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-14-p",
+     "vehicles": 1,
+     "triangles": 25402,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-15-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-15-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-15-p",
+     "vehicles": 1,
+     "triangles": 21158,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-16-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-16-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-16-p",
+     "vehicles": 1,
+     "triangles": 25674,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-17-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-17-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-17-p",
+     "vehicles": 1,
+     "triangles": 20934,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-18-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-18-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-18-p",
+     "vehicles": 1,
+     "triangles": 20934,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-19-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-19-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-19-p",
+     "vehicles": 1,
+     "triangles": 20936,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-20-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-20-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-20-p",
+     "vehicles": 1,
+     "triangles": 20936,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-21-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-21-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-21-p",
+     "vehicles": 1,
+     "triangles": 20928,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-22-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-22-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-22-p",
+     "vehicles": 1,
+     "triangles": 20928,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-23-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-23-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-23-p",
+     "vehicles": 1,
+     "triangles": 20941,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-24-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-24-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-24-p",
+     "vehicles": 1,
+     "triangles": 20941,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-25-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-25-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-25-p",
+     "vehicles": 1,
+     "triangles": 11030,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-26-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-26-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-26-p",
+     "vehicles": 1,
+     "triangles": 11045,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-27-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-27-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-27-p",
+     "vehicles": 1,
+     "triangles": 11048,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-28-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-28-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-28-p",
+     "vehicles": 1,
+     "triangles": 11052,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\2684007317\\rabde502-twindexx-29-p.crp",
+   "package": "2684007317",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "rabde502-twindexx-29-p",
+     "type": "Prop",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\rabde502-twindexx-29-p",
+     "vehicles": 1,
+     "triangles": 220,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "2684007317"
+  },
+  {
+   "source": "downloaded\\3059127104\\SBB RABe 514 DTZ 1.crp",
+   "package": "3059127104",
+   "format_version": 10,
+   "assets": [
+    {
+     "name": "SBB RABe 514 DTZ 1",
+     "type": "Building",
+     "folder": "converted\\SBB RABe 514 (DTZ)\\SBB RABe 514 DTZ 1",
+     "vehicles": 1,
+     "triangles": 24482,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABe 514 (DTZ)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "3059127104"
+  },
+  {
+   "source": "downloaded\\3059127104\\SBB RABe 514 DTZ 2.crp",
+   "package": "3059127104",
+   "format_version": 10,
+   "assets": [
+    {
+     "name": "SBB RABe 514 DTZ 2",
+     "type": "Building",
+     "folder": "converted\\SBB RABe 514 (DTZ)\\SBB RABe 514 DTZ 2",
+     "vehicles": 1,
+     "triangles": 16118,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABe 514 (DTZ)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "3059127104"
+  },
+  {
+   "source": "downloaded\\3059127104\\SBB RABe 514 DTZ 3.crp",
+   "package": "3059127104",
+   "format_version": 10,
+   "assets": [
+    {
+     "name": "SBB RABe 514 DTZ 3",
+     "type": "Building",
+     "folder": "converted\\SBB RABe 514 (DTZ)\\SBB RABe 514 DTZ 3",
+     "vehicles": 1,
+     "triangles": 16110,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABe 514 (DTZ)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "3059127104"
+  },
+  {
+   "source": "downloaded\\3059127104\\SBB RABe 514 DTZ 4.crp",
+   "package": "3059127104",
+   "format_version": 10,
+   "assets": [
+    {
+     "name": "SBB RABe 514 DTZ 4",
+     "type": "Building",
+     "folder": "converted\\SBB RABe 514 (DTZ)\\SBB RABe 514 DTZ 4",
+     "vehicles": 1,
+     "triangles": 24470,
+     "materials": 2,
+     "reversed_variants": 0,
+     "train": "SBB RABe 514 (DTZ)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "3059127104"
+  },
+  {
+   "source": "downloaded\\3059127698\\SBB RABe 514 DTZ 8-car.crp",
+   "package": "3059127698",
+   "format_version": 10,
+   "assets": [
+    {
+     "name": "SBB RABe 514 DTZ 8-car",
+     "type": "Vehicle",
+     "folder": "converted\\SBB RABe 514 (DTZ)\\SBB RABe 514 DTZ 8-car",
+     "vehicles": 8,
+     "triangles": 162816,
+     "materials": 6,
+     "reversed_variants": 8,
+     "train": "SBB RABe 514 (DTZ)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "3059127698"
+  },
+  {
+   "source": "downloaded\\3059127698\\SBB RABe 514 DTZ.crp",
+   "package": "3059127698",
+   "format_version": 10,
+   "assets": [
+    {
+     "name": "SBB RABe 514 DTZ",
+     "type": "Vehicle",
+     "folder": "converted\\SBB RABe 514 (DTZ)\\SBB RABe 514 DTZ",
+     "vehicles": 4,
+     "triangles": 81362,
+     "materials": 7,
+     "reversed_variants": 4,
+     "train": "SBB RABe 514 (DTZ)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "3059127698"
+  },
+  {
+   "source": "downloaded\\3375281750\\SBB Re 460 IC (Mixed 9_4 Cars).crp",
+   "package": "3375281750",
+   "format_version": 10,
+   "assets": [
+    {
+     "name": "SBB Re 460 IC (Mixed 9+4 Cars)",
+     "type": "Vehicle",
+     "folder": "converted\\SBB Re 460\\SBB Re 460 IC (Mixed 9+4 Cars)",
+     "vehicles": 15,
+     "triangles": 62408,
+     "materials": 26,
+     "reversed_variants": 4,
+     "train": "SBB Re 460"
+    }
+   ],
+   "log": [],
+   "workshop_id": "3375281750"
+  },
+  {
+   "source": "downloaded\\492618605\\FLIRT (SBB RABe523).crp",
+   "package": "492618605",
+   "format_version": 4,
+   "assets": [
+    {
+     "name": "FLIRT (SBB RABe523)",
+     "type": "Vehicle",
+     "folder": "converted\\SBB RABe 523 (FLIRT)\\FLIRT (SBB RABe523)",
+     "vehicles": 4,
+     "triangles": 7576,
+     "materials": 6,
+     "reversed_variants": 0,
+     "train": "SBB RABe 523 (FLIRT)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "492618605"
+  },
+  {
+   "source": "downloaded\\500655948\\TRAXX Cargo (SBB Re482).crp",
+   "package": "500655948",
+   "format_version": 4,
+   "assets": [
+    {
+     "name": "TRAXX Cargo (SBB Re482)",
+     "type": "Vehicle",
+     "folder": "converted\\SBB Re 482 (TRAXX)\\TRAXX Cargo (SBB Re482)",
+     "vehicles": 10,
+     "triangles": 13310,
+     "materials": 14,
+     "reversed_variants": 0,
+     "train": "SBB Re 482 (TRAXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": "500655948"
+  },
+  {
+   "source": "rabe502-rabde502/rabde502-zurich-08.crp",
+   "package": "2649673228",
+   "format_version": 7,
+   "assets": [
+    {
+     "name": "SBB TWINDEXX-IC Zurich (8)",
+     "type": "Vehicle",
+     "folder": "converted\\SBB RABDe 502 (TWINDEXX)\\SBB TWINDEXX-IC Zurich (8)",
+     "vehicles": 15,
+     "triangles": 110135,
+     "materials": 17,
+     "reversed_variants": 4,
+     "train": "SBB RABDe 502 (TWINDEXX)"
+    }
+   ],
+   "log": [],
+   "workshop_id": ""
+  }
+ ]
+}

@@ -42,7 +42,7 @@ Pick the builder and describe the vehicle as a spec. Don't copy geometry between
 |---|---|---|
 | Locomotive with two cabs | `parts.loco.build_loco(LocoSpec(...))` | `models/sbb/re460` |
 | Coach, control car, single-deck multiple unit | `parts.coach.build_coach(CoachSpec(...))`, `CabSpec` for a cab, `mu_role` for unit cars | `models/sbb/ew4_bt`, `models/sbb/npz` |
-| Double-deck multiple unit | `parts.dosto.build_dosto_car(DostoSpec(...))` | `models/sbb/fv_dosto` |
+| Double-deck multiple unit | `parts.kiss.build_kiss_car(KissSpec(...))` (styles kiss, kiss2, dtz, ic2000 on the shared `parts/dosto.py` layout); FV-Dosto in true proportions: `parts.fv_dosto.build_fv_car(FvSpec(...))` | `models/sbb/rabe511`, `models/sbb/fv_dosto` |
 | Articulated unit on Jakobs bogies | `parts.smile.build_smile_car(SmileSpec(...))` | `models/sbb/giruno` |
 | Panorama coach | `parts.panorama.build_panorama_car(PanoramaSpec(...))` | `models/mgb/glacier` |
 | Freight wagon | parts + `CARGO = CargoSpec(...)` | `models/sbb/eanos`, `models/sbb/sgns` |

@@ -231,18 +231,40 @@ def test_rendered_length_fits_ottd_length() -> None:
                 )
 
 
-def test_double_deck_floor_profile() -> None:
-    """FV-Dosto: lower deck reaches down to z 3 between the bogies, the intermediate levels
-    over the bogies start at z 12, and the double-deck roof is at z 56 (REFERENCE.md)."""
-    from puenktlich.voxel.parts.dosto import HIGH_FLOOR, LOW_FLOOR, ROOF, DostoSpec, build_dosto_car
+def test_fv_dosto_true_proportions() -> None:
+    """FV-Dosto (REFERENCE.md, measured from the 3D model and the factsheets): body 34 voxels wide
+    for 2.80 m against the 4.59 m roof at z 56 (true width:height), lower deck down to z 3 between
+    the doors, intermediate levels at z 9, end car 25.32 m with a lower cab roof and a nose that
+    is narrower in plan than the body."""
+    from puenktlich.voxel.parts.fv_dosto import (
+        CAB_ROOF,
+        HALF_WIDTH,
+        HIGH_FLOOR,
+        LOW_FLOOR,
+        ROOF,
+        FvSpec,
+        build_fv_car,
+        end_car,
+    )
     from puenktlich.voxel.variants import LIGHT_VARIANTS
 
-    d = build_dosto_car(DostoSpec(), LIGHT_VARIANTS["none"]).grid.data
-    side = d[:, 2, :]  # body side (y 2: inside the tumblehome, outside the bogie frames)
-    mid, end = d.shape[0] // 2, 20
+    none = LIGHT_VARIANTS["none"]
+    d = build_fv_car(FvSpec(), none).grid.data
+    mid = d.shape[0] // 2
+    width = np.flatnonzero(d[mid, :, 30]).size
+    assert width == 2 * HALF_WIDTH and abs(width / ROOF - 2.80 / 4.59) < 0.02
+    side = d[:, 21 - HALF_WIDTH + 2, :]  # inside the tumblehome
     assert np.flatnonzero(side[mid])[0] == LOW_FLOOR
-    assert np.flatnonzero(side[end])[0] >= HIGH_FLOOR
+    body = np.flatnonzero(d[:, 20, ROOF])  # roof line: the body without the gangway bellows
+    assert np.flatnonzero(side[body[0] + 4])[0] >= HIGH_FLOOR  # intermediate level, in front of the bogie
     assert np.flatnonzero(d[mid, 20, :])[-1] == ROOF
+
+    cab = build_fv_car(end_car(mu_role="front"), none).grid.data
+    xs = np.flatnonzero(cab[:, 20, :].any(axis=1))
+    assert abs((xs[-1] - xs[0] + 1) - 253) <= 2  # 25.32 m
+    assert np.flatnonzero(cab[xs[-1] - 50, 20, :])[-1] <= CAB_ROOF  # cab section roof
+    tip_width = np.flatnonzero(cab[xs[-1] - 3, :, 14]).size
+    assert 0 < tip_width < 2 * HALF_WIDTH - 10  # tapered in plan
 
 
 def test_kiss_pantograph_well_and_regional_skirt() -> None:

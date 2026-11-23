@@ -10,6 +10,7 @@ Adopted from Timberwolf's Trains (`development_notes.md`), which is designed for
 
 - **Rendered length.** OpenTTD draws one 1/8 unit as 4 px at 1x in the 90° view. On this manifest (62 px for 256 voxels) that is 16 voxels, so an 8/8 vehicle has to render **128** voxels long. Recipes still model at 10 vox/m on the full canvas. `voxel/squash.py` halves every train grid along x before Cargopositor and GoRender. Width and height stay, which gives the usual compressed OpenTTD look. When two voxels merge, the colour that is rarer in the model wins, so one-voxel seams, pillars and lamps survive. A test checks every car: rendered length ≤ 16 × OpenTTD length (+2).
 - **Rendered width (calibrated to aBase).** With Timberwolf's proportions a 40-voxel body is 7 px wide end-on at 1x. aBase draws its wagons about 11.5 px wide at the same length and height (measured from `abase_base.grf`, Passenger Carriage at 4x: 46 px end-on, 130×43 px side-on). `voxel/squash.py` therefore widens each body 1.5× onto a **64-voxel-wide** render canvas. In each x-column, the rows from the first body-wide row (≥ 30 voxels across) upward are stretched. Wheels, bogie frames and buffers below the body keep their gauge, so trains stay on the rails. The train manifests GoRender gets (`build/manifests/`) are derived from Timberwolf's (`render/manifests/`), with the same pixels per voxel in every view. The layout tests stay pinned to his originals. Result at 4x: EW IV 42 px end-on, 124×55 side-on.
+- **True-proportion models (opt-out).** A recipe can set `RENDER_WIDEN = False`: its body then keeps the authored width when rendered (only re-centred on the 64-voxel canvas). Such a model is authored at the real width:height ratio, i.e. width and height at the same voxels per metre (FV-Dosto: 2.80 m → 34 voxels against the 4.59 m roof at z 56, `models/sbb/fv_dosto`). It renders noticeably slimmer than the widened stock.
 - **Fit models to their OpenTTD length.** A model longer than `ottd_length × 3.2 m` overlaps its neighbours in trains and in the depot window. Compress such models to the OpenTTD length, e.g. EW IV 26.4 → 25.6 m, Eanos 14.04 → 12.8 m, Sgns 19.7 → 19.2 m.
 - **OpenTTD length** = `round(length_m / 3.2)`, clamped to 1..8. For example, Re 460 at 18.5 m gives 6/8. Vehicles longer than 25.6 m need articulation (roadmap).
 - **Front** = high x. GoRender angle `a` corresponds to OpenTTD direction `a/45` (N, NE, E, SE, S, SW, W, NW).
@@ -43,7 +44,7 @@ and ~1.3× taller than a bus on Timberwolf's road canvas; widening alone already
 floor at z ≈ 4 (low floor), roof at z ≈ 40, roof equipment up to z ≈ 44.
 
 ## Double-deck cars
-FV-Dosto (4.59 m high, `voxel/parts/dosto.py`):
+Shared double-deck layout (`voxel/parts/dosto.py`, used by the KISS family; the FV-Dosto in true proportions is `voxel/parts/fv_dosto.py`, heights in its REFERENCE.md):
 
 | Level | z |
 |---|---|

@@ -30,14 +30,14 @@ liveries:
   - id: company
     name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
     company_colours: true
-cars:
-  - model: { path: sbb/fv_dosto, lights: true, params: { car: cab_first, role: front } }
+cars:   # front to rear (Bombardier factsheet): A (luggage) · A · A · B + restaurant · B · B · B · B
+  - model: { path: sbb/fv_dosto, lights: true, params: { car: cab_first_lug, role: front } }
+    length_m: 25.6
+  - model: { path: sbb/fv_dosto, lights: true, params: { car: first, role: middle } }
     length_m: 25.6
   - model: { path: sbb/fv_dosto, lights: true, params: { car: first, role: middle } }
     length_m: 25.6
   - model: { path: sbb/fv_dosto, lights: true, params: { car: dining, role: middle } }
-    length_m: 25.6
-  - model: { path: sbb/fv_dosto, lights: true, params: { car: second, role: middle } }
     length_m: 25.6
   - model: { path: sbb/fv_dosto, lights: true, params: { car: second, role: middle } }
     length_m: 25.6

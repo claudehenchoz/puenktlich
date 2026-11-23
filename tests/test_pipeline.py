@@ -166,3 +166,25 @@ def test_preview_recolour_matches_openttd_brightness() -> None:
     assert (out[1] == red // 2).all()
     r, g, b = out[2]
     assert r == 255 and g > red[1] * 250 // 128 and abs(int(g) - int(b)) <= abs(int(red[1]) - int(red[2])) * 2 + 2
+
+
+def test_render_widen_opt_out() -> None:
+    """Trains are widened 1.5x for rendering unless the recipe sets RENDER_WIDEN = False
+    (true-proportion models, docs/SCALE.md): then the body keeps its authored width."""
+    import numpy as np
+
+    from puenktlich import models, schema
+    from puenktlich.voxel.squash import RENDER_WIDTH
+
+    def body_width(vehicle_id: str) -> int:
+        v = schema.vehicles()[vehicle_id]
+        car = v.car_specs[1]  # an intermediate car
+        plan = models._plan(vehicle_id, car)
+        grid = next(iter(plan.bodies.values())).data
+        assert grid.shape[1] == RENDER_WIDTH
+        mid = grid.shape[0] // 2
+        return np.flatnonzero(grid[mid, :, 30]).size
+
+    assert models.load_recipe(models.paths.MODELS / "sbb" / "fv_dosto" / "recipe.py").RENDER_WIDEN is False
+    assert body_width("fv_dosto_ir100") == 34  # authored width kept
+    assert body_width("rabe512") >= 55  # widened 1.5x from 40
