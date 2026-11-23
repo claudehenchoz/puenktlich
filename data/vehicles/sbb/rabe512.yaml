@@ -1,5 +1,5 @@
 # SBB RABe 512 "IR-Dosto" (Stadler KISS, second generation), 60 six-car units 2022–2026.
-# See models/sbb/rabe512/REFERENCE.md. Car order and class split from photos (approximate).
+# See models/sbb/rabe512/REFERENCE.md. Car order, classes and lengths from Stadler's type sketch.
 id: rabe512
 grf_id: 112          # never change — saved games reference this (`pk lock`)
 name:
@@ -30,19 +30,19 @@ liveries:               # append-only: item id = grf_id * 8 + position
   - id: company
     name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
     company_colours: true
-cars:   # front to rear: Bt · B (pantograph) · AB · B · B (pantograph) · Bt
+cars:   # front to rear (Stadler type sketch): Bt · B (multi-purpose) · AB · AB · B · Bt (pantograph raised)
   - model: { path: sbb/rabe512, lights: true, params: { car: cab, role: front } }
-    length_m: 25.3
-  - model: { path: sbb/rabe512, lights: true, params: { car: panto, role: middle } }
-    length_m: 25.3
-  - model: { path: sbb/rabe512, lights: true, params: { car: first, role: middle } }
-    length_m: 25.3
+    length_m: 25.6
+  - model: { path: sbb/rabe512, lights: true, params: { car: multi, role: middle } }
+    length_m: 24.9
+  - model: { path: sbb/rabe512, lights: true, params: { car: first_a, role: middle } }
+    length_m: 24.9
+  - model: { path: sbb/rabe512, lights: true, params: { car: first_b, role: middle } }
+    length_m: 24.8
   - model: { path: sbb/rabe512, lights: true, params: { car: second, role: middle } }
-    length_m: 25.3
-  - model: { path: sbb/rabe512, lights: true, params: { car: panto_rear, role: middle } }
-    length_m: 25.3
-  - model: { path: sbb/rabe512, lights: true, params: { car: cab, role: rear } }
-    length_m: 25.3
+    length_m: 24.8
+  - model: { path: sbb/rabe512, lights: true, params: { car: cab_panto_up, role: rear } }
+    length_m: 25.6
 reference: [sbb-rabe512]
 description:
   en: InterRegio double-decker (Stadler KISS), the second generation with the raked nose, six cars.

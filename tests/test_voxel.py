@@ -355,21 +355,37 @@ def test_flirt_cars_jakobs_and_generations() -> None:
     assert (cab1[front - 30 :] != cab3[front - 30 :]).any()
 
 
-def test_kiss2_cab_car_upper_deck_between_doors() -> None:
-    """RABe 512 cab car: long single-level cab section, so no upper-deck windows in front of the
-    first door; the shared shield nose puts glass on the front face."""
+def test_ir_dosto_proportions() -> None:
+    """RABe 512 in true proportions (models/sbb/rabe512/REFERENCE.md): body 34 voxels wide
+    (2.80 m), roof z 56 (4.595 m) and the cab section's lower roof; intermediate cars at their
+    real length (24.8 m); upper-deck windows only over the double-deck section of the cab car;
+    glass in the windscreen; the pantograph on the cab car over its inner end."""
+    from puenktlich import models
     from puenktlich.voxel import palette as P
-    from puenktlich.voxel.parts.kiss import K2_UPPER_WIN, build_kiss_car, kiss2_cab_car
+    from puenktlich.voxel.parts.ir_dosto import CAB_ROOF, ROOF, UPPER_WIN, build_ir_car, cab_car
     from puenktlich.voxel.variants import LIGHT_VARIANTS
 
-    spec = kiss2_cab_car(mu_role="front")
-    d = build_kiss_car(spec, LIGHT_VARIANTS["none"]).grid.data
+    none = LIGHT_VARIANTS["none"]
+    recipe = models.load_recipe(models.paths.MODELS / "sbb" / "rabe512" / "recipe.py")
+    mid_car = recipe.build(none, car="second").grid.data
+    xs = np.flatnonzero(mid_car.any(axis=(1, 2)))
+    assert xs[-1] - xs[0] + 1 == 248  # 24.8 m
+    mid = mid_car.shape[0] // 2
+    assert np.flatnonzero(mid_car[mid, :, 30]).size == 34
+    assert np.flatnonzero(mid_car[mid, 20, :])[-1] == ROOF
+
+    spec = cab_car(mu_role="front")
+    d = build_ir_car(spec, none).grid.data
     front = np.flatnonzero(d.any(axis=(1, 2)))[-1]
-    door1 = int(front - spec.doors[0][0] * 10)  # front edge of door 1
-    side = d[:, 1:3, K2_UPPER_WIN[0] + 1 : K2_UPPER_WIN[1] - 1]  # side skin (glass is inset one voxel)
-    assert P.GLASS not in side[door1 + 5 : front - 60]  # cab section (behind the cab window)
+    assert np.flatnonzero(d[front - 30, 20, :])[-1] == CAB_ROOF  # cab section, 3 m behind the tip
+    scale = spec.length_m / spec.real_m
+    door1 = int(front - spec.doors[0][0] * 10 * scale)
+    side = d[:, 0:6, UPPER_WIN[0] + 1 : UPPER_WIN[1] - 1]
+    assert P.GLASS not in side[door1 + 10 : front - 40]  # no upper deck over the cab section
     assert P.GLASS in side[door1 - 100 : door1]
-    assert P.GLASS in d[front - 4 : front + 1, 15:26, 35:45]  # windscreen
+    assert P.GLASS in d[front - 30 : front + 1, 12:30, 34:48]  # windscreen
+    panto = np.flatnonzero((d[:, :, ROOF + 1 :] == P.LIGHT_GREY).any(axis=(1, 2)))
+    assert panto.size and panto.max() < front - 200  # over the inner end
 
 
 def test_tilting_icn_taper_and_nose() -> None:
