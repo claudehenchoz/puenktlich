@@ -28,7 +28,7 @@ fetch() {  # name repo sha
 
 build() {  # name output
   echo "building $1 @ $(git -C "$SRC/$1" rev-parse --short HEAD)"
-  (cd "$SRC/$1" && go build -o "$BIN/$2" ./cmd)
+  (cd "$SRC/$1" && go build -o "$BIN/$2$(go env GOEXE)" ./cmd)
 }
 
 fetch gorender "$GORENDER_REPO" "$GORENDER_SHA"

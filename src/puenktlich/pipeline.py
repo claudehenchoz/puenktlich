@@ -129,13 +129,26 @@ def _render_by_id(args: tuple[str, bool, bool]) -> RenderResult:
 
 
 def _available_memory_mb() -> int | None:
+    if os.name == "nt":
+        import ctypes
+
+        class MemoryStatus(ctypes.Structure):
+            _fields_ = [("dwLength", ctypes.c_ulong), ("dwMemoryLoad", ctypes.c_ulong)] + [
+                (n, ctypes.c_ulonglong)
+                for n in ("total", "avail", "total_page", "avail_page", "total_virt", "avail_virt", "avail_ext")
+            ]
+
+        status = MemoryStatus(dwLength=ctypes.sizeof(MemoryStatus))
+        if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+            return status.avail // (1024 * 1024)
+        return None
     try:
         for line in Path("/proc/meminfo").read_text().splitlines():
             if line.startswith("MemAvailable:"):
                 return int(line.split()[1]) // 1024
     except OSError:
         pass
-    return None  # not Linux: no limit from memory
+    return None  # not Linux or Windows: no limit from memory
 
 
 def default_jobs() -> int:

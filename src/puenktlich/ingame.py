@@ -30,7 +30,7 @@ from puenktlich import paths
 
 GS_DIR = paths.ROOT / "tools" / "ingame" / "pk_test"
 OUT = paths.BUILD / "ingame"
-NICE = ["nice", "-n", "10"] if shutil.which("nice") else []
+NICE = ["nice", "-n", "10"] if os.name != "nt" and shutil.which("nice") else []  # not on Windows
 ZOOM_LEVELS = {"4x": 0, "2x": 1, "1x": 2}  # OpenTTD ZoomLevel: 0 = 4x in, 2 = normal
 
 # A 4x4-tile loop around the map centre (64x64 map): the initial camera looks at

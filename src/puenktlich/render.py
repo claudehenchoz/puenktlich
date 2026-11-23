@@ -32,7 +32,7 @@ from puenktlich.voxel.squash import RENDER_WIDTH, ROAD_RENDER
 
 SCALES = (1, 2, 4)
 # renderers run at lower priority so a build never freezes the desktop
-NICE = ["nice", "-n", "10"] if shutil.which("nice") else []
+NICE = ["nice", "-n", "10"] if os.name != "nt" and shutil.which("nice") else []  # not on Windows
 SPRITE_SPACING = 8  # GoRender constant
 GORENDER_BATCH = 6  # .vox files per GoRender process (memory, see gorender())
 GORENDER_MEMORY_MB = 3500  # budget per GoRender process: parallel jobs are limited by it

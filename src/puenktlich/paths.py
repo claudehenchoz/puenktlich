@@ -1,5 +1,6 @@
 """Canonical repository paths. Everything else should import from here."""
 
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -16,8 +17,9 @@ MANIFESTS = RENDER / "manifests"
 PALETTE_JSON = RENDER / "palettes" / "ttd_palette.json"
 
 TOOLS_BIN = ROOT / ".tools" / "bin"
-GORENDER = TOOLS_BIN / "gorender"
-CARGOPOSITOR = TOOLS_BIN / "cargopositor"
+EXE = ".exe" if os.name == "nt" else ""  # `go build` names Windows binaries *.exe (tools/install.sh)
+GORENDER = TOOLS_BIN / f"gorender{EXE}"
+CARGOPOSITOR = TOOLS_BIN / f"cargopositor{EXE}"
 
 BUILD = ROOT / "build"
 BUILD_VOX = BUILD / "vox"
