@@ -1,15 +1,11 @@
-"""Single-deck tilting multiple-unit cars with long noses: SBB RABe 503 (Alstom ETR 610 "Astoro")
-and RABDe 500 (ICN). Measurements and photos: models/sbb/rabe503/REFERENCE.md and
-models/sbb/rabde500/REFERENCE.md.
+"""Single-deck tilting multiple-unit cars: SBB RABDe 500 (ICN). Measurements and photos:
+models/sbb/rabde500/REFERENCE.md. (The RABe 503 / ETR 610 has its own builder, parts/etr610.py.)
 
 `build_tilting_car(spec, lights)` builds one 8/8 car on the train canvas from a `TiltSpec`.
 Positions along the car are *real* metres from the car's front end (cab cars: from the nose
 tip), scaled to the modelled 25.6 m like `parts/smile.py`. Cars run on ordinary bogies near the
 ends. The bodies taper above the window band (tilting profile: `CrossSection.chamfer_*`).
 
-style "etr610": white body CC2, continuous dark window band, thin red (CC1) cant line, dark
-    roof; long pointed nose with a red mask around the black windscreen visor and a white bumper
-    tip, round lamps.
 style "icn": white body CC2, dark window band, black skirt, dark roof; blunter nose: silver lower
     nose, red (CC1) mask round the black windscreen.
 Multiple-unit lamp roles work like `DostoSpec.mu_role`.
@@ -56,17 +52,6 @@ class Style:
 
 
 STYLES = {
-    # REFERENCE.md (RABe 503): height 4.1 m -> roof z 50
-    "etr610": Style(
-        roof=50,
-        band=(20, 31),
-        roof_from=40,
-        skirt_top=0,
-        red_line=(37, 39),
-        nose=EndShape(rake=55, rake_from=13, corner_radius=15, undercut=6, undercut_height=9, profile="ellipse"),
-        nose_len=5.6,
-        door_z=(10, 35),
-    ),
     # REFERENCE.md (RABDe 500): height 3.95 m -> roof z 48
     "icn": Style(
         roof=48,
@@ -85,7 +70,6 @@ WHITE = P.BODY_CC2
 RED = P.BODY_CC1
 BLACK = P.BLACK
 DARK = P.DARK
-ROOF_DARK = P.ROOF_DARK
 SILVER = P.ramp(P.GREY, 0.72)
 FIRST_YELLOW = P.YELLOW
 DISPLAY = P.YELLOW
@@ -93,7 +77,7 @@ DISPLAY = P.YELLOW
 
 @dataclass
 class TiltSpec:
-    style: Literal["etr610", "icn"] = "etr610"
+    style: Literal["icn"] = "icn"
     cab: bool = False  # cab at the front (high x)
     real_m: float = 26.4
     length_m: float = 25.6  # modelled length
@@ -112,7 +96,6 @@ class TiltSpec:
 def cab_car(style: str, **kw) -> TiltSpec:
     """Cab end car: long nose, one door behind the cab and one at the rear end."""
     base = {
-        "etr610": TiltSpec(style="etr610", cab=True, real_m=27.6, doors=(8.0, 26.0), bogies=(6.8, 24.2)),
         "icn": TiltSpec(style="icn", cab=True, real_m=28.4, doors=(6.2, 26.8), bogies=(5.6, 25.4)),
     }[style]
     return replace(base, **kw)
@@ -188,17 +171,14 @@ def build_tilting_car(spec: TiltSpec, lights: Lights) -> Model:
 
     # --- nose ---------------------------------------------------------------------------
     if spec.cab:
-        if spec.style == "etr610":
-            _nose_etr610(mdl, at, scale, u, dy, st)
-        else:
-            _nose_icn(mdl, at, scale, u, dy, st)
+        _nose_icn(mdl, at, scale, u, dy, st)
         lamp_cluster(
             mdl,
             shell,
             True,
             lights.state("front"),
-            low_z=(17, 20) if spec.style == "etr610" else (21, 24),
-            top_z=None if spec.style == "etr610" else (44, 46),
+            low_z=(21, 24),
+            top_z=(44, 46),
             spacing=12,
             lamp_half_width=2,
             face=True,
@@ -230,27 +210,6 @@ def build_tilting_car(spec: TiltSpec, lights: Lights) -> Model:
     if turn_round:
         mdl.rotate_180()
     return mdl
-
-
-def _nose_etr610(mdl: Model, at, scale: float, u: np.ndarray, dy: np.ndarray, st: Style) -> None:
-    """Long pointed nose: red mask from the white bumper tip up to the cant line, black visor
-    over the windscreen on top, black cab side window behind the visor."""
-    _, _, Z = mdl.coords()
-    nose = u < st.nose_len
-    red_lo = 14 + (st.red_line[1] - 14) * np.clip(u / st.nose_len, 0, 1)  # white below
-    visor = 23 + (st.roof_from - 23) * np.clip(u / 3.6, 0, 1)  # black above (before 3.6 m)
-    mdl.paint(nose & (red_lo <= Z) & (st.roof_from > Z), RED)
-    mdl.paint(nose & (u < 3.6) & (visor <= Z), BLACK)
-    mdl.paint(nose & (u >= 3.6) & (st.roof_from <= Z), ROOF_DARK)
-    mdl.paint(nose & (red_lo > Z) & (Z >= 6), WHITE)
-    cab_win = side_band(mdl, at(4.6 / scale), at(3.4 / scale), 27, 35) & (red_lo + 1 <= Z)
-    mdl.paint(cab_win, BLACK)
-    mdl.inset(cab_win & side_band(mdl, at(4.5 / scale), at(3.5 / scale), 28, 34), P.GLASS)
-    face = face_mask(mdl, True, depth=3) & (u < 3.0) & (dy <= 17)
-    mdl.paint(face & (Z >= 22) & (dy <= 12), BLACK)
-    mdl.inset(face & (Z >= 26) & (Z < 35) & (dy <= 10), P.GLASS)
-    mdl.paint(face & (Z < 13), WHITE)  # bumper tip
-    mdl.paint(face & (Z >= 15) & (Z < 16) & (dy <= 1), P.OFF_WHITE)  # SBB logo
 
 
 def _nose_icn(mdl: Model, at, scale: float, u: np.ndarray, dy: np.ndarray, st: Style) -> None:

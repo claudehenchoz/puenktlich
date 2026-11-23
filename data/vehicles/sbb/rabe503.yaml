@@ -15,11 +15,11 @@ vehicle_life_years: 30
 model_life_years: 25
 max_speed_kmh: 250
 power_kw: 5500
-tractive_effort_kn: 225
-weight_t: 450
+tractive_effort_kn: 226  # GDL brochure
+weight_t: 442          # GDL brochure
 length_m: 187.4
 capacity:
-  PASS: 431
+  PASS: 408              # GDL brochure: 104 1st + 304 2nd (restaurant seats not counted)
 cost_factor: 190
 running_cost_factor: 120
 liveries:               # append-only: item id = grf_id * 8 + position
@@ -30,7 +30,7 @@ liveries:               # append-only: item id = grf_id * 8 + position
   - id: company
     name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
     company_colours: true
-cars:   # front to rear: A (cab) · A · WR/A · B (pantograph) · B (pantograph) · B · B (cab)
+cars:   # front to rear: A (cab) · A · WR/A (DB panto) · B (SBB+DC, raised) · B (SBB+DC) · B (DB panto) · B (cab)
   - model: { path: sbb/rabe503, lights: true, params: { car: cab_first, role: front } }
     length_m: 25.6
   - model: { path: sbb/rabe503, lights: true, params: { car: first, role: middle } }
@@ -41,7 +41,7 @@ cars:   # front to rear: A (cab) · A · WR/A · B (pantograph) · B (pantograph
     length_m: 25.6
   - model: { path: sbb/rabe503, lights: true, params: { car: second_pan, role: middle } }
     length_m: 25.6
-  - model: { path: sbb/rabe503, lights: true, params: { car: second, role: middle } }
+  - model: { path: sbb/rabe503, lights: true, params: { car: second_db, role: middle } }
     length_m: 25.6
   - model: { path: sbb/rabe503, lights: true, params: { car: cab, role: rear } }
     length_m: 25.6

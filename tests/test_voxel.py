@@ -372,27 +372,53 @@ def test_kiss2_cab_car_upper_deck_between_doors() -> None:
     assert P.GLASS in d[front - 4 : front + 1, 15:26, 35:45]  # windscreen
 
 
-def test_tilting_cars_taper_and_noses() -> None:
-    """ETR 610 / ICN: the body narrows above the window band (tilting profile), the two styles
-    have their own roof height and nose, and cab cars are longer in the nose than a flat end."""
+def test_tilting_icn_taper_and_nose() -> None:
+    """ICN: the body narrows above the window band (tilting profile), and the cab car's nose is
+    pointed (the roof far behind the tip)."""
     from puenktlich.voxel.parts.tilting import STYLES, TiltSpec, build_tilting_car, cab_car
     from puenktlich.voxel.variants import LIGHT_VARIANTS
 
     none = LIGHT_VARIANTS["none"]
-    for style in ("etr610", "icn"):
-        st = STYLES[style]
-        d = build_tilting_car(TiltSpec(style=style), none).grid.data
-        mid = d.shape[0] // 2
-        widths = [np.flatnonzero(d[mid, :, z]).size for z in (st.band[0], st.roof - 4)]
-        assert widths[0] > widths[1]  # tapered upper body
-        assert np.flatnonzero(d[mid, 20, :])[-1] == st.roof
-        cab = build_tilting_car(cab_car(style, mu_role="front"), none).grid.data
-        front = np.flatnonzero(cab.any(axis=(1, 2)))[-1]
-        tip_z = np.flatnonzero(cab[front, 20, :])
-        assert tip_z.size and tip_z.max() < st.roof - 15  # pointed nose: roof far behind the tip
-    etr = build_tilting_car(cab_car("etr610", mu_role="front"), none).grid.data
-    icn = build_tilting_car(cab_car("icn", mu_role="front"), none).grid.data
-    assert (etr != icn).any()
+    st = STYLES["icn"]
+    d = build_tilting_car(TiltSpec(style="icn"), none).grid.data
+    mid = d.shape[0] // 2
+    widths = [np.flatnonzero(d[mid, :, z]).size for z in (st.band[0], st.roof - 4)]
+    assert widths[0] > widths[1]  # tapered upper body
+    assert np.flatnonzero(d[mid, 20, :])[-1] == st.roof
+    cab = build_tilting_car(cab_car("icn", mu_role="front"), none).grid.data
+    front = np.flatnonzero(cab.any(axis=(1, 2)))[-1]
+    tip_z = np.flatnonzero(cab[front, 20, :])
+    assert tip_z.size and tip_z.max() < st.roof - 15
+
+
+def test_etr610_proportions() -> None:
+    """RABe 503 / ETR 610 in true proportions (models/sbb/rabe503/REFERENCE.md): body 34 voxels
+    wide (2.83 m), roof z 50 (4.10 m), tilting taper above the window band, a long low nose
+    (tip at the bumper height, roof reached ~6.9 m back), pantographs as in the GDL brochure."""
+    from puenktlich import models
+    from puenktlich.voxel.parts.etr610 import BAND, ROOF, build_etr_car, end_car
+    from puenktlich.voxel.variants import LIGHT_VARIANTS
+
+    recipe = models.load_recipe(models.paths.MODELS / "sbb" / "rabe503" / "recipe.py")
+    none = LIGHT_VARIANTS["none"]
+    d = recipe.build(none, car="second_db").grid.data
+    mid = d.shape[0] // 2
+    assert np.flatnonzero(d[mid, :, BAND[0]]).size == 34
+    assert np.flatnonzero(d[mid, :, ROOF - 4]).size < 34  # tilting taper
+    assert np.flatnonzero(d[mid - 60, 20, :])[-1] == ROOF  # beside the roof hump
+    cab = build_etr_car(end_car(mu_role="front"), none).grid.data
+    front = np.flatnonzero(cab.any(axis=(1, 2)))[-1]
+    assert np.flatnonzero(cab[front, 20, :]).max() < 18  # tip at ~1.2 m
+    roof_x = np.flatnonzero(cab[:, 20, ROOF])
+    assert front - roof_x.max() > 50  # the roof starts ~6.4 modelled metres behind the tip
+
+    def pantographs(car: str) -> int:  # pantograph bases: light-grey insulator clusters on the roof
+        g = recipe.build(none, car=car).grid.data
+        roof_top = g[:, :, ROOF : ROOF + 3]
+        cols = np.flatnonzero((roof_top == models.P.LIGHT_GREY).any(axis=(1, 2)))
+        return int((np.diff(cols) > 20).sum() + 1) if cols.size else 0
+
+    assert [pantographs(c) for c in ("first", "dining", "second_pan_up", "second_pan", "second_db")] == [0, 1, 2, 2, 1]
 
 
 def test_dtz_end_car() -> None:
