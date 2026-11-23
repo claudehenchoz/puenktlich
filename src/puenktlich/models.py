@@ -32,7 +32,16 @@ from puenktlich.schema import CarSpec, Vehicle
 from puenktlich.voxel import palette as P
 from puenktlich.voxel.model import Model
 from puenktlich.voxel.palette import rgb_palette
-from puenktlich.voxel.squash import body_split, colour_counts, for_road_render, squash_x, widen_y
+from puenktlich.voxel.squash import (
+    Z_PER_M,
+    authored_body_width,
+    body_split,
+    colour_counts,
+    for_road_render,
+    squash_x,
+    true_width_factor,
+    widen_y,
+)
 from puenktlich.voxel.variants import DEFAULT_VARIANT, LIGHT_VARIANTS
 from puenktlich.voxel.vox import VoxelGrid, read_vox, write_vox
 
@@ -194,14 +203,16 @@ def _cargo_plan(car: CarSpec, recipe) -> VariantPlan:
     from puenktlich.render import cargopositor
 
     spec = recipe.CARGO
-    masked = widen_y(squash_x(build_grid(car)))  # render scale
+    grid = build_grid(car)
+    factor = width_factor(recipe, grid)
+    masked = widen_y(squash_x(grid), factor=factor)  # render scale
     with tempfile.TemporaryDirectory(prefix=f"pk_cargo_{car.key}_") as tmp:
         src, out = Path(tmp) / "in", Path(tmp) / "out"
         write_vox(masked, src / f"{car.key}.vox", rgb_palette())
         for name, make in spec.shapes.items():
             shape = make()
             shape = squash_x(shape.grid if isinstance(shape, Model) else shape, centre=False)
-            shape = widen_y(shape, full=True)
+            shape = widen_y(shape, full=True, factor=factor)  # same scale as the wagon body
             write_vox(shape, src / f"{name}.vox", rgb_palette())
         batch = Path(tmp) / "batch.json"
         batch.write_text(json.dumps({"files": [f"{car.key}.vox"], "operations": spec.batch_operations()}))
@@ -235,13 +246,20 @@ def _cargo_plan(car: CarSpec, recipe) -> VariantPlan:
     )
 
 
+def width_factor(recipe, grid: VoxelGrid) -> float:
+    """Across-scale that renders the body of `grid` at the recipe's real BODY_WIDTH_M (metres)
+    on its height scale Z_PER_M (voxels per metre, default 12.2); docs/SCALE.md."""
+    width_m = getattr(recipe, "BODY_WIDTH_M", None) if recipe is not None else None
+    z_per_m = getattr(recipe, "Z_PER_M", Z_PER_M) if recipe is not None else Z_PER_M
+    return true_width_factor(authored_body_width(grid), width_m, z_per_m)
+
+
 def _plan(vehicle_id: str, vehicle: CarSpec) -> VariantPlan:
-    widen = True
+    recipe = None
     if vehicle.model.kind == "recipe":
         recipe = load_recipe(model_dir(vehicle) / "recipe.py")
         if hasattr(recipe, "CARGO"):
             return _cargo_plan(vehicle, recipe)
-        widen = bool(getattr(recipe, "RENDER_WIDEN", True))
     bodies: dict[str, VoxelGrid] = {}
     body_by_digest: dict[str, str] = {}
     overlays: dict[str, tuple[str, VoxelGrid]] = {}
@@ -250,13 +268,14 @@ def _plan(vehicle_id: str, vehicle: CarSpec) -> VariantPlan:
     for var in variants(vehicle):
         dark = build_grid(vehicle, var, dark=True)
         lit = build_grid(vehicle, var)
-        if not vehicle.road:  # trains: half length, widened body (voxel/squash.py, docs/SCALE.md)
+        if not vehicle.road:  # trains: half length, body at its real width (voxel/squash.py, docs/SCALE.md)
+            factor = width_factor(recipe, dark)
             counts = colour_counts(dark)
             dark, lit = squash_x(dark, counts), squash_x(lit, counts)
-            # same widening for lit and dark: overlays stay lamp diffs. RENDER_WIDEN = False:
-            # no row counts as body, so the model is only re-centred onto the render canvas
-            split = body_split(dark) if widen else np.full(dark.data.shape[0], dark.data.shape[2])
-            dark, lit = widen_y(dark, split), widen_y(lit, split)
+            # same split, factor and colour ranking for lit and dark: overlays stay lamp diffs
+            split = body_split(dark)
+            dark = widen_y(dark, split, factor=factor, counts=counts)
+            lit = widen_y(lit, split, factor=factor, counts=counts)
         else:  # buses: wider and taller (aBase proportions)
             dark, lit = for_road_render(dark), for_road_render(lit)
         dd = _digest(dark)

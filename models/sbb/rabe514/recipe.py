@@ -14,6 +14,8 @@ from puenktlich.voxel.model import Model
 from puenktlich.voxel.parts.kiss import build_kiss_car, dtz_cab_car, dtz_car
 from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
 
+BODY_WIDTH_M = 2.78  # 2,780 mm (docs/SCALE.md)
+
 CARS = {
     "cab": lambda role: dtz_cab_car(pantograph_raised=role == "rear"),
     "cab_first": lambda role: dtz_cab_car(first_class=True, pantograph_raised=role == "rear"),

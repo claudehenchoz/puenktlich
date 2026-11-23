@@ -139,8 +139,8 @@ def test_road_manifest() -> None:
 
 
 def test_widened_manifest_keeps_pixels_per_voxel() -> None:
-    """The render manifest only adds the extra body width: the 90° length is unchanged and
-    the end-on view is ~1.5x wider (aBase calibration, voxel/squash.py)."""
+    """The render manifest only widens the canvas (64 voxels, voxel/squash.py): the 90° length
+    is unchanged and the end-on view has room for the whole canvas width."""
     raw = {s["angle"]: s for s in load_manifest("train", raw=True)["sprites"]}
     new = {s["angle"]: s for s in load_manifest("train")["sprites"]}
     assert load_manifest("train")["size"]["y"] == 64

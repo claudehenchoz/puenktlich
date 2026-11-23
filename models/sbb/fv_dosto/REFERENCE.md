@@ -86,8 +86,8 @@ up to ≈2.95 m, round a black lower panel 1.2–2.25 m; red outside the outline
 
 ## Scale (true proportions)
 The body is authored 34 voxels wide (2.80 m at the same 12.2 voxels per metre as the height)
-and the recipe sets `RENDER_WIDEN = False`, so the render step keeps that width instead of
-the 1.5× aBase widening used by the other trains (docs/SCALE.md). Width:height = 0.61, as on the
+and the recipe's `BODY_WIDTH_M = 2.8` matches it, so the render step keeps that width (the other
+trains are authored wider and scaled to their real width, docs/SCALE.md). Width:height = 0.61, as on the
 real train. Cars keep their real lengths in their 8/8 slots; the intermediates' gangway bellows
 reach out to the slot ends so coupled cars meet.
 

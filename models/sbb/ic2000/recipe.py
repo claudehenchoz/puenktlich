@@ -15,6 +15,8 @@ from puenktlich.voxel.model import Model
 from puenktlich.voxel.parts.kiss import build_kiss_car, ic2000_bt, ic2000_coach
 from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
 
+BODY_WIDTH_M = 2.825  # 2,825 mm (fr.wikipedia) (docs/SCALE.md)
+
 CARS = {
     "a": lambda: ic2000_coach(first_class=True),
     "ad": lambda: ic2000_coach(first_class=True, lower_windows=4),

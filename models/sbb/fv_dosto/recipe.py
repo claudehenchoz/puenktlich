@@ -12,14 +12,14 @@ car layouts: REFERENCE.md in this directory.
     role: front | middle | rear (multiple-unit lamps; a rear cab car is turned round)
 
 Real lengths in their 8/8 slots: end cars 25.32 m, intermediates 24.28 m (bellows out to the
-slot ends). RENDER_WIDEN = False: the 2.80 m body keeps its true width when rendered.
+slot ends). The 2.80 m body is authored at its real width (BODY_WIDTH_M), so rendering keeps it.
 """
 
 from puenktlich.voxel.model import Model
 from puenktlich.voxel.parts.fv_dosto import FvSpec, build_fv_car, end_car
 from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
 
-RENDER_WIDEN = False  # true proportions (docs/SCALE.md)
+BODY_WIDTH_M = 2.8  # 2,800 mm, authored at this width (docs/SCALE.md)
 
 CARS = {
     "cab_first": lambda: end_car(first_class=True, pantograph=True),

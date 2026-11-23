@@ -19,6 +19,9 @@ from puenktlich.voxel.parts.coach import DOOR, DOOR_SEAM, CabSpec, CoachSpec, bu
 from puenktlich.voxel.parts.roof import main_switch, pantograph, roof_box
 from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
 
+BODY_WIDTH_M = 2.86  # 2,860 mm, RBDe 560 (de.wikipedia) (docs/SCALE.md)
+Z_PER_M = 12.8  # height scale of this model: roof z 48 = 3.75 m
+
 SECTION = CrossSection(floor=15, roof=47, half_width=19, roof_radius=8, tumblehome=1, tumble_from=24)
 NOSE = EndShape(rake=8, rake_from=30, rake_curve=1.2, corner_radius=6, undercut=2, undercut_height=4)
 CAB = CabSpec(nose=NOSE, windscreen_z=(31, 43), windscreen_half_width=16, door_from_end=(24, 32))

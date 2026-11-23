@@ -39,6 +39,16 @@ DATA = {
     "bus": (None, 80, 220, 18, 12.0, 90, "model:\n  path: {path}\n"),
 }
 
+
+def _after_imports(source: str, line: str) -> str:
+    """`source` with `line` inserted after its last top-level import (multi-line imports too)."""
+    lines = source.split("\n")
+    last = max(i for i, ln in enumerate(lines) if ln.startswith(("from ", "import ")))
+    if lines[last].rstrip().endswith("("):
+        last = next(i for i in range(last, len(lines)) if lines[i].startswith(")"))
+    return "\n".join([*lines[: last + 1], "", line, *lines[last + 1 :]])
+
+
 RECIPES = {
     "locomotive": """from puenktlich.voxel import palette as P
 from puenktlich.voxel.model import Model
@@ -237,6 +247,9 @@ def new_vehicle(operator: str, vehicle_id: str, kind: str, name: str) -> list[Pa
     yaml_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
     model_dir.mkdir(parents=True, exist_ok=True)
     doc = f'"""{name} — TODO: prototype summary. Facts and sources: REFERENCE.md in this directory."""\n\n'
-    (model_dir / "recipe.py").write_text(doc + RECIPES[kind].format(length=length), encoding="utf-8")
+    recipe = RECIPES[kind].format(length=length)
+    if kind != "bus":  # trains render at their real width (docs/SCALE.md)
+        recipe = _after_imports(recipe, "BODY_WIDTH_M = 2.8  # TODO: real body width in metres (docs/SCALE.md)")
+    (model_dir / "recipe.py").write_text(doc + recipe, encoding="utf-8")
     (model_dir / "REFERENCE.md").write_text(REFERENCE.format(name=name), encoding="utf-8")
     return files

@@ -14,6 +14,8 @@ from puenktlich.voxel.parts.loco import LOK2000_NOSE  # the Bt has the cab of th
 from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
 
 # windscreen ends below the roof crown so the top headlamp sits above it, as on the Re 460
+BODY_WIDTH_M = 2.825  # 2,825 mm (docs/SCALE.md)
+
 SPEC = CoachSpec(windows=10, cab=CabSpec(nose=LOK2000_NOSE, windscreen_z=(33, 46)))
 
 

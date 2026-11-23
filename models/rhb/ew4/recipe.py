@@ -15,6 +15,9 @@ from puenktlich.voxel.parts.body import CrossSection, EndShape
 from puenktlich.voxel.parts.coach import CoachSpec, build_coach
 from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
 
+BODY_WIDTH_M = 2.65  # 2,650 mm (docs/SCALE.md)
+Z_PER_M = 13.3  # height scale of this model: roof z 46 = 3.45 m
+
 SECTION = CrossSection(floor=13, roof=45, half_width=17.5, roof_radius=7, tumblehome=1, tumble_from=23)
 
 

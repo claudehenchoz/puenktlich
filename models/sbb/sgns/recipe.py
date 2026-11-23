@@ -13,6 +13,8 @@ from puenktlich.voxel.model import Model, m
 from puenktlich.voxel.parts.running_gear import bogie, buffers
 from puenktlich.voxel.vox import VoxelGrid
 
+BODY_WIDTH_M = 2.6  # 2,600 mm deck width (docs/SCALE.md)
+
 LENGTH_M = 19.2  # real 19.7 m, fitted to its OpenTTD length 6/8 (19.2 m)
 BUFFER_DEPTH = 6
 DECK = 15

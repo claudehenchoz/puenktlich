@@ -15,6 +15,8 @@ from puenktlich.voxel.parts.body import CrossSection, EndShape
 from puenktlich.voxel.parts.loco import LocoSpec, Louvres, Panel, Windscreen, build_loco
 from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
 
+BODY_WIDTH_M = 2.8  # 2,800 mm (de/en.wikipedia) (docs/SCALE.md)
+
 SPEC = LocoSpec(
     length_m=16.0,
     section=CrossSection(floor=13, roof=46, half_width=18, roof_radius=6, tumblehome=1, tumble_from=24),

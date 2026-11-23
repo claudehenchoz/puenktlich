@@ -9,6 +9,8 @@ from puenktlich.voxel.model import Model
 from puenktlich.voxel.parts.hood import Block, HoodSpec, build_hood_loco
 from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
 
+BODY_WIDTH_M = 2.955  # 2,955 mm (docs/SCALE.md)
+
 SPEC = HoodSpec(
     length_m=18.75,
     frame_z=(12, 25),

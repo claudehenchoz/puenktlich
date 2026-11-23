@@ -16,6 +16,8 @@ from puenktlich.voxel.model import Model
 from puenktlich.voxel.parts.kiss import build_kiss_car, kiss2_cab_car, kiss2_car
 from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
 
+BODY_WIDTH_M = 2.8  # 2,800 mm (docs/SCALE.md)
+
 CARS = {
     "cab": lambda: kiss2_cab_car(),
     "first": lambda: kiss2_car(first_class=True),

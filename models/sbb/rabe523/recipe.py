@@ -15,6 +15,8 @@ from puenktlich.voxel.model import Model
 from puenktlich.voxel.parts.flirt import FlirtSpec, build_flirt_car, end_car
 from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
 
+BODY_WIDTH_M = 2.88  # 2,880 mm, FLIRT for SBB (later units 2,820) (docs/SCALE.md)
+
 CARS = {
     "cab_first": lambda g, role: end_car(generation=g, first_class=(4.2, 8.2), pantograph_raised=role == "front"),
     "cab": lambda g, role: end_car(generation=g, pantograph_raised=role == "front"),

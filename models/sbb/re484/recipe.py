@@ -14,6 +14,8 @@ from puenktlich.voxel.parts.loco import LocoSpec, Louvres, Panel, Windscreen, bu
 from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
 
 # TRAXX: near-vertical front with a slightly raked windscreen, flat sides
+BODY_WIDTH_M = 2.977  # 2,977 mm (docs/SCALE.md)
+
 TRAXX_NOSE = EndShape(rake=10, rake_from=31, rake_curve=1.2, corner_radius=6, undercut=2, undercut_height=5)
 
 SPEC = LocoSpec(

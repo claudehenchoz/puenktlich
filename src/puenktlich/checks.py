@@ -113,7 +113,16 @@ def check_coupling(v: Vehicle, car: CarSpec) -> list[str]:
     return out
 
 
-CHECKS = (check_shape, check_palette, check_lamps, check_coupling)
+def check_width(v: Vehicle, car: CarSpec) -> list[str]:
+    """Train recipes give their real body width; the render step scales the body to it."""
+    if car.road or car.model.kind != "recipe":
+        return []
+    if getattr(load_recipe(model_dir(car) / "recipe.py"), "BODY_WIDTH_M", None) is None:
+        return [f"{car.key}: recipe sets no BODY_WIDTH_M, so the body renders at its authored width"]
+    return []
+
+
+CHECKS = (check_shape, check_palette, check_lamps, check_coupling, check_width)
 
 
 def check_vehicle(v: Vehicle) -> list[str]:

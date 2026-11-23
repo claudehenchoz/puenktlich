@@ -14,6 +14,9 @@ from puenktlich.voxel.model import Model
 from puenktlich.voxel.parts.panorama import PanoramaSpec, build_panorama_car
 from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
 
+BODY_WIDTH_M = 2.68  # 2,680 mm (docs/SCALE.md)
+Z_PER_M = 12.5  # height scale of this model (REFERENCE.md)
+
 
 def build(lights: Lights = LIGHT_VARIANTS["solo"], kind: str = "second") -> Model:
     return build_panorama_car(PanoramaSpec(kind=kind), lights)  # type: ignore[arg-type]

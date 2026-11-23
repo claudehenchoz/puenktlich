@@ -4,8 +4,7 @@
 measured from the 3D model and the Bombardier factsheets (models/sbb/fv_dosto/REFERENCE.md):
 x 10 voxels per metre along the car (positions are metres from the car's front end, cab cars
 from the nose tip), y and z both 12.2 voxels per metre (roof 4.59 m = z 56), so the 2.80 m body
-is 34 voxels wide. The recipe sets RENDER_WIDEN = False: the render step keeps this width
-instead of the 1.5x aBase widening (docs/SCALE.md).
+is 34 voxels wide, its real width: the render step keeps it (BODY_WIDTH_M, docs/SCALE.md).
 
 Structure: lower deck between the doors (body down to 0.25 m), intermediate levels over the
 bogies (0.75 m), upper deck along the whole car; end cars have a single-level cab section with

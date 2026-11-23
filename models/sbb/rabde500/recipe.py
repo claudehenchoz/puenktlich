@@ -17,6 +17,8 @@ from puenktlich.voxel.model import Model
 from puenktlich.voxel.parts.tilting import TiltSpec, build_tilting_car, cab_car
 from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
 
+BODY_WIDTH_M = 2.83  # 2,830 mm (docs/SCALE.md)
+
 CARS = {
     "cab": lambda: cab_car("icn"),
     "second": lambda: TiltSpec(style="icn"),

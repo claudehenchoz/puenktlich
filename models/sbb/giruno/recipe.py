@@ -20,6 +20,9 @@ from puenktlich.voxel.model import Model
 from puenktlich.voxel.parts.smile import SmileSpec, build_smile_car, end_car
 from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
 
+BODY_WIDTH_M = 2.9  # 2,900 mm (docs/SCALE.md)
+Z_PER_M = 12.1  # height scale of this model (REFERENCE.md)
+
 CARS = {
     "cab_first": lambda: end_car(first_class=True),
     "first": lambda: SmileSpec(first_class=True, doors=(12.1,)),

@@ -44,20 +44,20 @@ def squash_x(grid: VoxelGrid, counts: np.ndarray | None = None, centre: bool = T
     return VoxelGrid(full)
 
 
-# --- widening (calibrated to aBase / original-TTD proportions) ------------------------------
-# Timberwolf's proportions render a 40-voxel body 7 px wide at 1x (end-on view); aBase draws
-# its wagons about 11.5 px wide at the same length and height. Bodies are therefore widened
-# 1.5x onto a 64-voxel-wide render canvas, while the running gear below the body (wheels,
-# bogie frames, buffers) keeps its gauge so trains still sit on the rails.
+# --- true width (docs/SCALE.md) --------------------------------------------------------------
+# Train bodies are authored 40 voxels wide (36 on metre gauge), wider than their real width at
+# the height scale (~12.2 voxels per metre). The render step rescales each body to its real
+# width (the recipe's BODY_WIDTH_M) on a 64-voxel-wide render canvas, while the running gear
+# below the body (wheels, bogie frames, buffers) keeps its gauge so trains sit on the rails.
 AUTHOR_WIDTH = 42
 RENDER_WIDTH = 64
-WIDEN = 1.5
 BODY_ROW_MIN = 30  # a row (x, z) at least this many voxels across belongs to the body
+Z_PER_M = 12.2  # height scale of the train models (most REFERENCE.md files); recipes can override
 
 
 def body_split(grid: VoxelGrid) -> np.ndarray:
-    """Per x: the lowest z whose row is body-wide. Rows from there up are widened; the
-    running gear below keeps its width. No body in a column -> nothing widened there."""
+    """Per x: the lowest z whose row is body-wide. Rows from there up are rescaled; the
+    running gear below keeps its width. No body in a column -> nothing rescaled there."""
     occ = grid.data != 0
     sy = occ.shape[1]
     has = occ.any(axis=1)
@@ -67,17 +67,69 @@ def body_split(grid: VoxelGrid) -> np.ndarray:
     return np.where(wide.any(axis=1), np.argmax(wide, axis=1), occ.shape[2])
 
 
+def authored_body_width(grid: VoxelGrid) -> int:
+    """The body width a model is authored at: the widest row width among body-wide rows that
+    occurs at least a fifth as often as the most common one. Rounded roofs and tumblehome make
+    many rows narrower; mirrors or steps that stick out over a few rows don't count."""
+    occ = grid.data != 0
+    sy = occ.shape[1]
+    has = occ.any(axis=1)
+    first = np.argmax(occ, axis=1)
+    last = sy - 1 - np.argmax(occ[:, ::-1, :], axis=1)
+    width = np.where(has, last - first + 1, 0)
+    width = width[width >= BODY_ROW_MIN]
+    if not width.size:
+        return 0
+    counts = np.bincount(width)
+    return int(np.flatnonzero(counts >= counts.max() / 5).max())
+
+
+def true_width_factor(authored: int, width_m: float | None, z_per_m: float = Z_PER_M) -> float:
+    """Factor that renders a body authored `authored` voxels wide at its real width `width_m`,
+    on the same scale as the height (`z_per_m`), rounded to an even voxel count so the body
+    stays symmetric about the centre line. No real width given: authored width kept."""
+    if not width_m or not authored:
+        return 1.0
+    return 2 * round(width_m * z_per_m / 2) / authored
+
+
+def _narrow_y(d: np.ndarray, factor: float, counts: np.ndarray, width: int) -> np.ndarray:
+    """Narrow every row onto `width` (factor <= 1), centred. Each source row lands on exactly
+    one output row, symmetrically about the centre line; where two land on the same one, the
+    colour that is rarer in `counts` wins, so one-voxel details (pillars, lamps) survive."""
+    sx, sy, sz = d.shape
+    c, nc = (sy - 1) / 2, (width - 1) / 2
+    out = np.zeros((sx, width, sz), dtype=np.uint8)
+    rank = np.full((sx, width, sz), np.inf)
+    for k in range(sy):
+        off = (k - c) * factor
+        j = int(round(nc + np.sign(off) * (np.floor(abs(off)) + 0.5))) if off else int(round(nc))
+        if not 0 <= j < width:
+            continue
+        r = counts[d[:, k, :]]
+        better = r < rank[:, j, :]
+        out[:, j, :] = np.where(better, d[:, k, :], out[:, j, :])
+        rank[:, j, :] = np.where(better, r, rank[:, j, :])
+    return out
+
+
 def widen_y(
-    grid: VoxelGrid, split: np.ndarray | None = None, full: bool = False, render_width: int = RENDER_WIDTH
+    grid: VoxelGrid,
+    split: np.ndarray | None = None,
+    full: bool = False,
+    render_width: int = RENDER_WIDTH,
+    factor: float = 1.0,
+    counts: np.ndarray | None = None,
 ) -> VoxelGrid:
-    """Widen `grid` (authoring width) for rendering. Vehicles: onto RENDER_WIDTH, centred,
-    rows from `split` (default: body_split of this grid) up stretched by WIDEN, the rest
-    only re-centred. full=True (cargo shapes): stretch everything to round(width * WIDEN)."""
+    """Rescale `grid` across (y) for rendering. Vehicles: onto `render_width`, centred, rows
+    from `split` (default: body_split of this grid) up scaled by `factor`, the rest (running
+    gear) only re-centred. factor < 1 narrows with rarer-colour merging (`counts`, default
+    this grid's). full=True (cargo shapes): scale everything to round(width * factor)."""
     d = grid.data
     sx, sy, sz = d.shape
     if full:
-        ny = int(round(sy * WIDEN))
-        src = np.floor((sy - 1) / 2 + (np.arange(ny) - (ny - 1) / 2) / WIDEN + 0.5).astype(int)
+        ny = int(round(sy * factor))
+        src = np.floor((sy - 1) / 2 + (np.arange(ny) - (ny - 1) / 2) / factor + 0.5).astype(int)
         ok = (src >= 0) & (src < sy)
         out = d[:, np.clip(src, 0, sy - 1), :] * ok[None, :, None]
         return VoxelGrid(np.ascontiguousarray(out.astype(np.uint8)))
@@ -85,20 +137,18 @@ def widen_y(
         split = body_split(grid)
     c, nc = (sy - 1) / 2, (render_width - 1) / 2
     ny = np.arange(render_width)
-    s_src = np.floor(c + (ny - nc) / WIDEN + 0.5).astype(int)
-    s_ok = (s_src >= 0) & (s_src < sy)
+    if factor < 1:
+        scaled = _narrow_y(d, factor, colour_counts(grid) if counts is None else counts, render_width)
+    else:
+        s_src = np.floor(c + (ny - nc) / factor + 0.5).astype(int)
+        s_ok = (s_src >= 0) & (s_src < sy)
+        scaled = d[:, np.clip(s_src, 0, sy - 1), :] * s_ok[None, :, None]
     k_src = (ny - int(round(nc - c))).astype(int)
     k_ok = (k_src >= 0) & (k_src < sy)
-    stretched = d[:, np.clip(s_src, 0, sy - 1), :] * s_ok[None, :, None]
     kept = d[:, np.clip(k_src, 0, sy - 1), :] * k_ok[None, :, None]
     rows = np.arange(sz)[None, :] >= split[:, None]  # (x, z)
-    out = np.where(rows[:, None, :], stretched, kept)
+    out = np.where(rows[:, None, :], scaled, kept)
     return VoxelGrid(np.ascontiguousarray(out.astype(np.uint8)))
-
-
-def for_render(grid: VoxelGrid, counts: np.ndarray, split: np.ndarray | None = None) -> VoxelGrid:
-    """Authoring grid -> render grid: half length (squash_x), widened body (widen_y)."""
-    return widen_y(squash_x(grid, counts), split)
 
 
 # --- road vehicles ---------------------------------------------------------------------------
@@ -121,5 +171,5 @@ def stretch_z(grid: VoxelGrid, factor: float, new_z: int) -> VoxelGrid:
 def for_road_render(grid: VoxelGrid) -> VoxelGrid:
     """Road authoring grid (126x40x48) -> render grid (126x60x64)."""
     split = np.zeros(grid.data.shape[0], dtype=int)  # widen every row
-    wide = widen_y(grid, split, render_width=ROAD_RENDER[1])
+    wide = widen_y(grid, split, render_width=ROAD_RENDER[1], factor=ROAD_WIDEN)
     return stretch_z(wide, ROAD_RAISE, ROAD_RENDER[2])

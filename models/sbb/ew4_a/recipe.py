@@ -10,6 +10,8 @@ from puenktlich.voxel.model import Model
 from puenktlich.voxel.parts.coach import CoachSpec, build_coach
 from puenktlich.voxel.variants import LIGHT_VARIANTS, Lights
 
+BODY_WIDTH_M = 2.825  # 2,825 mm (docs/SCALE.md)
+
 SPEC = CoachSpec(windows=10, first_class=True)
 
 

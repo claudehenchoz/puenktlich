@@ -168,23 +168,48 @@ def test_preview_recolour_matches_openttd_brightness() -> None:
     assert r == 255 and g > red[1] * 250 // 128 and abs(int(g) - int(b)) <= abs(int(red[1]) - int(red[2])) * 2 + 2
 
 
-def test_render_widen_opt_out() -> None:
-    """Trains are widened 1.5x for rendering unless the recipe sets RENDER_WIDEN = False
-    (true-proportion models, docs/SCALE.md): then the body keeps its authored width."""
+def test_render_true_width() -> None:
+    """Train bodies render at their real width (BODY_WIDTH_M at 12.2 voxels per metre,
+    docs/SCALE.md): the FV-Dosto, authored at 34, keeps it; the RABe 512, authored 40 wide,
+    is narrowed to the same 34; the wheels keep their gauge."""
     import numpy as np
 
     from puenktlich import models, schema
     from puenktlich.voxel.squash import RENDER_WIDTH
 
-    def body_width(vehicle_id: str) -> int:
+    def rendered(vehicle_id: str) -> tuple[np.ndarray, np.ndarray]:
         v = schema.vehicles()[vehicle_id]
-        car = v.car_specs[1]  # an intermediate car
-        plan = models._plan(vehicle_id, car)
-        grid = next(iter(plan.bodies.values())).data
+        car = v.car_specs[min(1, len(v.car_specs) - 1)]  # an intermediate car
+        grid = next(iter(models._plan(vehicle_id, car).bodies.values())).data
         assert grid.shape[1] == RENDER_WIDTH
-        mid = grid.shape[0] // 2
-        return np.flatnonzero(grid[mid, :, 30]).size
+        return models.build_grid(car, dark=True).data, grid
 
-    assert models.load_recipe(models.paths.MODELS / "sbb" / "fv_dosto" / "recipe.py").RENDER_WIDEN is False
-    assert body_width("fv_dosto_ir100") == 34  # authored width kept
-    assert body_width("rabe512") >= 55  # widened 1.5x from 40
+    def body_width(vehicle_id: str) -> int:
+        grid = rendered(vehicle_id)[1]
+        return np.flatnonzero(grid[grid.shape[0] // 2, :, 30]).size
+
+    def gear_width(grid: np.ndarray) -> int:  # wheels (z 0..3; buffer beams above narrow with the body)
+        return int(np.ptp(np.flatnonzero((grid[:, :, :4] != 0).any(axis=(0, 2))))) + 1
+
+    assert body_width("fv_dosto_ir100") == body_width("rabe512") == 34
+    authored, out = rendered("re484")
+    assert body_width("re484") == 36 and gear_width(out) == gear_width(authored)
+
+
+def test_narrow_keeps_details_and_symmetry() -> None:
+    """Narrowing a body merges rows rarer-colour-first: a one-voxel pillar survives, and a
+    symmetric model stays symmetric."""
+    import numpy as np
+
+    from puenktlich.voxel.squash import body_split, widen_y
+    from puenktlich.voxel.vox import VoxelGrid
+
+    d = np.zeros((4, 42, 40), dtype=np.uint8)
+    d[:, 1:41, 10:35] = 200  # 40-wide body
+    d[:, 20, 20] = d[:, 21, 20] = 3  # one-voxel-wide pillar pair on the centre line
+    d[:, 5, 25] = d[:, 36, 25] = 3  # mirrored details off-centre
+    grid = VoxelGrid(d)
+    out = widen_y(grid, body_split(grid), factor=34 / 40).data
+    assert (out[0, :, 15] != 0).sum() == 34
+    assert (out[0, :, 20] == 3).sum() == 2 and (out[0, :, 25] == 3).sum() == 2
+    assert (out == out[:, ::-1, :]).all()
