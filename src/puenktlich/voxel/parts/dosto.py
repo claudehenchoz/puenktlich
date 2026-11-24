@@ -1,5 +1,5 @@
-"""Shared layout of double-deck multiple-unit cars (used by parts/kiss.py: SBB RABe 511, 512,
-514 and the IC2000 coaches). The SBB FV-Dosto itself is built by parts/fv_dosto.py.
+"""Shared layout of double-deck cars (used by parts/kiss.py: SBB RABe 514 and the IC2000
+coaches). The SBB FV-Dosto itself is built by parts/fv_dosto.py.
 
 Structure of every car:
     intermediate level over each bogie: body bottom high (HIGH_FLOOR), small window
@@ -25,7 +25,7 @@ from puenktlich.voxel.parts.body import (
     rounded_window,
 )
 
-# heights (z) of the KISS family (models/sbb/rabe511/REFERENCE.md)
+# heights (z) of the KISS-proportioned layout (roof 4.595 m = z 56)
 LOW_FLOOR = 3
 HIGH_FLOOR = 12
 ROOF = 56

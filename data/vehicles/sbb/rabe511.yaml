@@ -34,19 +34,19 @@ liveries:               # append-only: item id = grf_id * 8 + position
   - id: company
     name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
     company_colours: true
-cars:   # front to rear: Bt · B (pantograph) · AB · B · B (pantograph) · Bt
+cars:   # front to rear: Bt · AB · B (multi-purpose) · B · AB · Bt; pantographs on the cab cars
   - model: { path: sbb/rabe511, lights: true, params: { car: cab, role: front } }
-    length_m: 25.0
-  - model: { path: sbb/rabe511, lights: true, params: { car: panto, role: middle } }
-    length_m: 25.0
+    length_m: 24.9
   - model: { path: sbb/rabe511, lights: true, params: { car: first, role: middle } }
-    length_m: 25.0
+    length_m: 24.7
+  - model: { path: sbb/rabe511, lights: true, params: { car: multi, role: middle } }
+    length_m: 24.7
   - model: { path: sbb/rabe511, lights: true, params: { car: second, role: middle } }
-    length_m: 25.0
-  - model: { path: sbb/rabe511, lights: true, params: { car: panto_rear, role: middle } }
-    length_m: 25.0
-  - model: { path: sbb/rabe511, lights: true, params: { car: cab, role: rear } }
-    length_m: 25.0
+    length_m: 24.7
+  - model: { path: sbb/rabe511, lights: true, params: { car: first_b, role: middle } }
+    length_m: 24.7
+  - model: { path: sbb/rabe511, lights: true, params: { car: cab_panto_up, role: rear } }
+    length_m: 24.9
 reference: [sbb-rabe511]
 description:
   en: Regional double-decker (Stadler KISS) of the Zürich S-Bahn, six cars.

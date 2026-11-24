@@ -267,31 +267,46 @@ def test_fv_dosto_true_proportions() -> None:
     assert 0 < tip_width < 2 * HALF_WIDTH - 10  # tapered in plan
 
 
-def test_kiss_pantograph_well_and_regional_skirt() -> None:
-    """RABe 511 (KISS): the pantograph car's roof drops into a well at its front end (the
-    pantograph stands in it), `turned` moves it to the rear, and the skirt band below z 17 is
-    the dark CC2 shade, so the S-Bahn Zürich (blue) and RegioExpress (grey) schemes are only
-    a cc2 change."""
+def test_regio_dosto_proportions() -> None:
+    """RABe 511 in true proportions (models/sbb/rabe511/REFERENCE.md): body 34 voxels wide
+    (2.80 m), roof z 56 (4.595 m), intermediate cars at their real length (24.7 m); the skirt is
+    the dark CC2 shade, so the S-Bahn Zürich (blue) and RegioExpress (grey) schemes are only a cc2
+    change; the cab car's roof drops into a well at its inner end with the pantograph in it, and
+    the windscreen has glass."""
+    from puenktlich import models
     from puenktlich.voxel import palette as P
-    from puenktlich.voxel.parts.dosto import ROOF
-    from puenktlich.voxel.parts.kiss import SKIRT_TOP, WELL_ROOF, KissSpec, build_kiss_car
+    from puenktlich.voxel.parts.regio_dosto import (
+        LOWER_WIN,
+        ROOF,
+        SKIRT_TOP,
+        WELL_ROOF,
+        build_regio_car,
+        cab_car,
+    )
     from puenktlich.voxel.variants import LIGHT_VARIANTS
 
-    def roof_top(d: np.ndarray, x: int) -> int:  # on the centre line
-        return int(np.flatnonzero(d[x, 20, :])[-1])
+    none = LIGHT_VARIANTS["none"]
+    recipe = models.load_recipe(models.paths.MODELS / "sbb" / "rabe511" / "recipe.py")
+    mid_car = recipe.build(none, car="second").grid.data
+    xs = np.flatnonzero(mid_car.any(axis=(1, 2)))
+    assert abs(xs[-1] - xs[0] + 1 - 247) <= 1  # 24.7 m, centred on the canvas
+    mid = mid_car.shape[0] // 2
+    assert np.flatnonzero(mid_car[mid, :, 30]).size == 34
+    assert np.flatnonzero(mid_car[mid, 20, :])[-1] == ROOF - 1  # top voxel up to 4.59 m
+    skirt = mid_car[mid, :, :SKIRT_TOP][:, : LOWER_WIN[0]]  # below the lower-deck windows
+    side = skirt[np.flatnonzero(skirt.any(axis=1))[0]]
+    assert (side[side != 0] == P.DARK_CC2).all()
 
-    d = build_kiss_car(KissSpec(pantograph=True), LIGHT_VARIANTS["none"]).grid.data
-    sx = d.shape[0]
-    front, rear = sx // 2 + 117, sx // 2 - 117  # 0.6 m from each end of the 25 m car
-    assert roof_top(d, front) == WELL_ROOF
-    assert roof_top(d, rear) == ROOF
-    assert d[sx // 2 + 101, 20, WELL_ROOF + 1 :].any()  # pantograph in the well, 2.4 m from the front
-
-    t = build_kiss_car(KissSpec(pantograph=True, turned=True), LIGHT_VARIANTS["none"]).grid.data
-    assert roof_top(t, rear) == WELL_ROOF and roof_top(t, front) > WELL_ROOF
-
-    skirt = d[sx // 2, 2, :SKIRT_TOP]
-    assert (skirt[skirt != 0] == P.DARK_CC2).all()
+    d = build_regio_car(cab_car(mu_role="front"), none).grid.data
+    xs = np.flatnonzero(d.any(axis=(1, 2)))
+    front, rear = xs[-1], xs[0]
+    assert np.flatnonzero(d[front - 60, 20, :])[-1] == ROOF - 1  # full-height cab
+    assert np.flatnonzero(d[rear + 2, 20, :])[-1] < ROOF - 4  # roof well at the inner end
+    panto = np.flatnonzero((d[:, :, WELL_ROOF + 1 :] == P.LIGHT_GREY).any(axis=(1, 2)))
+    assert panto.size and panto.max() < front - 180  # in the well, over the inner end
+    assert P.GLASS in d[front - 10 : front + 1, 12:30, 27:42]  # windscreen
+    up = recipe.build(none, car="cab_panto_up").grid.data
+    assert np.flatnonzero(up.any(axis=(0, 1)))[-1] > np.flatnonzero(d.any(axis=(0, 1)))[-1]  # raised
 
 
 def test_face_mask_only_touches_the_front_skin() -> None:
