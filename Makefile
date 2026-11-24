@@ -32,7 +32,7 @@ fmt:
 coverage:             ## completeness report -> docs/COMPLETENESS.md
 	$(PK) coverage
 
-install: build        ## copy the grf into ~/.local/share/openttd/newgrf
+install: build        ## copy the grfs into OpenTTD's newgrf folder (~/.local/share/openttd, Windows: Documents/OpenTTD)
 	$(PK) install
 
 clean:

@@ -219,9 +219,7 @@ def build_kiss_car(spec: KissSpec, lights: Lights) -> Model:
         x_rear,
         x_front,
         SECTION,
-        front={"kiss": NOSE, "dtz": DTZ_NOSE, "ic2000": IC_NOSE}[spec.style]
-        if spec.cab
-        else FLAT_END,
+        front={"kiss": NOSE, "dtz": DTZ_NOSE, "ic2000": IC_NOSE}[spec.style] if spec.cab else FLAT_END,
         rear=FLAT_END,
         floor_at=floor_at,
         roof_at=roof_at,

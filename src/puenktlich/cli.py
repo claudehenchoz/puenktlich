@@ -215,13 +215,19 @@ def coverage(write: Annotated[bool, typer.Option(help="Write docs/COMPLETENESS.m
 @app.command()
 def install(
     openttd_dir: Annotated[
-        str, typer.Argument(help="OpenTTD data dir, e.g. ~/.local/share/openttd")
-    ] = "~/.local/share/openttd",
+        str | None,
+        typer.Argument(
+            help="OpenTTD data dir (default: ~/.local/share/openttd on Linux, Documents\\OpenTTD on Windows)"
+        ),
+    ] = None,
 ) -> None:
     """Copy build/puenktlich.grf and build/puenktlich_tracks.grf into OpenTTD's newgrf folder."""
     from pathlib import Path
 
-    dst_dir = Path(openttd_dir).expanduser() / "newgrf"
+    from puenktlich.ingame import personal_dir
+
+    base = Path(openttd_dir).expanduser() if openttd_dir else personal_dir()
+    dst_dir = base / "newgrf"
     dst_dir.mkdir(parents=True, exist_ok=True)
     for src in (paths.BUILD / f"{paths.GRF_NAME}.grf", paths.BUILD / "puenktlich_tracks.grf"):
         if src.exists():

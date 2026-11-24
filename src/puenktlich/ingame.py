@@ -182,9 +182,12 @@ def _profile(
     shutil.rmtree(root, ignore_errors=True)
     data = root / "data" / "openttd"
     (data / "newgrf").mkdir(parents=True)
-    grfs = [g for g in (paths.BUILD / "puenktlich_tracks.grf", grf) if g.exists()]  # tracks first
-    for g in grfs:
-        shutil.copy2(g, data / "newgrf" / g.name)
+    # own file names: on Windows OpenTTD also searches Documents\OpenTTD (before this profile), where
+    # `pk install` puts puenktlich.grf; the same name would load that copy instead of the build
+    sources = [g for g in (paths.BUILD / "puenktlich_tracks.grf", grf) if g.exists()]  # tracks first
+    grfs = [data / "newgrf" / f"pk_test_{g.name}" for g in sources]
+    for src, dst in zip(sources, grfs, strict=True):
+        shutil.copy2(src, dst)
     gs = data / "game" / "pk_test"
     shutil.copytree(GS_DIR, gs)
     graphicsset = ""

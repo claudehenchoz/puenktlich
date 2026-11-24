@@ -13,7 +13,8 @@ Requirements: [uv](https://docs.astral.sh/uv/), Go ≥ 1.22, git. For testing yo
 ```sh
 make setup        # python deps + gorender/cargopositor into .tools/bin
 make build        # -> build/puenktlich.grf + build/puenktlich_tracks.grf (metre gauge)
-make install      # copy to ~/.local/share/openttd/newgrf
+make install      # copy to OpenTTD's newgrf folder (~/.local/share/openttd/newgrf; Windows: Documents/OpenTTD/newgrf)
+ewgrf)
 make test lint
 ```
 
