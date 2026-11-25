@@ -1,0 +1,41 @@
+# VBZ Lion's City 12 E (12.2 m, fitted to OpenTTD length 8; 1/8 = 1.4 m). Facts: models/vbz/lions_city/REFERENCE.md.
+id: vbz_lions_city_12e
+grf_id: 706          # never change — saved games reference this (road vehicle id space)
+name:
+  en: "VBZ Lion's City 12 E"
+  de: "VBZ Lion's City 12 E"
+  fr: "VBZ Lion's City 12 E"
+  it: "VBZ Lion's City 12 E"
+operator: vbz
+kind: bus
+traction: battery
+intro_year: 2022
+vehicle_life_years: 15
+model_life_years: 20
+max_speed_kmh: 85
+power_kw: 240
+tractive_effort_kn: 60
+weight_t: 19.5
+length_m: 12.2
+capacity:
+  PASS: 67
+cost_factor: 24
+running_cost_factor: 16
+liveries:
+  - id: vbz
+    name: { en: VBZ white and blue, de: VBZ Weiss-Blau, fr: VBZ blanc et bleu, it: VBZ bianco e blu }
+    cc1: BLUE
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: vbz/lions_city
+  kind: recipe
+  params: { type: 12e }
+reference: [vbz-lions-city-12e]
+description:
+  en: "MAN battery bus with its batteries on the roof, charged in the depot."
+  de: "Batteriebus von MAN mit den Batterien auf dem Dach, im Depot geladen."
+  fr: "Bus à batterie MAN, batteries sur le toit, rechargé au dépôt."
+  it: "Autobus a batteria MAN con le batterie sul tetto, ricaricato in deposito."

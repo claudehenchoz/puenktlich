@@ -1,0 +1,42 @@
+# VBZ lighTram 19 DC (18.74 m, fitted to OpenTTD length 6 + 5; 1/8 = 1.4 m). Facts: models/vbz/hess_trolley/REFERENCE.md.
+id: vbz_lightram19
+grf_id: 702          # never change — saved games reference this (road vehicle id space)
+name:
+  en: "VBZ lighTram 19 DC"
+  de: "VBZ lighTram 19 DC"
+  fr: "VBZ lighTram 19 DC"
+  it: "VBZ lighTram 19 DC"
+operator: vbz
+kind: bus
+traction: trolley
+intro_year: 2020
+vehicle_life_years: 15
+model_life_years: 20
+max_speed_kmh: 70
+power_kw: 320
+tractive_effort_kn: 75
+weight_t: 21
+length_m: 18.74
+capacity:
+  PASS: 117
+cost_factor: 32
+running_cost_factor: 22
+liveries:
+  - id: vbz
+    name: { en: VBZ white and blue, de: VBZ Weiss-Blau, fr: VBZ blanc et bleu, it: VBZ bianco e blu }
+    cc1: BLUE
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+cars:
+  - model: { path: vbz/hess_trolley, kind: recipe, params: { type: lt19, car: 0 } }
+    length_m: 8.4
+  - model: { path: vbz/hess_trolley, kind: recipe, params: { type: lt19, car: 1 } }
+    length_m: 7.0
+reference: [vbz-lightram19]
+description:
+  en: "Battery trolleybus: it charges from the wires while it runs and covers wire-free sections on battery."
+  de: "Batterie-Trolleybus: lädt während der Fahrt an der Fahrleitung und fährt Abschnitte ohne Fahrleitung mit Batterie."
+  fr: "Trolleybus à batterie : il se recharge sous la ligne aérienne en roulant et parcourt les tronçons sans ligne sur batterie."
+  it: "Filobus a batteria: si ricarica dalla linea aerea in marcia e percorre i tratti senza linea a batteria."

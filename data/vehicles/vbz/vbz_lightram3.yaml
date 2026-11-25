@@ -1,0 +1,44 @@
+# VBZ lighTram 3 (24.7 m, fitted to OpenTTD length 6 + 5 + 4; 1/8 = 1.4 m). Facts: models/vbz/hess_trolley/REFERENCE.md.
+id: vbz_lightram3
+grf_id: 703          # never change — saved games reference this (road vehicle id space)
+name:
+  en: "VBZ lighTram 3"
+  de: "VBZ lighTram 3"
+  fr: "VBZ lighTram 3"
+  it: "VBZ lighTram 3"
+operator: vbz
+kind: bus
+traction: trolley
+intro_year: 2007
+vehicle_life_years: 15
+model_life_years: 20
+max_speed_kmh: 60
+power_kw: 320
+tractive_effort_kn: 90
+weight_t: 24
+length_m: 24.7
+capacity:
+  PASS: 155
+cost_factor: 38
+running_cost_factor: 26
+liveries:
+  - id: vbz
+    name: { en: VBZ white and blue, de: VBZ Weiss-Blau, fr: VBZ blanc et bleu, it: VBZ bianco e blu }
+    cc1: BLUE
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+cars:
+  - model: { path: vbz/hess_trolley, kind: recipe, params: { type: lt3, car: 0 } }
+    length_m: 8.4
+  - model: { path: vbz/hess_trolley, kind: recipe, params: { type: lt3, car: 1 } }
+    length_m: 7.0
+  - model: { path: vbz/hess_trolley, kind: recipe, params: { type: lt3, car: 2 } }
+    length_m: 5.6
+reference: [vbz-lightram3]
+description:
+  en: "Double-articulated 25 m trolleybus for the busiest Zurich lines, such as the 31 and 32."
+  de: "Doppelgelenk-Trolleybus von 25 m für die stärksten Zürcher Linien wie die 31 und 32."
+  fr: "Trolleybus à double articulation de 25 m pour les lignes les plus chargées de Zurich, comme la 31 et la 32."
+  it: "Filobus a doppia articolazione di 25 m per le linee più frequentate di Zurigo, come la 31 e la 32."

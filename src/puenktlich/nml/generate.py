@@ -109,7 +109,7 @@ def vehicle_badges(v: Vehicle) -> list[str]:
     if not v.is_road:
         out.append("gauge/metre" if v.railtype.startswith("metre") else "gauge/standard")
     if v.is_road:
-        out.append("traction/diesel")
+        out.append(f"traction/{v.traction or 'diesel'}")
     elif v.power_kw > 0 and v.kind != "control_car":
         out.append("traction/rack" if "rack" in v.railtype else f"traction/{_traction(v)}")
     return out

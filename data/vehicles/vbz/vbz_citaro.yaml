@@ -1,0 +1,41 @@
+# VBZ Citaro (12.0 m, fitted to OpenTTD length 8; 1/8 = 1.4 m). Facts: models/vbz/citaro/REFERENCE.md.
+id: vbz_citaro
+grf_id: 709          # never change — saved games reference this (road vehicle id space)
+name:
+  en: "VBZ Citaro"
+  de: "VBZ Citaro"
+  fr: "VBZ Citaro"
+  it: "VBZ Citaro"
+operator: vbz
+kind: bus
+traction: diesel
+intro_year: 2008
+vehicle_life_years: 15
+model_life_years: 20
+max_speed_kmh: 80
+power_kw: 220
+tractive_effort_kn: 60
+weight_t: 18
+length_m: 12.0
+capacity:
+  PASS: 64
+cost_factor: 20
+running_cost_factor: 20
+liveries:
+  - id: vbz
+    name: { en: VBZ white and blue, de: VBZ Weiss-Blau, fr: VBZ blanc et bleu, it: VBZ bianco e blu }
+    cc1: BLUE
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: vbz/citaro
+  kind: recipe
+  params: { type: solo }
+reference: [vbz-citaro]
+description:
+  en: "Mercedes-Benz standard diesel bus in the white and blue of the Zurich city lines."
+  de: "Mercedes-Benz-Standardbus mit Dieselantrieb im Weiss-Blau der Zürcher Stadtlinien."
+  fr: "Bus standard diesel Mercedes-Benz aux couleurs blanc et bleu des lignes urbaines de Zurich."
+  it: "Autobus standard diesel Mercedes-Benz nel bianco e blu delle linee urbane di Zurigo."

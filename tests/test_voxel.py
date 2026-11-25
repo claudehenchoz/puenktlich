@@ -537,3 +537,32 @@ def test_chamfered_section() -> None:
     roof_w = width[int(SECTION.roof) - 1]
     assert roof_w < width[cf] - 2 * SECTION.chamfer_inset + 6
     assert np.all(np.diff(width[cf : int(SECTION.roof)]) <= 0)
+
+
+def test_vbz_city_buses() -> None:
+    """VBZ buses: blue (CC1) skirt and white (CC2) sides, doors only on the kerb side, trolley
+    poles only on the last section of a trolleybus, axles where the layout puts them."""
+    from puenktlich.models import load_recipe
+    from puenktlich.voxel.parts.citybus import CANTRAIL, SECTION, SKIRT_TOP, WINDOW, build_city_bus
+
+    root = Path(__file__).parent.parent / "models" / "vbz"
+    trolley = load_recipe(root / "hess_trolley" / "recipe.py").TYPES["lt3"]
+    cars = [build_city_bus(trolley, k) for k in range(3)]
+    for mdl in cars:
+        d = mdl.d
+        assert (d[:, :, : SKIRT_TOP + 1] == P.BODY_CC1).sum() > 200  # blue skirt
+        assert (d[:, :, SKIRT_TOP + 1 : WINDOW[0]] == P.BODY_CC2).sum() > 200  # white below the windows
+        assert (d[:, :, CANTRAIL] == P.BODY_CC1).any()  # blue cantrail line
+    poles = [int((m.d[:, :, SECTION.roof + 2 :] == P.DARK_GREY).sum()) for m in cars]
+    assert poles[0] == poles[1] == 0 and poles[2] > 20
+    # doors (glass from the floor up) on the kerb side (high y) only
+    d = cars[0].d
+    low = d[:, :, SECTION.floor + 3]
+    assert (low[:, 20:] == P.GLASS).any() and not (low[:, :20] == P.GLASS).any()
+    # the solo bus fills its OpenTTD length and has two axles
+    man = load_recipe(root / "lions_city" / "recipe.py").TYPES["12e"]
+    mdl = build_city_bus(man)
+    xs = np.nonzero((mdl.d != 0).any(axis=(1, 2)))[0]
+    assert 108 <= xs.max() - xs.min() + 1 <= 112
+    tyres = np.nonzero((mdl.d[:, :8, 2:8] == P.BLACK).any(axis=(1, 2)))[0]
+    assert len(np.split(tyres, np.nonzero(np.diff(tyres) > 1)[0] + 1)) == 2

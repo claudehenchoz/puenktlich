@@ -1,0 +1,40 @@
+# VBZ lighTram 10 (10.8 m, fitted to OpenTTD length 7; 1/8 = 1.4 m). Facts: models/vbz/lightram10/REFERENCE.md.
+id: vbz_lightram10
+grf_id: 705          # never change — saved games reference this (road vehicle id space)
+name:
+  en: "VBZ lighTram 10"
+  de: "VBZ lighTram 10"
+  fr: "VBZ lighTram 10"
+  it: "VBZ lighTram 10"
+operator: vbz
+kind: bus
+traction: battery
+intro_year: 2022
+vehicle_life_years: 15
+model_life_years: 20
+max_speed_kmh: 80
+power_kw: 160
+tractive_effort_kn: 60
+weight_t: 14
+length_m: 10.8
+capacity:
+  PASS: 60
+cost_factor: 24
+running_cost_factor: 16
+liveries:
+  - id: vbz
+    name: { en: VBZ white and blue, de: VBZ Weiss-Blau, fr: VBZ blanc et bleu, it: VBZ bianco e blu }
+    cc1: BLUE
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+model:
+  path: vbz/lightram10
+  kind: recipe
+reference: [vbz-lightram10]
+description:
+  en: "Compact battery bus for the narrow Zurich neighbourhood lines, charged overnight in the depot."
+  de: "Kompakter Batteriebus für die engen Zürcher Quartierlinien, über Nacht im Depot geladen."
+  fr: "Bus à batterie compact pour les lignes de quartier étroites de Zurich, rechargé la nuit au dépôt."
+  it: "Autobus a batteria compatto per le strette linee di quartiere di Zurigo, ricaricato di notte in deposito."

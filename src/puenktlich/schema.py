@@ -148,6 +148,9 @@ class Vehicle(Strict):
     kind: Literal["locomotive", "emu", "dmu", "coach", "control_car", "wagon", "bus", "tram"]
     railtype: str | None = Field(None, description="Rail vehicles only (data/railtypes.yaml id)")
     roadtype: Literal["road", "tram"] | None = Field(None, description="Road vehicles only (bus: road)")
+    traction: Literal["diesel", "hybrid", "battery", "trolley"] | None = Field(
+        None, description="Road vehicles only: traction badge (default diesel); rail traction comes from the railtype"
+    )
     intro_year: int = Field(ge=1847, le=2100)
     retire_year: int | None = None
     vehicle_life_years: int = 40
@@ -184,7 +187,9 @@ class Vehicle(Strict):
         if self.is_road:
             if self.railtype is not None:
                 raise ValueError(f"{self.id}: road vehicles have a `roadtype`, not a `railtype`")
-        elif self.railtype is None or self.roadtype is not None:
+        elif self.traction is not None:
+            raise ValueError(f"{self.id}: `traction` is for road vehicles (rail: from the railtype)")
+        if not self.is_road and (self.railtype is None or self.roadtype is not None):
             raise ValueError(f"{self.id}: rail vehicles need a `railtype` (and no `roadtype`)")
         return self
 

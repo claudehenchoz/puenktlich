@@ -1,0 +1,42 @@
+# VBZ Volvo 7900 Hybrid articulated 18.7 m (18.74 m, fitted to OpenTTD length 6 + 5; 1/8 = 1.4 m). Facts: models/vbz/volvo7900/REFERENCE.md.
+id: vbz_volvo7900_ha
+grf_id: 713          # never change — saved games reference this (road vehicle id space)
+name:
+  en: "VBZ Volvo 7900 Hybrid articulated 18.7 m"
+  de: "VBZ Volvo 7900 Hybrid articulated 18.7 m"
+  fr: "VBZ Volvo 7900 Hybrid articulated 18.7 m"
+  it: "VBZ Volvo 7900 Hybrid articulated 18.7 m"
+operator: vbz
+kind: bus
+traction: hybrid
+intro_year: 2020
+vehicle_life_years: 15
+model_life_years: 20
+max_speed_kmh: 80
+power_kw: 330
+tractive_effort_kn: 75
+weight_t: 29
+length_m: 18.74
+capacity:
+  PASS: 110
+cost_factor: 28
+running_cost_factor: 26
+liveries:
+  - id: vbz
+    name: { en: VBZ white and blue, de: VBZ Weiss-Blau, fr: VBZ blanc et bleu, it: VBZ bianco e blu }
+    cc1: BLUE
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+cars:
+  - model: { path: vbz/volvo7900, kind: recipe, params: { type: ha, car: 0 } }
+    length_m: 8.4
+  - model: { path: vbz/volvo7900, kind: recipe, params: { type: ha, car: 1 } }
+    length_m: 7.0
+reference: [vbz-volvo7900-ha]
+description:
+  en: "The longer 18.7 m version of the Volvo hybrid articulated bus, with a stronger electric motor."
+  de: "Die längere 18,7-m-Version des Volvo-Hybrid-Gelenkbusses mit stärkerem Elektromotor."
+  fr: "La version plus longue de 18,7 m du bus articulé hybride Volvo, au moteur électrique plus puissant."
+  it: "La versione più lunga di 18,7 m dell'autobus articolato ibrido Volvo, con motore elettrico più potente."

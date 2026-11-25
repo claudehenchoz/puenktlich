@@ -1,0 +1,42 @@
+# VBZ Swisstrolley 4 (18.7 m, fitted to OpenTTD length 6 + 5; 1/8 = 1.4 m). Facts: models/vbz/hess_trolley/REFERENCE.md.
+id: vbz_swisstrolley4
+grf_id: 701          # never change — saved games reference this (road vehicle id space)
+name:
+  en: "VBZ Swisstrolley 4"
+  de: "VBZ Swisstrolley 4"
+  fr: "VBZ Swisstrolley 4"
+  it: "VBZ Swisstrolley 4"
+operator: vbz
+kind: bus
+traction: trolley
+intro_year: 2013
+vehicle_life_years: 15
+model_life_years: 20
+max_speed_kmh: 60
+power_kw: 240
+tractive_effort_kn: 75
+weight_t: 20
+length_m: 18.7
+capacity:
+  PASS: 115
+cost_factor: 32
+running_cost_factor: 22
+liveries:
+  - id: vbz
+    name: { en: VBZ white and blue, de: VBZ Weiss-Blau, fr: VBZ blanc et bleu, it: VBZ bianco e blu }
+    cc1: BLUE
+    cc2: WHITE
+  - id: company
+    name: { en: Company colours, de: Firmenfarben, fr: Couleurs de la société, it: Colori della compagnia }
+    company_colours: true
+cars:
+  - model: { path: vbz/hess_trolley, kind: recipe, params: { type: st4, car: 0 } }
+    length_m: 8.4
+  - model: { path: vbz/hess_trolley, kind: recipe, params: { type: st4, car: 1 } }
+    length_m: 7.0
+reference: [vbz-swisstrolley4]
+description:
+  en: "Hess articulated trolleybus of the fourth generation, the backbone of the Zurich trolleybus lines."
+  de: "Hess-Gelenktrolleybus der vierten Generation, das Rückgrat der Zürcher Trolleybuslinien."
+  fr: "Trolleybus articulé Hess de quatrième génération, pilier des lignes de trolleybus zurichoises."
+  it: "Filobus articolato Hess di quarta generazione, colonna portante delle linee filoviarie di Zurigo."

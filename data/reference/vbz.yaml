@@ -1,0 +1,19 @@
+# VBZ (Verkehrsbetriebe Zürich) bus fleet in service, November 2026 (trams not yet covered).
+operator: vbz
+source: "VBZ vehicle pages (Trolleybusse, Batteriebusse, Hybridbusse, Autobusse), Wikipedia DE fleet tables"
+retrieved: "2026-11-25"
+entries:
+  - { id: vbz-swisstrolley3,  name: "Hess Swisstrolley 3 (BGT-N2C, 144–161)",               category: bus, built: "2006–2007" }
+  - { id: vbz-swisstrolley4,  name: "Hess Swisstrolley 4 (BGT-N2D, 162–182)",               category: bus, built: "2013" }
+  - { id: vbz-lightram19,     name: "Hess lighTram 19 DC (183, 200–229)",                   category: bus, built: "2016–2026" }
+  - { id: vbz-lightram3,      name: "Hess lighTram 3 double-articulated (61–91)",           category: bus, built: "2007–2014" }
+  - { id: vbz-lightram25,     name: "Hess lighTram 25 DC (1–13, 92–94)",                    category: bus, built: "2018–2026" }
+  - { id: vbz-lightram10,     name: "Hess lighTram 10 Plug (340–354)",                      category: bus, built: "2022–2023" }
+  - { id: vbz-lions-city-12e, name: "MAN Lion's City 12 E (636–657)",                       category: bus, built: "2022–2023" }
+  - { id: vbz-lions-city-18e, name: "MAN Lion's City 18 E (474–503)",                       category: bus, built: "2022–2024" }
+  - { id: vbz-lions-city-gl,  name: "MAN Lion's City GL (A40, 510–515)",                    category: bus, built: "2015" }
+  - { id: vbz-citaro,         name: "Mercedes-Benz Citaro (O 530 facelift, 601–617)",       category: bus, built: "2008–2009" }
+  - { id: vbz-citaro-g,       name: "Mercedes-Benz Citaro G (O 530 G, 401–431)",            category: bus, built: "2008–2015" }
+  - { id: vbz-volvo7900-eh,   name: "Volvo 7900 Electric Hybrid (620–635)",                 category: bus, built: "2019–2020" }
+  - { id: vbz-volvo7900-lah,  name: "Volvo 7900 Hybrid articulated LAH (190, 440–457)",     category: bus, built: "2015–2018" }
+  - { id: vbz-volvo7900-ha,   name: "Volvo 7900 Hybrid articulated HA 18.7 m (458–472)",    category: bus, built: "2020" }

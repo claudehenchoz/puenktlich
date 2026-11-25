@@ -45,6 +45,21 @@ STR_BADGE_TRACTION_DIESEL:
   de: "Diesel"
   fr: "Diesel"
   it: "Diesel"
+STR_BADGE_TRACTION_HYBRID:
+  en: "Diesel-electric hybrid"
+  de: "Diesel-Hybrid"
+  fr: "Hybride diesel"
+  it: "Ibrida diesel"
+STR_BADGE_TRACTION_BATTERY:
+  en: "Battery-electric"
+  de: "Batterie-elektrisch"
+  fr: "Électrique à batterie"
+  it: "Elettrica a batteria"
+STR_BADGE_TRACTION_TROLLEY:
+  en: "Trolleybus"
+  de: "Trolleybus"
+  fr: "Trolleybus"
+  it: "Filobus"
 STR_BADGE_TRACTION_RACK:
   en: "Electric, rack and adhesion"
   de: "Elektrisch, Zahnrad und Adhäsion"

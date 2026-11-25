@@ -50,3 +50,13 @@
   badge: operator/postauto
   grf_id_block: 400
   founded: 1906
+- id: vbz
+  name: VBZ
+  full_name:
+    en: Zurich Public Transport
+    de: Verkehrsbetriebe Zürich
+    fr: Transports publics de Zurich
+    it: Trasporti pubblici di Zurigo
+  badge: operator/vbz
+  grf_id_block: 700
+  founded: 1896

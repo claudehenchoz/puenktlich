@@ -112,3 +112,45 @@ citaro:
 citaro_g:
   grf_id: 401
   liveries: [postauto, company]
+vbz_swisstrolley3:
+  grf_id: 700
+  liveries: [vbz, company]
+vbz_swisstrolley4:
+  grf_id: 701
+  liveries: [vbz, company]
+vbz_lightram19:
+  grf_id: 702
+  liveries: [vbz, company]
+vbz_lightram3:
+  grf_id: 703
+  liveries: [vbz, company]
+vbz_lightram25:
+  grf_id: 704
+  liveries: [vbz, company]
+vbz_lightram10:
+  grf_id: 705
+  liveries: [vbz, company]
+vbz_lions_city_12e:
+  grf_id: 706
+  liveries: [vbz, company]
+vbz_lions_city_18e:
+  grf_id: 707
+  liveries: [vbz, company]
+vbz_lions_city_gl:
+  grf_id: 708
+  liveries: [vbz, company]
+vbz_citaro:
+  grf_id: 709
+  liveries: [vbz, company]
+vbz_citaro_g:
+  grf_id: 710
+  liveries: [vbz, company]
+vbz_volvo7900_eh:
+  grf_id: 711
+  liveries: [vbz, company]
+vbz_volvo7900_lah:
+  grf_id: 712
+  liveries: [vbz, company]
+vbz_volvo7900_ha:
+  grf_id: 713
+  liveries: [vbz, company]
