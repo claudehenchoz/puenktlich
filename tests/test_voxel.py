@@ -425,7 +425,8 @@ def test_tilting_icn_taper_and_nose() -> None:
 def test_etr610_proportions() -> None:
     """RABe 503 / ETR 610 in true proportions (models/sbb/rabe503/REFERENCE.md): body 34 voxels
     wide (2.83 m), roof z 50 (4.10 m), tilting taper above the window band, a long low nose
-    (tip at the bumper height, roof reached ~6.9 m back), pantographs as in the GDL brochure."""
+    (tip at the bumper height, roof reached ~10.35 m back: the measured 6.9 m stretched 1.5x so it
+    reads long at half-length rendering), pantographs as in the GDL brochure."""
     from puenktlich import models
     from puenktlich.voxel.parts.etr610 import BAND, ROOF, build_etr_car, end_car
     from puenktlich.voxel.variants import LIGHT_VARIANTS
@@ -441,7 +442,7 @@ def test_etr610_proportions() -> None:
     front = np.flatnonzero(cab.any(axis=(1, 2)))[-1]
     assert np.flatnonzero(cab[front, 20, :]).max() < 18  # tip at ~1.2 m
     roof_x = np.flatnonzero(cab[:, 20, ROOF])
-    assert front - roof_x.max() > 50  # the roof starts ~6.4 modelled metres behind the tip
+    assert front - roof_x.max() > 85  # the roof starts ~9.6 modelled metres behind the tip
 
     def pantographs(car: str) -> int:  # pantograph bases: light-grey insulator clusters on the roof
         g = recipe.build(none, car=car).grid.data

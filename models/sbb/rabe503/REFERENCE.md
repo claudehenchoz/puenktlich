@@ -78,9 +78,11 @@ z 11.
 - bogies 5.6 and 23.65 (wheel contacts at 4.1/6.9 and 21.9/24.6 in the model);
 - door 7.55–8.55 behind the cab;
 - window band 8.75–23.6 with 8 windows 1.4 m wide every 1.88 m from 8.85;
+- in the model the nose is stretched (see "Approximations"), so the door is at 11.0–12.0 and
+  the band runs 12.2–23.6 with 6 windows from 12.3;
 - blue marker 24.7–24.95;
 - red end panel from 24.95 to the end, with the door 25.55–26.75;
-- roof equipment 12.0–19.5.
+- roof equipment 12.0–19.5 (model: 15.45–22.95).
 
 **Restaurant car** (photo 03; 1st-class end towards car 2):
 - door 0.35–1.35, red/yellow end panel and blue "1" marker;
@@ -116,6 +118,11 @@ and the recipe's `BODY_WIDTH_M = 2.83` matches it, so the render step keeps that
 
 ## Approximations
 - **Car lengths:** see "Data" above; all cars are compressed to 25.6 m.
+- **Nose stretched 1.5×:** trains render at half length but full height (docs/SCALE.md), so the
+  measured nose (roof reached 6.9 m behind the tip) looked about 2.7× too steep in game. Every
+  nose feature is stretched 1.5× along the car (roof reached at 10.35 m; `parts/etr610.py`
+  `NOSE_STRETCH`, the measured tables are kept as `MEASURED_*`). The door and windows behind it
+  move back 3.45 m, so the end car shows 6 of its 8 windows. Bogies keep their real positions.
 - **Window band height:** the 3D model and photo 01 disagree by ~0.2 m; the 3D model is used.
 - **Pantographs:** which of the two on cars 4 and 5 is the SBB one, and that car 4's is the
   raised one, are assumptions (one SBB pantograph raised in Switzerland).

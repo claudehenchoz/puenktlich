@@ -10,7 +10,8 @@ the authored width when rendered (docs/SCALE.md).
 
 Structure: single-deck high-floor cars on bogies near the ends, the body tapering above the
 window band (tilting profile). End cars have a long, low nose (measured top, bottom and plan
-tables) with a steep windscreen. Livery: white body CC2, dark window band with framed windows,
+tables, stretched 1.5x along the car so it still reads long at OpenTTD's half-length rendering)
+with a steep windscreen. Livery: white body CC2, dark window band with framed windows,
 thin red (CC1) cant line under the anthracite roof, dark skirt, red end panels with a blue class
 marker at the car ends (1st class: yellow top third), red nose top with a black windscreen,
 round lamps either side of the white bumper tip. Restaurant car: red window band on the dining
@@ -76,25 +77,49 @@ SECTION = CrossSection(
 END = EndShape(rake=0, corner_radius=3)
 FLAT = EndShape(rake=0, corner_radius=0)  # the nose is cut by nose_mask()
 
-# nose (real metres from the tip), REFERENCE.md "Nose": silhouette top and bottom, plan half-width
-NOSE_TOP = (
+# nose as measured (real metres from the tip), REFERENCE.md "Nose": silhouette top and bottom,
+# plan half-width
+MEASURED_TOP = (
     (0.0, 1.18), (0.25, 1.33), (0.5, 1.46), (0.75, 1.59), (1.0, 1.69), (1.5, 1.87), (2.0, 2.03),
     (2.5, 2.18), (3.0, 2.34), (3.5, 2.52), (3.75, 2.72), (4.0, 2.98), (4.25, 3.24), (4.5, 3.39),
     (5.0, 3.65), (5.5, 3.83), (6.0, 3.96), (6.5, 4.05), (6.9, 4.10),
 )  # fmt: skip
-NOSE_BOTTOM = ((0.0, 0.95), (0.25, 0.66), (0.5, 0.55), (0.75, 0.30))
-NOSE_HALF = (
+MEASURED_BOTTOM = ((0.0, 0.95), (0.25, 0.66), (0.5, 0.55), (0.75, 0.30))
+MEASURED_HALF = (
     (0.0, 0.15), (0.25, 0.50), (0.5, 0.76), (0.75, 0.89), (1.0, 1.03), (1.5, 1.14), (2.0, 1.22),
     (2.5, 1.27), (3.0, 1.33), (3.5, 1.38), (4.0, 1.415),
 )  # fmt: skip
-NOSE_LEN = 6.9  # roof height reached
+MEASURED_LEN = 6.9  # roof height reached
+
+# Trains render at half length but full height (docs/SCALE.md), which makes this long, shallow
+# nose look ~2.7x steeper in game than it is. The model stretches every nose feature 1.5x along
+# the car (roof reached at 10.35 m) and moves the cab car's door and windows back by the same
+# 3.45 m, at the cost of two of its eight windows. Lengths below are in the stretched frame.
+NOSE_STRETCH = 1.5
+NOSE_SHIFT = MEASURED_LEN * (NOSE_STRETCH - 1)  # everything behind the nose moves back this far
+
+
+def _stretch(table: tuple[tuple[float, float], ...]) -> tuple[tuple[float, float], ...]:
+    return tuple((u * NOSE_STRETCH, v) for u, v in table)
+
+
+NOSE_TOP = _stretch(MEASURED_TOP)
+NOSE_BOTTOM = _stretch(MEASURED_BOTTOM)
+NOSE_HALF = _stretch(MEASURED_HALF)
+NOSE_LEN = MEASURED_LEN * NOSE_STRETCH
 NOSE_ROUND = 4  # voxel radius of the rounded top edges of the nose
-RED_TOP_TO = 2.9  # red nose top back to the windscreen
-WINDSCREEN = (3.0, 4.7)
-CAB_WINDOW = ((3.6, 5.75), (2.05, 2.75), ((3.6, 2.2), (4.0, 2.55), (5.4, 3.3), (5.75, 2.95)))
-SEAM = ((4.3, 0.95), (7.0, 3.85))  # cab module joint, a thin dark diagonal on the side
+RED_TOP_TO = 2.9 * NOSE_STRETCH  # red nose top back to the windscreen
+WINDSCREEN = (3.0 * NOSE_STRETCH, 4.7 * NOSE_STRETCH)
+# cab side window: x range, lower edge heights at its ends, upper edge (x, height) corners, panes
+CAB_WINDOW = (
+    (3.6 * NOSE_STRETCH, 5.75 * NOSE_STRETCH),
+    (2.05, 2.75),
+    _stretch(((3.6, 2.2), (4.0, 2.55), (5.4, 3.3), (5.75, 2.95))),
+)
+CAB_PANES = (4.3 * NOSE_STRETCH, 5.2 * NOSE_STRETCH)
+SEAM = _stretch(((4.3, 0.95), (7.0, 3.85)))  # cab module joint, a thin dark diagonal on the side
 # depth (voxels) of the black windscreen/roof cap below the nose silhouette, seen from the side
-SIDE_BLACK = ((0.0, 0.0), (2.9, 0.0), (4.0, 2.0), (5.5, 4.0), (6.9, 3.0))
+SIDE_BLACK = _stretch(((0.0, 0.0), (2.9, 0.0), (4.0, 2.0), (5.5, 4.0), (6.9, 3.0)))
 
 WHITE = P.BODY_CC2
 RED = P.BODY_CC1
@@ -130,12 +155,13 @@ class EtrSpec:
 
 
 def end_car(**kw) -> EtrSpec:
-    """Cab end car (27.7 m): nose, door behind the cab, 8 windows, door and red panel at the rear."""
+    """Cab end car (27.7 m): nose (stretched, see NOSE_STRETCH), door behind the cab, 6 of the
+    8 windows, door and red panel at the rear."""
     base = EtrSpec(
         kind="cab",
         real_m=27.7,
         bogies=(5.6, 23.65),
-        windows=tuple(8.85 + k * 1.88 for k in range(8)),
+        windows=tuple(8.85 + NOSE_SHIFT + k * 1.88 for k in range(6)),
     )
     return replace(base, **kw)
 
@@ -210,7 +236,7 @@ def build_etr_car(spec: EtrSpec, lights: Lights) -> Model:
     mdl.solid(body, WHITE)
     mdl.paint(Z >= ROOF_FROM, ROOF_GREY)
     mdl.paint((RED_LINE[0] <= Z) & (RED_LINE[1] > Z) & ~nose, RED)
-    mdl.paint((Z < SKIRT_TOP) & ((ur >= 7.2) if cab else True), DARK)
+    mdl.paint((Z < SKIRT_TOP) & ((ur >= 7.2 + NOSE_SHIFT) if cab else True), DARK)
     if cab:
         mdl.paint(nose & (Z < 7), DARK)  # dark lower lip under the nose
 
@@ -256,8 +282,8 @@ def build_etr_car(spec: EtrSpec, lights: Lights) -> Model:
             a = 8.9 + k * 0.5
             mdl.paint(side_band(mdl, *span(a, a + 0.3), *LETTERING_Z), RED)
     else:  # cab end car
-        windows(DARK, 8.75, 23.6)
-        plug_door(7.55, 8.55)
+        windows(DARK, 8.75 + NOSE_SHIFT, 23.6)
+        plug_door(7.55 + NOSE_SHIFT, 8.55 + NOSE_SHIFT)
         marker(24.7)
         end_panel(24.95, L, (25.55, 26.75))
 
@@ -272,7 +298,8 @@ def build_etr_car(spec: EtrSpec, lights: Lights) -> Model:
 
     # skirt: louvred panels between the bogies
     b0, b1 = spec.bogies
-    louvres(mdl, *span(b0 + 2.4, b1 - 2.4), FLOOR + 1, SKIRT_TOP - 1, back=BLACK, slat=P.DARK_GREY)
+    l0 = 8.0 + NOSE_SHIFT if cab else b0 + 2.4  # cab car: behind the (stretched) nose
+    louvres(mdl, *span(l0, b1 - 2.4), FLOOR + 1, SKIRT_TOP - 1, back=BLACK, slat=P.DARK_GREY)
 
     # --- nose ---------------------------------------------------------------------------
     if cab:
@@ -289,7 +316,7 @@ def build_etr_car(spec: EtrSpec, lights: Lights) -> Model:
 
     # --- roof -----------------------------------------------------------------------------
     if cab:
-        roof_box(mdl, *span(12.0, 19.5), 8, ROOF - 1, 2, P.MID_GREY)
+        roof_box(mdl, *span(12.0 + NOSE_SHIFT, min(19.5 + NOSE_SHIFT, 24.7)), 8, ROOF - 1, 2, P.MID_GREY)
     else:
         roof_box(mdl, *span(L / 2 - 4.3, L / 2 + 4.3), 9, ROOF - 1, 3, ROOF_GREY)
     if spec.roof_line:
@@ -334,7 +361,7 @@ def _nose(mdl: Model, ur: np.ndarray, dy: np.ndarray, Z: np.ndarray) -> None:
     upper = np.interp(ur, *zip(*up, strict=True)) * ZM
     win = side & (ur >= u0) & (ur < u1) & (lower <= Z) & (upper > Z)
     mdl.paint(win, BLACK)
-    mdl.inset(win & (ur >= 4.3) & (ur < 5.2) & (lower + 1 <= Z) & (upper - 1 > Z), P.GLASS)
+    mdl.inset(win & (ur >= CAB_PANES[0]) & (ur < CAB_PANES[1]) & (lower + 1 <= Z) & (upper - 1 > Z), P.GLASS)
 
     # cab module seam
     (sa, za), (sb, zb) = SEAM
